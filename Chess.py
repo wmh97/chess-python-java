@@ -358,11 +358,14 @@ class MovePiece(SetChessPieces):
        
         @end_pos.setter
         def end_pos(self, value):
-                if self._validate_position(value):
-                        if self._check_occupancy(value):
-                                raise ValueError("Take/Blocked")
-                        self._end_pos = value
-                        return self._end_pos
+                return self._end_pos(value)
+
+        def _end_pos(self, end_pos): 
+            if self._validate_position(end_pos):
+                    if self._check_occupancy(end_pos):
+                            raise ValueError("Take/Blocked")
+                    self._end_pos = end_pos
+                    return self._end_pos
                        
         def _check_occupancy(self, position):
                 for row in self.linked_map:
@@ -430,7 +433,69 @@ class MovePawn(MovePiece):
                 print("Valid Dests: ", valid_dest)
                 return valid_dest
                
+class PawnTake(MovePawn):
+    # if target square in take range...
+    
+    def __init__(self, linked_map, start_pos, end_pos):
+        super().__init__(linked_map, start_pos, end_pos)
 
+    def _execute_move(self, piece="p"):
+            if self._validate_move():
+                    for row in self.linked_map:
+                            if self.start_pos in row:
+                                    row[self.start_pos].pop()
+                            if self.end_pos in row:
+                                    row[self.end_pos].pop()
+                                    row[self.end_pos].append(piece)
+
+    def _end_pos(self, end_pos):
+        if self._validate_position(end_pos):
+                if not self._check_occupancy(end_pos):
+                    raise ValueError("No Piece to Take")
+                self._end_pos = end_pos
+                return self._end_pos
+
+    def _check_occupancy(self, position):
+            for row in self.linked_map:
+                    if position in row:
+                            if len(row[position]) == 2:
+                                    self.piece_taken = row[position][-1]
+                                    return True
+                            return False
+
+    def _get_valid_dest(self):
+            valid_range_up, valid_range_along = self._get_valid_range()
+            valid_dest = self._get_valid_diag_dest(
+                    valid_range_up, 
+                    valid_range_along
+            )
+            return valid_dest
+
+    # diagonal range
+    def _get_valid_range(self):
+            valid_range_up = 1
+            valid_range_along = 1
+            return (valid_range_up, valid_range_along)
+            
+    def _get_valid_diag_dest(self, valid_range_up, valid_range_along):
+            valid_dest = []
+            for down, rank in enumerate(
+                    ChessBoard.squares_map):
+                            for right, square in enumerate(
+                                    rank
+                            ):
+                                    if self.start_pos == square:
+                                            valid_dest.append(
+                                                ChessBoard.squares_map
+                                                [down-valid_range_up][right+valid_range_along]
+                                            )
+                                            valid_dest.append(
+                                                ChessBoard.squares_map
+                                                [down-valid_range_up][right-valid_range_along]
+                                            )
+                                                    
+            print("Valid Pawn Take Dests: ", valid_dest)
+            return valid_dest
 
 class TrackPieces:
        
@@ -438,11 +503,31 @@ class TrackPieces:
                            black_positions):
                 self._white_positions = white_positions
                 self._black_positions = black_positions
+                self._taken_by_white = []
+                self._taken_by_black = []
                
         def __call__(self):
                 self._get_colour()
                 self._print_turn()
                 self._print_colour_positions()
+                self._print_colour_taken()
+
+        def update_take(self, target_position, piece_taken):
+            if self._white_move:
+                self._black_positions.remove(target_position)
+                self._taken_by_white.append(piece_taken)
+            if self._black_move:
+                self._white_positions.remove(target_position)
+                self._taken_by_black.append(piece_taken)
+
+        def query_take(self, target_position):
+            if self._white_move:
+                if target_position in self._black_positions:
+                    return True
+            if self._black_move:
+                if target_position in self._white_positions:
+                    return True
+            return False
 
         def validate_colour_move(self, current_position):
             if self._white_move:
@@ -461,6 +546,12 @@ class TrackPieces:
                 self._black_positions.remove(old_position)
                 self._black_positions.append(new_position)
 
+        def _print_colour_taken(self):
+            if self._white_move:
+                print("Taken by White: ", self._taken_by_white)
+            if self._black_move:
+                print("Taken by Black: ", self._taken_by_black)
+        
         def _print_colour_positions(self):
             if self._white_move:
                 print("White: ", self._white_positions)
@@ -507,10 +598,11 @@ class Controller:
                
                 self._white_positions = [] 
                 self._white_pawns = SetPawn(
-                        self.board.linked_map, "a2", "b2",
-                                               "c2", "d2",
-                                               "e2", "f2",
-                                               "g2", "h2" 
+                        self.board.linked_map, "d3", "a2" 
+                        # self.board.linked_map, "a2", "b2",
+                        #                        "c2", "d2",
+                        #                        "e2", "f2",
+                        #                        "g2", "h2" 
                     )
                 self._white_positions += self._white_pawns.position_list
 
@@ -518,28 +610,40 @@ class Controller:
 
                 self._black_positions = [] 
                 self._black_pawns = SetPawn(
-                        self.board.linked_map, "a7", "b7",
-                                               "c7", "d7",
-                                               "e7", "f7",
-                                               "g7", "h7" 
+                        self.board.linked_map, "c4", "d5"
+                        # self.board.linked_map, "a7", "b7",
+                        #                        "c7", "d7",
+                        #                        "e7", "f7",
+                        #                        "g7", "h7" 
                     )
                 self._black_positions += self._black_pawns.position_list
 
         def move(self, start_pos, end_pos):
                 
                 if not self.track.validate_colour_move(start_pos):
-                    raise ValueError("Not Your Turn")
+                    raise ValueError("Not Your Turn/Invalid Move")
                 
                 for row in self.board.linked_map:
                         if start_pos in row:
                                 piece = row[start_pos][-1]
                 if piece == "p":
-                       
-                        move = MovePawn(
+                        
+                        if not self.track.query_take(end_pos):
+                            move = MovePawn(
+                                    self.board.linked_map,
+                                    start_pos,
+                                    end_pos
+                            )
+                        else:
+                            #raise ValueError("Potential Take")
+                            take = PawnTake(
                                 self.board.linked_map,
                                 start_pos,
                                 end_pos
-                        )
+                            )
+                            self.track.update_take(end_pos, take.piece_taken)
+                            # self.track.
+
                         self.track.update_colour_position(start_pos, end_pos)
                         self._refresh_board()
                
@@ -556,12 +660,12 @@ class Controller:
                 self.track()
                 self.board()
        
-       
-               
 
 player = Controller()
-player.move("b2", "b3")
-player.move("b7", "b6")
+player.move("d3", "c4")
+player.move("d5", "c4")
+player.move("a2", "a3")
+# player.move("b7", "b6")
 
 
 #Board([4, 4])
