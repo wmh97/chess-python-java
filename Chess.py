@@ -428,7 +428,7 @@ class MovePawn(MovePiece):
                
         def _get_valid_dest(self):
                 valid_range = self._get_valid_range()
-                valid_dest = self._get_valid_vert_dest(
+                valid_dest = self._get_valid_orthog_dest(
                         valid_range
                 )
                 return valid_dest
@@ -439,7 +439,7 @@ class MovePawn(MovePiece):
                         valid_range = 2
                 return valid_range
                
-        def _get_valid_vert_dest(self, valid_range):
+        def _get_valid_orthog_dest(self, valid_range):
                 valid_dest = []
                 valid_range = Board._board_range(
                         valid_range
@@ -465,24 +465,90 @@ class MoveRook(MovePawn):
                                          end_pos):
                 #super().__init__(linked_map, start_pos,
                 #                             end_pos)
-                pass
-
-        def _get_valid_range(self, start_pos):
                 
-                valid_range_up = ChessBoard.HEIGHT - int(start_pos[1])
-                valid_range_down = (ChessBoard.HEIGHT - 1) - (ChessBoard.HEIGHT - int(start_pos[1]))
+                self.linked_map = linked_map
+                self.start_pos = start_pos
+                self.end_pos = end_pos
+                self._validate_move()
+                #self._execute_move()
+                MovePiece.MOVE_NUMBER += 1
+
+        def _validate_move(self):
+                valid_dest = self._get_valid_dest()
+                for dest_list in valid_dest:
+                        if self.end_pos in dest_list:
+                                valid_dest = []
+                                return True
+                raise ValueError("Invalid Move")
+                return False
+
+        def _get_valid_dest(self):
+                valid_range_up, valid_range_down, valid_range_left, valid_range_right = self._get_valid_range()
+                valid_dest = self._get_valid_orthog_dest(
+                        valid_range_up, valid_range_down,
+                        valid_range_left, valid_range_right
+                )
+                return valid_dest
+
+        def _get_valid_range(self):
+                
+                valid_range_up = ChessBoard.HEIGHT - int(self.start_pos[1])
+                valid_range_down = (ChessBoard.HEIGHT - 1) - (ChessBoard.HEIGHT - int(self.start_pos[1]))
 
                 valid_range_left = 0
                 valid_range_right = ChessBoard.WIDTH - 1
                 for square in ChessBoard.squares_map[valid_range_up]:
-                        if start_pos == square:
+                        if self.start_pos == square:
                                 break
                         valid_range_left += 1
                         valid_range_right -= 1
 
-
                 return (valid_range_up, valid_range_down, 
                         valid_range_left, valid_range_right)
+
+        def _get_valid_orthog_dest(self, valid_range_up, valid_range_down, 
+                                         valid_range_left, valid_range_right):
+                valid_dest_up = []
+                valid_dest_down = []
+                valid_dest_left = []
+                valid_dest_right = []
+
+                valid_range_up = Board._board_range(valid_range_up)
+                valid_range_down = Board._board_range(valid_range_down)
+                valid_range_left = Board._board_range(valid_range_left)
+                valid_range_right = Board._board_range(valid_range_right)
+                for down, rank in enumerate(
+                        ChessBoard.squares_map):
+                                for right, square in enumerate(
+                                        rank
+                                ):
+                                        if self.start_pos == square:
+                                                for range in valid_range_up:
+                                                        valid_dest_up.append(
+                                                        ChessBoard.squares_map
+                                                        [down-range][right])
+                                                for range in valid_range_down:
+                                                        valid_dest_down.append(
+                                                        ChessBoard.squares_map
+                                                        [down+range][right])    
+                                                for range in valid_range_left:                                                   
+                                                        valid_dest_left.append(
+                                                        ChessBoard.squares_map
+                                                        [down][right-range]) 
+                                                for range in valid_range_right:
+                                                        valid_dest_right.append(
+                                                        ChessBoard.squares_map
+                                                        [down][right+range])
+
+                valid_dest = [valid_dest_up, valid_dest_down, 
+                        valid_dest_left, valid_dest_right]
+                
+                print("Valid Rook Dests Up: ", valid_dest_up)
+                print("Valid Rook Dests Down: ", valid_dest_down)
+                print("Valid Rook Dests Left: ", valid_dest_left)
+                print("Valid Rook Dests Right: ", valid_dest_right)
+
+                return valid_dest
 
 
 class PawnTake(MovePawn):
@@ -717,12 +783,14 @@ end = time.time()
 print("Time Taken: ", end-start)
 
 
-testrange = MoveRook([], "a1", "a8")
-up, down, left, right = MoveRook._get_valid_range(testrange, "f2")
-print("up:", up)
-print("down:", down)
-print("left:", left)
-print("right:", right)
+testrook = MoveRook(player.board.linked_map, "d5", "a8")
+#up, down, left, right = testrange._get_valid_range("a1")
+# print("up:", up)
+# print("down:", down)
+# print("left:", left)
+# print("right:", right)
+#testrange._get_valid_orthog_dest(up, down, left, right)
+
 # print(player.board.linked_map is player.rotate.linked_map)
 
 #Board([4, 4])
