@@ -130,15 +130,18 @@ class ChessBoard(AlternatingBoard):
        
         def _link_squares_map(self):
                
-                linked_map = []
-                for row1, row2 in zip(self.squares_map,          self.board):
+                linked_map = {}
+                for row1, row2 in zip(self.squares_map, self.board):
                         linked_row = {}
                         for square, colour in zip(row1,
                                                   row2):
                                 linked_row[square] = [colour]
-                        linked_map.append(linked_row)
+                        linked_map.update(linked_row)
                        
                 self._linked_map = linked_map
+
+                print(self._linked_map)
+
                 return self._linked_map
        
         def _print_chess_squares(self):
@@ -146,11 +149,18 @@ class ChessBoard(AlternatingBoard):
                         print(" ".join(rank))
                        
         def _render_board(self):
-                for row in self.linked_map:
-                        board_row = []
-                        for value in row.values():
+                counter = 0
+                board_row = []
+                for value in self.linked_map.values():
+                        #print("value: ", value, "counter: ", counter)
+                        if counter < 7:
+                                counter +=1
                                 board_row.append(value[-1])
-                        print(" ".join(board_row))
+                        else:
+                                board_row.append(value[-1])
+                                print(" ".join(board_row))
+                                board_row.clear()
+                                counter = 0    
                 print()
        
         @staticmethod
@@ -183,8 +193,10 @@ class RotateBoard180():
                 self._rotate_squares()
                
         def _rotate_board(self):
-                self._reverse_rows(self.linked_map)
-                self._reverse_linked_columns()
+                self._reverse_linked(
+                        self.linked_map
+                )
+                #print("ROTATED: ", self.linked_map)
                
         def _rotate_squares(self):
                 self._reverse_rows(
@@ -197,19 +209,13 @@ class RotateBoard180():
         def _reverse_rows(self, map):
                 return map.reverse()
                
-        def _reverse_linked_columns(self):
-                counter = 0
-                for row in self.linked_map:
-                        self.linked_map[counter] = dict(
-                                reversed(
-                                        list(
-                                                self.linked_map[
-                                                        counter
-                                                ].items()
-                                        )      
-                                )
-                        )
-                        counter += 1
+        def _reverse_linked(self, linked_map):
+                linked_map = dict(
+                        reversed(list(linked_map.items()))
+                )
+                self.linked_map.clear()
+                self.linked_map.update(linked_map)
+
        
         def _reverse_columns(self, map):
                 for row in map:
@@ -247,17 +253,13 @@ class SetChessPieces():
         def _set_position(self, position,
                                    piece):
                 if self._validate_position(position):
-                        for row in self.linked_map:
-                                if position in row.keys():
-                                        row[position].append(piece)
-                                        break
+                        self.linked_map[position].append(piece)
                         self._position = position
                         return self._position
                
         def _validate_position(self, position):
-                for row in self.linked_map:
-                        if position in row.keys():
-                                return True
+                if self.linked_map[position]:
+                        return True
                 raise ValueError("Invalid Position")
                 return False
        
@@ -368,18 +370,13 @@ class MovePiece(SetChessPieces):
                     return self._end_pos
                        
         def _check_occupancy(self, position):
-                for row in self.linked_map:
-                        if position in row:
-                                if len(row[position]) == 2:
-                                        return True
-                                return False
+                if len(self.linked_map[position]) == 2:
+                        return True
+                return False
                                
         def _execute_move(self, piece):
-                for row in self.linked_map:
-                        if self.start_pos in row:
-                                row[self.start_pos].pop()
-                        if self.end_pos in row:
-                                row[self.end_pos].append(piece)
+                self.linked_map[self.start_pos].pop()
+                self.linked_map[self.end_pos].append(piece)
                        
                
 class MovePawn(MovePiece):
@@ -410,8 +407,10 @@ class MovePawn(MovePiece):
                
         def _get_valid_range(self):
                 valid_range = 1
-                if self.start_pos in self.linked_map[1] or self.start_pos in self.linked_map[-2]:
-                        valid_range = 2
+                # Amend this considering new layout of linked_map. **********
+                # Maybe reuse logic, except on squares_map.        **********
+                # if self.start_pos in self.linked_map[1] or self.start_pos in self.linked_map[-2]:
+                #         valid_range = 2
                 return valid_range
                
         def _get_valid_vert_dest(self, valid_range):
@@ -441,12 +440,8 @@ class PawnTake(MovePawn):
 
     def _execute_move(self, piece="p"):
             if self._validate_move():
-                    for row in self.linked_map:
-                            if self.start_pos in row:
-                                    row[self.start_pos].pop()
-                            if self.end_pos in row:
-                                    row[self.end_pos].pop()
-                                    row[self.end_pos].append(piece)
+                    self.linked_map[self.end_pos].pop()
+                    super()._execute_move(piece="p")
 
     def _end_pos(self, end_pos):
         if self._validate_position(end_pos):
@@ -456,12 +451,10 @@ class PawnTake(MovePawn):
                 return self._end_pos
 
     def _check_occupancy(self, position):
-            for row in self.linked_map:
-                    if position in row:
-                            if len(row[position]) == 2:
-                                    self.piece_taken = row[position][-1]
-                                    return True
-                            return False
+        if len(self.linked_map[position]) == 2:
+                self.piece_taken = self.linked_map[position][-1]
+                return True
+        return False
 
     def _get_valid_dest(self):
             valid_range_up, valid_range_along = self._get_valid_range()
@@ -479,6 +472,7 @@ class PawnTake(MovePawn):
             
     def _get_valid_diag_dest(self, valid_range_up, valid_range_along):
             valid_dest = []
+            print("valid take dests???")
             for down, rank in enumerate(
                     ChessBoard.squares_map):
                             for right, square in enumerate(
@@ -623,9 +617,8 @@ class Controller:
                 if not self.track.validate_colour_move(start_pos):
                     raise ValueError("Not Your Turn/Invalid Move")
                 
-                for row in self.board.linked_map:
-                        if start_pos in row:
-                                piece = row[start_pos][-1]
+                
+                piece = self.board.linked_map[start_pos][-1]
                 if piece == "p":
                         
                         if not self.track.query_take(end_pos):
@@ -642,7 +635,6 @@ class Controller:
                                 end_pos
                             )
                             self.track.update_take(end_pos, take.piece_taken)
-                            # self.track.
 
                         self.track.update_colour_position(start_pos, end_pos)
                         self._refresh_board()
@@ -665,8 +657,8 @@ player = Controller()
 player.move("d3", "c4")
 player.move("d5", "c4")
 player.move("a2", "a3")
-# player.move("b7", "b6")
 
+print(player.board.linked_map is player.rotate.linked_map)
 
 #Board([4, 4])
 #AlternatingBoard([20,2])
