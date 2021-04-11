@@ -112,17 +112,26 @@ class AlternatingBoard(Board):
 
 class ChessBoard(AlternatingBoard):
        
-        class_test_attr = ""
+
         squares_map = []
+        WIDTH = None
+        HEIGHT = None
        
         def __init__(self):
-                super().__init__([8, 8])
+                self._dimensions = [8,8]
+                super().__init__(self._dimensions)
+
+                ChessBoard.WIDTH = self._dimensions[0]
+                ChessBoard.HEIGHT = self._dimensions[1]
+
                 self.squares_map = self._get_chess_squares()
                 self.linked_map = self._link_squares_map()
                
                 ChessBoard.squares_map = self.squares_map
-                ChessBoard.class_test_attr = "Inherited variable working!"
-               
+
+
+
+
                
         def __call__(self):
                 #self._print_chess_squares()
@@ -448,7 +457,34 @@ class MovePawn(MovePiece):
                                                        
                 print("Valid Dests: ", valid_dest)
                 return valid_dest
-               
+
+
+class MoveRook(MovePawn):
+
+        def __init__(self, linked_map, start_pos,
+                                         end_pos):
+                #super().__init__(linked_map, start_pos,
+                #                             end_pos)
+                pass
+
+        def _get_valid_range(self, start_pos):
+                
+                valid_range_up = ChessBoard.HEIGHT - int(start_pos[1])
+                valid_range_down = (ChessBoard.HEIGHT - 1) - (ChessBoard.HEIGHT - int(start_pos[1]))
+
+                valid_range_left = 0
+                valid_range_right = ChessBoard.WIDTH - 1
+                for square in ChessBoard.squares_map[valid_range_up]:
+                        if start_pos == square:
+                                break
+                        valid_range_left += 1
+                        valid_range_right -= 1
+
+
+                return (valid_range_up, valid_range_down, 
+                        valid_range_left, valid_range_right)
+
+
 class PawnTake(MovePawn):
     # if target square in take range...
     
@@ -666,6 +702,9 @@ class Controller:
                 self.track()
                 self.board()
        
+import time
+
+start = time.time()
 
 player = Controller()
 player.move("c2", "c4")
@@ -673,6 +712,17 @@ player.move("d7", "d5")
 player.move("c4", "d5")
 player.move("g7", "g6")
 
+end = time.time()
+
+print("Time Taken: ", end-start)
+
+
+testrange = MoveRook([], "a1", "a8")
+up, down, left, right = MoveRook._get_valid_range(testrange, "f2")
+print("up:", up)
+print("down:", down)
+print("left:", left)
+print("right:", right)
 # print(player.board.linked_map is player.rotate.linked_map)
 
 #Board([4, 4])
