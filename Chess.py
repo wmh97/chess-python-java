@@ -441,7 +441,7 @@ class PawnTake(MovePawn):
     def _execute_move(self, piece="p"):
             if self._validate_move():
                     self.linked_map[self.end_pos].pop()
-                    super()._execute_move(piece="p")
+                    super(MovePawn, self)._execute_move(piece="p") # Trimming the MRO so we use the code from MovePiece
 
     def _end_pos(self, end_pos):
         if self._validate_position(end_pos):
@@ -472,7 +472,6 @@ class PawnTake(MovePawn):
             
     def _get_valid_diag_dest(self, valid_range_up, valid_range_along):
             valid_dest = []
-            print("valid take dests???")
             for down, rank in enumerate(
                     ChessBoard.squares_map):
                             for right, square in enumerate(
@@ -655,8 +654,8 @@ class Controller:
 
 player = Controller()
 player.move("d3", "c4")
-player.move("d5", "c4")
-player.move("a2", "a3")
+# player.move("d5", "c4")
+# player.move("a2", "a3")
 
 print(player.board.linked_map is player.rotate.linked_map)
 
