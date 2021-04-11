@@ -125,7 +125,7 @@ class ChessBoard(AlternatingBoard):
                
                
         def __call__(self):
-                self._print_chess_squares()
+                #self._print_chess_squares()
                 self._render_board()
        
         def _link_squares_map(self):
@@ -140,7 +140,7 @@ class ChessBoard(AlternatingBoard):
                        
                 self._linked_map = linked_map
 
-                print(self._linked_map)
+                #print(self._linked_map)
 
                 return self._linked_map
        
@@ -149,18 +149,37 @@ class ChessBoard(AlternatingBoard):
                         print(" ".join(rank))
                        
         def _render_board(self):
+                
+                file_letters = []
+                rank_numbers = []
+                for square in next(iter(ChessBoard.squares_map)):
+                        file_letters.append(
+                                square[0]
+                        )
+                for rank in ChessBoard.squares_map:
+                        rank_numbers.append(
+                                rank[0][1]
+                        )
+
+                horizontal_border = '{:>18}'.format(" ".join(file_letters)) 
+                print(horizontal_border)
+
                 counter = 0
+                rank_index = 0
                 board_row = []
                 for value in self.linked_map.values():
-                        #print("value: ", value, "counter: ", counter)
+
                         if counter < 7:
                                 counter +=1
                                 board_row.append(value[-1])
                         else:
                                 board_row.append(value[-1])
-                                print(" ".join(board_row))
+                                print(rank_numbers[rank_index]+"|", " ".join(board_row), "|"+rank_numbers[rank_index])
                                 board_row.clear()
-                                counter = 0    
+                                counter = 0
+                                rank_index += 1    
+                
+                print(horizontal_border)
                 print()
        
         @staticmethod
@@ -407,10 +426,8 @@ class MovePawn(MovePiece):
                
         def _get_valid_range(self):
                 valid_range = 1
-                # Amend this considering new layout of linked_map. **********
-                # Maybe reuse logic, except on squares_map.        **********
-                # if self.start_pos in self.linked_map[1] or self.start_pos in self.linked_map[-2]:
-                #         valid_range = 2
+                if self.start_pos in ChessBoard.squares_map[-2]:
+                        valid_range = 2
                 return valid_range
                
         def _get_valid_vert_dest(self, valid_range):
@@ -591,11 +608,10 @@ class Controller:
                
                 self._white_positions = [] 
                 self._white_pawns = SetPawn(
-                        self.board.linked_map, "d3", "a2" 
-                        # self.board.linked_map, "a2", "b2",
-                        #                        "c2", "d2",
-                        #                        "e2", "f2",
-                        #                        "g2", "h2" 
+                        self.board.linked_map, "a2", "b2",
+                                               "c2", "d2",
+                                               "e2", "f2",
+                                               "g2", "h2" 
                     )
                 self._white_positions += self._white_pawns.position_list
 
@@ -603,11 +619,10 @@ class Controller:
 
                 self._black_positions = [] 
                 self._black_pawns = SetPawn(
-                        self.board.linked_map, "c4", "d5"
-                        # self.board.linked_map, "a7", "b7",
-                        #                        "c7", "d7",
-                        #                        "e7", "f7",
-                        #                        "g7", "h7" 
+                        self.board.linked_map, "a7", "b7",
+                                               "c7", "d7",
+                                               "e7", "f7",
+                                               "g7", "h7" 
                     )
                 self._black_positions += self._black_pawns.position_list
 
@@ -653,11 +668,12 @@ class Controller:
        
 
 player = Controller()
-player.move("d3", "c4")
-# player.move("d5", "c4")
-# player.move("a2", "a3")
+player.move("c2", "c4")
+player.move("d7", "d5")
+player.move("c4", "d5")
+player.move("g7", "g6")
 
-print(player.board.linked_map is player.rotate.linked_map)
+# print(player.board.linked_map is player.rotate.linked_map)
 
 #Board([4, 4])
 #AlternatingBoard([20,2])
