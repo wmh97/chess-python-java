@@ -129,10 +129,6 @@ class ChessBoard(AlternatingBoard):
                
                 ChessBoard.squares_map = self.squares_map
 
-
-
-
-               
         def __call__(self):
                 #self._print_chess_squares()
                 self._render_board()
@@ -421,7 +417,6 @@ class MovePawn(MovePiece):
         def _validate_move(self):
                 valid_dest = self._get_valid_dest()
                 if self.end_pos in valid_dest:
-                        valid_dest = []
                         return True
                 raise ValueError("Invalid Move")
                 return False
@@ -444,6 +439,7 @@ class MovePawn(MovePiece):
                 valid_range = Board._board_range(
                         valid_range
                 )
+                flag_break = False
                 for down, rank in enumerate(
                         ChessBoard.squares_map):
                                 for right, square in enumerate(
@@ -454,7 +450,10 @@ class MovePawn(MovePiece):
                                                         valid_dest.append(
                                                         ChessBoard.squares_map
                                                         [down-range][right])
-                                                       
+                                                flag_break = True # break to avoid going through the loop 
+                                                break             # beyond finding the right square.
+                                if flag_break:
+                                        break                                                       
                 print("Valid Dests: ", valid_dest)
                 return valid_dest
 
@@ -540,6 +539,8 @@ class MoveRook(MovePawn):
                 valid_range_down = Board._board_range(valid_range_down)
                 valid_range_left = Board._board_range(valid_range_left)
                 valid_range_right = Board._board_range(valid_range_right)
+                
+                flag_break = False
                 for down, rank in enumerate(
                         ChessBoard.squares_map):
                                 for right, square in enumerate(
@@ -564,8 +565,12 @@ class MoveRook(MovePawn):
                                                         valid_dest_right.append(
                                                         ChessBoard.squares_map
                                                         [down][right+range])
+                                                flag_break = True
                                                 break
-                print("*** Got Here ***")
+                                if flag_break:
+                                        break
+                                
+
                 valid_dest = [valid_dest_up, valid_dest_down, 
                         valid_dest_left, valid_dest_right]
 
@@ -612,6 +617,8 @@ class PawnTake(MovePawn):
             
     def _get_valid_diag_dest(self, valid_range_up, valid_range_along):
             valid_dest = []
+            
+            flag_break = False
             for down, rank in enumerate(
                     ChessBoard.squares_map):
                             for right, square in enumerate(
@@ -626,6 +633,10 @@ class PawnTake(MovePawn):
                                                 ChessBoard.squares_map
                                                 [down-valid_range_up][right-valid_range_along]
                                             )
+                                            flag_break = True
+                                            break
+                            if flag_break:
+                                    break
                                                     
             print("Valid Pawn Take Dests: ", valid_dest)
             return valid_dest
@@ -706,6 +717,132 @@ class TrackPieces:
                         print("White to move")
                 if self._black_move:
                         print("Black to move")
+
+
+class PieceMoveRanges:
+
+        VALID_PAWN_DESTS = {}
+        VALID_PAWN_TAKE_DESTS = {}
+        VALID_ROOK_DESTS = {}
+        
+        def __init__(self):
+                PieceMoveRanges.VALID_PAWN_DESTS = self._get_valid_pawn_dests()
+                PieceMoveRanges.VALID_TAKE_PAWN_DESTS = self._get_valid_pawn_take_dests()
+                PieceMoveRanges.VALID_ROOK_DESTS = self._get_valid_rook_dests()
+
+        def _get_valid_pawn_dests(self):
+                # This returns lists of pawn dests - specifically in one direction
+                # up the board.
+                valid_pawn_dests = {}
+
+                valid_start_range = 2
+                valid_range = 1
+
+                for down, rank in enumerate(ChessBoard.squares_map):
+                        for right, square in enumerate(rank):
+                                valid_pawn_dests[square] = [ [] ]  # up dests
+                                if down == (ChessBoard.HEIGHT - 1) - 1:
+                                        valid_pawn_dests[square][0].append(
+                                                ChessBoard.squares_map
+                                                        [down-valid_range][right]
+                                        )
+                                        valid_pawn_dests[square][0].append(
+                                                ChessBoard.squares_map
+                                                        [down-valid_start_range][right]
+                                        )
+                                if down > 0:
+                                        valid_pawn_dests[square][0].append(
+                                                ChessBoard.squares_map
+                                                        [down-valid_range][right]
+                                        )
+                for square, dests in valid_pawn_dests.items():
+                        print(square, dests)
+                return valid_pawn_dests
+
+        def _get_valid_pawn_take_dests(self):
+                # This returns lists of pawn dests - specifically in one direction
+                # up the board.
+                valid_pawn_take_dests = {}
+
+                valid_range_up = 1
+                valid_range_along = 1
+
+                for down, rank in enumerate(ChessBoard.squares_map):
+                        for right, square in enumerate(rank):
+                                valid_pawn_take_dests[square] = [ [],   # up-left dests
+                                                                  [] ]  # up-right dests
+                                if down > 0:
+                                        try:
+                                                # make sure we are not looping over the board.
+                                                if (right-1) >= 0:
+                                                        valid_pawn_take_dests[square][0].append(
+                                                                ChessBoard.squares_map
+                                                                        [down-valid_range_up][right-valid_range_along]
+                                                        )
+                                                valid_pawn_take_dests[square][1].append(
+                                                        ChessBoard.squares_map
+                                                                [down-valid_range_up][right+valid_range_along]
+                                                )
+                                        except:
+                                                pass # pass for index out of range - don't
+                                                     # try to generate dests for outside board.
+                for square, dests in valid_pawn_take_dests.items():
+                        print(square, dests)
+                return valid_pawn_ranges
+
+        def _get_valid_rook_dests(self):
+
+                valid_rook_dests = {}
+
+                for down, rank in enumerate(ChessBoard.squares_map):
+                                for right, square in enumerate(rank):
+                                        valid_rook_dests[square] = [ [],  # up range
+                                                                     [],  # down range
+                                                                     [],  # left range
+                                                                     [] ] # right range
+
+                                        valid_range_up = ChessBoard.HEIGHT - int(square[1])
+                                        valid_range_down = ( (ChessBoard.HEIGHT - 1) 
+                                                             - (ChessBoard.HEIGHT 
+                                                             - int(square[1]))       )
+
+                                        valid_range_left = 0
+                                        valid_range_right = ChessBoard.WIDTH - 1
+                                        for position in ChessBoard.squares_map[valid_range_up]:
+                                                if position == square:
+                                                        break
+                                                valid_range_left += 1
+                                                valid_range_right -= 1
+
+                                        valid_range_up = Board._board_range(valid_range_up)
+                                        valid_range_down = Board._board_range(valid_range_down)
+                                        valid_range_left = Board._board_range(valid_range_left)
+                                        valid_range_right = Board._board_range(valid_range_right)
+
+                                        for range in valid_range_up:
+                                                valid_rook_dests[square][0].append(
+                                                        ChessBoard.squares_map
+                                                                [down-range][right]
+                                                )
+                                        for range in valid_range_down:
+                                                valid_rook_dests[square][1].append(
+                                                        ChessBoard.squares_map
+                                                                [down+range][right]
+                                                )    
+                                        for range in valid_range_left:                                                   
+                                                valid_rook_dests[square][2].append(
+                                                        ChessBoard.squares_map
+                                                                [down][right-range]
+                                                ) 
+                                        for range in valid_range_right:
+                                                valid_rook_dests[square][3].append(
+                                                        ChessBoard.squares_map
+                                                                [down][right+range]
+                                                )
+                for square, dests in valid_rook_dests.items():
+                        print(square, dests)
+                        
+                return valid_rook_dests
 
 
 class Controller:
@@ -813,25 +950,27 @@ import time
 start = time.time()
 
 player = Controller()
-# player.move("d5", "e5")
-# print(player.board.linked_map)
-# player.move("h8", "h7")
-# player.move("e5", "f5")
+player.move("d5", "e5")
+player.move("h8", "h7")
+player.move("e5", "f5")
 
 end = time.time()
 
 print("Time Taken: ", end-start)
 
 
-# testrook = MoveRook(player.board.linked_map, "d5", "a8")
-#up, down, left, right = testrange._get_valid_range("a1")
-# print("up:", up)
-# print("down:", down)
-# print("left:", left)
-# print("right:", right)
-#testrange._get_valid_orthog_dest(up, down, left, right)
 
-# print(player.board.linked_map is player.rotate.linked_map)
+        
+# start = time.time()
+
+# testrookrange = PieceMoveRanges()
+# testrookrange._get_valid_rook_dests()
+
+# end = time.time()
+# print("Time Taken: ", end-start)
+
+
+
 
 #Board([4, 4])
 #AlternatingBoard([20,2])
