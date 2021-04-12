@@ -466,12 +466,17 @@ class MoveRook(MovePawn):
                 #super().__init__(linked_map, start_pos,
                 #                             end_pos)
                 
-                self.linked_map = linked_map
+                self.linked_map = linked_map   ##### Change this block to super() when ready (with necessary args)
                 self.start_pos = start_pos
                 self.end_pos = end_pos
                 self._validate_move()
-                #self._execute_move()
+                self._execute_move()
                 MovePiece.MOVE_NUMBER += 1
+
+        def _execute_move(self, piece="r"):   #################### change this to super() (with necessary args).
+                self.linked_map[self.start_pos].pop() ############
+                self.linked_map[self.end_pos].append(piece) ######
+
 
         def _validate_move(self):
                 valid_dest = self._get_valid_dest()
@@ -488,7 +493,25 @@ class MoveRook(MovePawn):
                         valid_range_up, valid_range_down,
                         valid_range_left, valid_range_right
                 )
+                valid_dest = self._truncate_dest_list(valid_dest)
                 return valid_dest
+
+        def _truncate_dest_list(self, valid_dest_lists):
+                # truncates the dest list if there is a piece blocking it.
+                for dest_list in valid_dest_lists:
+                        for square in dest_list:
+                                if len(self.linked_map[square]) == 2:
+                                        print(dest_list, "Blocked At:", square)
+                                        del dest_list[dest_list.index(square):]
+                                        print("Truncating to: ", dest_list)
+                
+                up, down, left, right = valid_dest_lists
+                print("Valid Rook Dests Up: ", up)
+                print("Valid Rook Dests Down: ", down)
+                print("Valid Rook Dests Left: ", left)
+                print("Valid Rook Dests Right: ", right)
+                
+                return valid_dest_lists
 
         def _get_valid_range(self):
                 
@@ -523,6 +546,8 @@ class MoveRook(MovePawn):
                                         rank
                                 ):
                                         if self.start_pos == square:
+                                                print("square: ", square)
+                                                
                                                 for range in valid_range_up:
                                                         valid_dest_up.append(
                                                         ChessBoard.squares_map
@@ -539,14 +564,10 @@ class MoveRook(MovePawn):
                                                         valid_dest_right.append(
                                                         ChessBoard.squares_map
                                                         [down][right+range])
-
+                                                break
+                print("*** Got Here ***")
                 valid_dest = [valid_dest_up, valid_dest_down, 
                         valid_dest_left, valid_dest_right]
-                
-                print("Valid Rook Dests Up: ", valid_dest_up)
-                print("Valid Rook Dests Down: ", valid_dest_down)
-                print("Valid Rook Dests Left: ", valid_dest_left)
-                print("Valid Rook Dests Right: ", valid_dest_right)
 
                 return valid_dest
 
@@ -710,21 +731,29 @@ class Controller:
                
                 self._white_positions = [] 
                 self._white_pawns = SetPawn(
-                        self.board.linked_map, "a2", "b2",
-                                               "c2", "d2",
-                                               "e2", "f2",
-                                               "g2", "h2" 
+                        self.board.linked_map, "d8", "h5",
+                                               "d3", "c5"
+                        # self.board.linked_map, "a2", "b2",
+                        #                        "c2", "d2",
+                        #                        "e2", "f2",
+                        #                        "g2", "h2" 
                     )
+                self._white_rook = SetRook(
+                        self.board.linked_map, "d5"
+                )
                 self._white_positions += self._white_pawns.position_list
+                self._white_positions += self._white_rook.position_list
 
         def _setup_black_pieces(self):
 
-                self._black_positions = [] 
+                self._black_positions = []
                 self._black_pawns = SetPawn(
-                        self.board.linked_map, "a7", "b7",
-                                               "c7", "d7",
-                                               "e7", "f7",
-                                               "g7", "h7" 
+                        self.board.linked_map, "h8"
+
+                        # self.board.linked_map, "a7", "b7",
+                        #                        "c7", "d7",
+                        #                        "e7", "f7",
+                        #                        "g7", "h7" 
                     )
                 self._black_positions += self._black_pawns.position_list
 
@@ -754,9 +783,20 @@ class Controller:
 
                         self.track.update_colour_position(start_pos, end_pos)
                         self._refresh_board()
+
+                if piece == "r":
+
+                        move = MoveRook(
+                                self.board.linked_map,
+                                start_pos,
+                                end_pos
+                        )
+                        
+                        self.track.update_colour_position(start_pos, end_pos)
+                        self._refresh_board()                        
                
-                else:
-                        raise ValueError("No Pawn Here")
+                elif piece not in list("rbkQKp"):
+                        raise ValueError("No Piece Here")
        
         def _display_board(self):
                 self.track()
@@ -773,17 +813,17 @@ import time
 start = time.time()
 
 player = Controller()
-player.move("c2", "c4")
-player.move("d7", "d5")
-player.move("c4", "d5")
-player.move("g7", "g6")
+# player.move("d5", "e5")
+# print(player.board.linked_map)
+# player.move("h8", "h7")
+# player.move("e5", "f5")
 
 end = time.time()
 
 print("Time Taken: ", end-start)
 
 
-testrook = MoveRook(player.board.linked_map, "d5", "a8")
+# testrook = MoveRook(player.board.linked_map, "d5", "a8")
 #up, down, left, right = testrange._get_valid_range("a1")
 # print("up:", up)
 # print("down:", down)
