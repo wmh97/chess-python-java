@@ -422,46 +422,49 @@ class MovePawn(MovePiece):
        
         def _validate_move(self):
                 valid_dest = self._get_valid_dest()
-                if self.end_pos in valid_dest:
-                        return True
+                for dest_list in valid_dest:
+                        if self.end_pos in dest_list:
+                                return True
                 raise ValueError("Invalid Move")
                 return False
-               
+
         def _get_valid_dest(self):
-                valid_range = self._get_valid_range()
-                valid_dest = self._get_valid_orthog_dest(
-                        valid_range
-                )
+                # valid_range = self._get_valid_range()
+                # valid_dest = self._get_valid_orthog_dest(
+                #         valid_range
+                # )
+                valid_dest = PieceMoveRanges.VALID_PAWN_DESTS[self.start_pos]
+
                 return valid_dest
                
-        def _get_valid_range(self):
-                valid_range = 1
-                if self.start_pos in ChessBoard.squares_map[-2]:
-                        valid_range = 2
-                return valid_range
+        # def _get_valid_range(self):
+        #         valid_range = 1
+        #         if self.start_pos in ChessBoard.squares_map[-2]:
+        #                 valid_range = 2
+        #         return valid_range
                
-        def _get_valid_orthog_dest(self, valid_range):
-                valid_dest = []
-                valid_range = Board._board_range(
-                        valid_range
-                )
-                flag_break = False
-                for down, rank in enumerate(
-                        ChessBoard.squares_map):
-                                for right, square in enumerate(
-                                        rank
-                                ):
-                                        if self.start_pos == square:
-                                                for range in valid_range:
-                                                        valid_dest.append(
-                                                        ChessBoard.squares_map
-                                                        [down-range][right])
-                                                flag_break = True # break to avoid going through the loop 
-                                                break             # beyond finding the right square.
-                                if flag_break:
-                                        break                                                       
-                print("Valid Dests: ", valid_dest)
-                return valid_dest
+        # def _get_valid_orthog_dest(self, valid_range):
+        #         valid_dest = []
+        #         valid_range = Board._board_range(
+        #                 valid_range
+        #         )
+        #         flag_break = False
+        #         for down, rank in enumerate(
+        #                 ChessBoard.squares_map):
+        #                         for right, square in enumerate(
+        #                                 rank
+        #                         ):
+        #                                 if self.start_pos == square:
+        #                                         for range in valid_range:
+        #                                                 valid_dest.append(
+        #                                                 ChessBoard.squares_map
+        #                                                 [down-range][right])
+        #                                         flag_break = True # break to avoid going through the loop 
+        #                                         break             # beyond finding the right square.
+        #                         if flag_break:
+        #                                 break                                                       
+        #         print("Valid Dests: ", valid_dest)
+        #         return valid_dest
 
 
 class MoveRook(MovePawn):
@@ -492,11 +495,13 @@ class MoveRook(MovePawn):
                 return False
 
         def _get_valid_dest(self):
-                valid_range_up, valid_range_down, valid_range_left, valid_range_right = self._get_valid_range()
-                valid_dest = self._get_valid_orthog_dest(
-                        valid_range_up, valid_range_down,
-                        valid_range_left, valid_range_right
-                )
+
+                valid_dest = PieceMoveRanges.VALID_ROOK_DESTS[self.start_pos]
+                # valid_range_up, valid_range_down, valid_range_left, valid_range_right = self._get_valid_range()
+                # valid_dest = self._get_valid_orthog_dest(
+                #         valid_range_up, valid_range_down,
+                #         valid_range_left, valid_range_right
+                # )
                 valid_dest = self._truncate_dest_list(valid_dest)
                 return valid_dest
 
@@ -517,69 +522,69 @@ class MoveRook(MovePawn):
                 
                 return valid_dest_lists
 
-        def _get_valid_range(self):
+        # def _get_valid_range(self):
                 
-                valid_range_up = ChessBoard.HEIGHT - int(self.start_pos[1])
-                valid_range_down = (ChessBoard.HEIGHT - 1) - (ChessBoard.HEIGHT - int(self.start_pos[1]))
+        #         valid_range_up = ChessBoard.HEIGHT - int(self.start_pos[1])
+        #         valid_range_down = (ChessBoard.HEIGHT - 1) - (ChessBoard.HEIGHT - int(self.start_pos[1]))
 
-                valid_range_left = 0
-                valid_range_right = ChessBoard.WIDTH - 1
-                for square in ChessBoard.squares_map[valid_range_up]:
-                        if self.start_pos == square:
-                                break
-                        valid_range_left += 1
-                        valid_range_right -= 1
+        #         valid_range_left = 0
+        #         valid_range_right = ChessBoard.WIDTH - 1
+        #         for square in ChessBoard.squares_map[valid_range_up]:
+        #                 if self.start_pos == square:
+        #                         break
+        #                 valid_range_left += 1
+        #                 valid_range_right -= 1
 
-                return (valid_range_up, valid_range_down, 
-                        valid_range_left, valid_range_right)
+        #         return (valid_range_up, valid_range_down, 
+        #                 valid_range_left, valid_range_right)
 
-        def _get_valid_orthog_dest(self, valid_range_up, valid_range_down, 
-                                         valid_range_left, valid_range_right):
-                valid_dest_up = []
-                valid_dest_down = []
-                valid_dest_left = []
-                valid_dest_right = []
+        # def _get_valid_orthog_dest(self, valid_range_up, valid_range_down, 
+        #                                  valid_range_left, valid_range_right):
+        #         valid_dest_up = []
+        #         valid_dest_down = []
+        #         valid_dest_left = []
+        #         valid_dest_right = []
 
-                valid_range_up = Board._board_range(valid_range_up)
-                valid_range_down = Board._board_range(valid_range_down)
-                valid_range_left = Board._board_range(valid_range_left)
-                valid_range_right = Board._board_range(valid_range_right)
+        #         valid_range_up = Board._board_range(valid_range_up)
+        #         valid_range_down = Board._board_range(valid_range_down)
+        #         valid_range_left = Board._board_range(valid_range_left)
+        #         valid_range_right = Board._board_range(valid_range_right)
                 
-                flag_break = False
-                for down, rank in enumerate(
-                        ChessBoard.squares_map):
-                                for right, square in enumerate(
-                                        rank
-                                ):
-                                        if self.start_pos == square:
-                                                print("square: ", square)
+        #         flag_break = False
+        #         for down, rank in enumerate(
+        #                 ChessBoard.squares_map):
+        #                         for right, square in enumerate(
+        #                                 rank
+        #                         ):
+        #                                 if self.start_pos == square:
+        #                                         print("square: ", square)
                                                 
-                                                for range in valid_range_up:
-                                                        valid_dest_up.append(
-                                                        ChessBoard.squares_map
-                                                        [down-range][right])
-                                                for range in valid_range_down:
-                                                        valid_dest_down.append(
-                                                        ChessBoard.squares_map
-                                                        [down+range][right])    
-                                                for range in valid_range_left:                                                   
-                                                        valid_dest_left.append(
-                                                        ChessBoard.squares_map
-                                                        [down][right-range]) 
-                                                for range in valid_range_right:
-                                                        valid_dest_right.append(
-                                                        ChessBoard.squares_map
-                                                        [down][right+range])
-                                                flag_break = True
-                                                break
-                                if flag_break:
-                                        break
+        #                                         for range in valid_range_up:
+        #                                                 valid_dest_up.append(
+        #                                                 ChessBoard.squares_map
+        #                                                 [down-range][right])
+        #                                         for range in valid_range_down:
+        #                                                 valid_dest_down.append(
+        #                                                 ChessBoard.squares_map
+        #                                                 [down+range][right])    
+        #                                         for range in valid_range_left:                                                   
+        #                                                 valid_dest_left.append(
+        #                                                 ChessBoard.squares_map
+        #                                                 [down][right-range]) 
+        #                                         for range in valid_range_right:
+        #                                                 valid_dest_right.append(
+        #                                                 ChessBoard.squares_map
+        #                                                 [down][right+range])
+        #                                         flag_break = True
+        #                                         break
+        #                         if flag_break:
+        #                                 break
                                 
 
-                valid_dest = [valid_dest_up, valid_dest_down, 
-                        valid_dest_left, valid_dest_right]
+        #         valid_dest = [valid_dest_up, valid_dest_down, 
+        #                 valid_dest_left, valid_dest_right]
 
-                return valid_dest
+        #         return valid_dest
 
 
 class PawnTake(MovePawn):
@@ -607,44 +612,45 @@ class PawnTake(MovePawn):
         return False
 
     def _get_valid_dest(self):
-            valid_range_up, valid_range_along = self._get_valid_range()
-            valid_dest = self._get_valid_diag_dest(
-                    valid_range_up, 
-                    valid_range_along
-            )
+            valid_dest = PieceMoveRanges.VALID_PAWN_TAKE_DESTS
+        #     valid_range_up, valid_range_along = self._get_valid_range()
+        #     valid_dest = self._get_valid_diag_dest(
+        #             valid_range_up, 
+        #             valid_range_along
+        #     )
             return valid_dest
 
     # diagonal range
-    def _get_valid_range(self):
-            valid_range_up = 1
-            valid_range_along = 1
-            return (valid_range_up, valid_range_along)
+#     def _get_valid_range(self):
+#             valid_range_up = 1
+#             valid_range_along = 1
+#             return (valid_range_up, valid_range_along)
             
-    def _get_valid_diag_dest(self, valid_range_up, valid_range_along):
-            valid_dest = []
+#     def _get_valid_diag_dest(self, valid_range_up, valid_range_along):
+#             valid_dest = []
             
-            flag_break = False
-            for down, rank in enumerate(
-                    ChessBoard.squares_map):
-                            for right, square in enumerate(
-                                    rank
-                            ):
-                                    if self.start_pos == square:
-                                            valid_dest.append(
-                                                ChessBoard.squares_map
-                                                [down-valid_range_up][right+valid_range_along]
-                                            )
-                                            valid_dest.append(
-                                                ChessBoard.squares_map
-                                                [down-valid_range_up][right-valid_range_along]
-                                            )
-                                            flag_break = True
-                                            break
-                            if flag_break:
-                                    break
+#             flag_break = False
+#             for down, rank in enumerate(
+#                     ChessBoard.squares_map):
+#                             for right, square in enumerate(
+#                                     rank
+#                             ):
+#                                     if self.start_pos == square:
+#                                             valid_dest.append(
+#                                                 ChessBoard.squares_map
+#                                                 [down-valid_range_up][right+valid_range_along]
+#                                             )
+#                                             valid_dest.append(
+#                                                 ChessBoard.squares_map
+#                                                 [down-valid_range_up][right-valid_range_along]
+#                                             )
+#                                             flag_break = True
+#                                             break
+#                             if flag_break:
+#                                     break
                                                     
-            print("Valid Pawn Take Dests: ", valid_dest)
-            return valid_dest
+#             print("Valid Pawn Take Dests: ", valid_dest)
+#             return valid_dest
 
 class TrackPieces:
        
@@ -711,9 +717,14 @@ class TrackPieces:
                 if MovePiece.MOVE_NUMBER % 2 != 0:
                         self._black_move = False
                         self._white_move = True
+                        PieceMoveRanges.VALID_PAWN_DESTS = PieceMoveRanges.VALID_PAWN_DESTS_UP
+                        PieceMoveRanges.VALID_PAWN_TAKE_DESTS = PieceMoveRanges.VALID_PAWN_TAKE_DESTS_UP
+
                         return
                 self._white_move = False
                 self._black_move = True
+                PieceMoveRanges.VALID_PAWN_DESTS = PieceMoveRanges.VALID_PAWN_DESTS_DOWN
+                PieceMoveRanges.VALID_PAWN_TAKE_DESTS = PieceMoveRanges.VALID_PAWN_TAKE_DESTS_DOWN
                 return
                
         def _print_turn(self):
@@ -726,9 +737,11 @@ class TrackPieces:
 
 class PieceMoveRanges:
 
+        VALID_PAWN_DESTS = {} # dictionary to be assigned to up or down depending on which turn it is.
         VALID_PAWN_DESTS_UP = {}
         VALID_PAWN_DESTS_DOWN = {}
 
+        VALID_PAWN_TAKE_DESTS = {} # same here
         VALID_PAWN_TAKE_DESTS_UP = {}
         VALID_PAWN_TAKE_DESTS_DOWN = {}
 
@@ -862,7 +875,6 @@ class PieceMoveRanges:
                 print("Valid Rook Dests:")
                 for square, dests in valid_rook_dests.items():
                         print(square, dests)
-                        
                 return valid_rook_dests
 
 
@@ -870,6 +882,7 @@ class Controller:
        
         def __init__(self):
                 self.board = ChessBoard()
+                self.callibrate = PieceMoveRanges()
                 self.rotate = RotateBoard180(
                         self.board.linked_map
                 )
@@ -973,19 +986,19 @@ start = time.time()
 player = Controller()
 player.move("d5", "e5")
 player.move("h8", "h7")
-#player.move("e5", "f5")
+player.move("e5", "f5")
 
 end = time.time()
 
 print("Time Taken: ", end-start)
 
 
-start = time.time()
+# start = time.time()
 
-testrookrange = PieceMoveRanges()
+# testrookrange = PieceMoveRanges()
 
-end = time.time()
-print("Time Taken: ", end-start)
+# end = time.time()
+# print("Time Taken: ", end-start)
 
 
 
