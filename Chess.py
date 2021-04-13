@@ -215,7 +215,7 @@ class RotateBoard180():
                
         def __call__(self):
                 self._rotate_board()
-                #self.rotate_squares(ChessBoard.squares_map)
+                self.rotate_squares(ChessBoard.squares_map) ########################## need to keep this in for now???
                
         def _rotate_board(self):
                 self._reverse_linked(
@@ -566,16 +566,16 @@ class TrackPieces:
                 TrackPieces.BLACK_POSITIONS.append(new_position)
 
         def _print_colour_taken(self):
-            if TrackPieces.WHITE_MOVE:
-                print("Taken by White: ", self._taken_by_white)
-            if TrackPieces.BLACK_MOVE:
-                print("Taken by Black: ", self._taken_by_black)
+            #if TrackPieces.WHITE_MOVE:
+            print("Taken by White: ", self._taken_by_white)
+            #if TrackPieces.BLACK_MOVE:
+            print("Taken by Black: ", self._taken_by_black)
         
         def _print_colour_positions(self):
-            if TrackPieces.WHITE_MOVE:
-                print("White: ", TrackPieces.WHITE_POSITIONS)
-            if TrackPieces.BLACK_MOVE:
-                print("Black: ", TrackPieces.BLACK_POSITIONS)
+            #if TrackPieces.WHITE_MOVE:
+            print("White: ", TrackPieces.WHITE_POSITIONS)
+            #if TrackPieces.BLACK_MOVE:
+            print("Black: ", TrackPieces.BLACK_POSITIONS)
        
         def _get_colour(self):
                 if MovePiece.MOVE_NUMBER % 2 != 0:
@@ -645,13 +645,13 @@ class PieceMoveRanges:
                                         for dest_square in dest_list:
                                                 # if there is another piece within that pieces
                                                 # valid dests...
-                                                if len(self.linked_map[dest_square]):
+                                                if len(self.linked_map[dest_square]) == 2:
                                                         # if its a white or black move, compare the square to pieces of
                                                         # the same and opposite colours and truncate accordingly.
-                                                        if TrackPieces.WHITE_MOVE:
-                                                                # if same colour truncate from incl that square.
-                                                                if dest_square in TrackPieces.WHITE_POSITIONS:
-                                                                        print(square, self.linked_map[square][1])
+                                                        if square in TrackPieces.WHITE_POSITIONS:                            # even though each turn
+                                                                # if same colour truncate from incl that square.             # one side's pieces haven't moved their
+                                                                if dest_square in TrackPieces.WHITE_POSITIONS:               # range/dests may be changed by
+                                                                        print(square, self.linked_map[square][1])            # movement of the opponent's piece.
                                                                         print(dest_list, "Blocked At:", dest_square)
                                                                         board_take_dests[dest.square] += dest_list[
                                                                                 0:dest_list.index(dest_square)
@@ -665,7 +665,7 @@ class PieceMoveRanges:
                                                                                 0:dest_list.index(dest_square)+1
                                                                         ]
                                                                         print("Truncating to: ", dest_list)
-                                                        if TrackPieces.BLACK_MOVE:
+                                                        if square in TrackPieces.BLACK_POSITIONS:
                                                                 if dest_square in TrackPieces.BLACK_POSITIONS:
                                                                         print(square, self.linked_map[square][1])
                                                                         print(dest_list, "Blocked At:", dest_square)
@@ -673,7 +673,7 @@ class PieceMoveRanges:
                                                                                 0:dest_list.index(dest_square)
                                                                         ] 
                                                                         print("Truncating to: ", dest_list)
-                                                                if dest_square in TrackPieces.BLACK_POSITIONS:
+                                                                if dest_square in TrackPieces.WHITE_POSITIONS:
                                                                         print(square, self.linked_map[square][1])
                                                                         print(dest_list, "Blocked By Opponent At:", dest_square)
                                                                         board_take_dests[dest.square] += dest_list[
