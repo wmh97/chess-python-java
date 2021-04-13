@@ -90,7 +90,7 @@ class AlternatingBoard(Board):
        
         def _generate_forward_row(self, length):
                 return self._generate_row(length,
-                                          "+", "-")   # x --> +, o --> -
+                                          "+", "-")   # "+" = white, "-" = black
        
                
         def _generate_reverse_row(self, length):
@@ -114,6 +114,7 @@ class ChessBoard(AlternatingBoard):
        
 
         squares_map = []
+        rotated_squares_map = []
         WIDTH = None
         HEIGHT = None
        
@@ -128,6 +129,13 @@ class ChessBoard(AlternatingBoard):
                 self.linked_map = self._link_squares_map()
                
                 ChessBoard.squares_map = self.squares_map
+
+                # creating a duplicate squares map to reverse.
+                ChessBoard.rotated_squares_map = [[row for row in list]         # Creating copies of not only the list
+                                                  for list in self.squares_map] # but the lists within the list too.
+                RotateBoard180.rotate_squares(
+                        ChessBoard.rotated_squares_map
+                )
 
         def __call__(self):
                 #self._print_chess_squares()
@@ -214,25 +222,14 @@ class RotateBoard180():
                
         def __call__(self):
                 self._rotate_board()
-                self._rotate_squares()
+                self.rotate_squares(ChessBoard.squares_map)
                
         def _rotate_board(self):
                 self._reverse_linked(
                         self.linked_map
                 )
                 #print("ROTATED: ", self.linked_map)
-               
-        def _rotate_squares(self):
-                self._reverse_rows(
-                        ChessBoard.squares_map
-                )
-                self._reverse_columns(
-                        ChessBoard.squares_map
-                )
 
-        def _reverse_rows(self, map):
-                return map.reverse()
-               
         def _reverse_linked(self, linked_map):
                 linked_map = dict(
                         reversed(list(linked_map.items()))
@@ -240,10 +237,19 @@ class RotateBoard180():
                 self.linked_map.clear()
                 self.linked_map.update(linked_map)
 
-       
-        def _reverse_columns(self, map):
+        @staticmethod
+        def rotate_squares(map):
+                RotateBoard180.reverse_rows(map)
+                RotateBoard180.reverse_columns(map)
+
+        @staticmethod
+        def reverse_rows(map):
+                return map.reverse()
+
+        @staticmethod
+        def reverse_columns(map):
                 for row in map:
-                        row.reverse()
+                        row.reverse()         
 
 
 class SetChessPieces():
@@ -481,7 +487,6 @@ class MoveRook(MovePawn):
                 valid_dest = self._get_valid_dest()
                 for dest_list in valid_dest:
                         if self.end_pos in dest_list:
-                                valid_dest = []
                                 return True
                 raise ValueError("Invalid Move")
                 return False
@@ -750,7 +755,7 @@ class PieceMoveRanges:
                                                 ChessBoard.squares_map
                                                         [down-valid_start_range][right]
                                         )
-                                if down > 0:
+                                elif down > 0:
                                         valid_pawn_dests[square][0].append(
                                                 ChessBoard.squares_map
                                                         [down-valid_range][right]
@@ -773,7 +778,8 @@ class PieceMoveRanges:
                                                                   [] ]  # up-right dests
                                 if down > 0:
                                         try:
-                                                # make sure we are not looping over the board.
+                                                # make sure we are not looping over the 
+                                                # other side of the board.
                                                 if (right-1) >= 0:
                                                         valid_pawn_take_dests[square][0].append(
                                                                 ChessBoard.squares_map
@@ -783,12 +789,12 @@ class PieceMoveRanges:
                                                         ChessBoard.squares_map
                                                                 [down-valid_range_up][right+valid_range_along]
                                                 )
-                                        except:
+                                        except IndexError:
                                                 pass # pass for index out of range - don't
                                                      # try to generate dests for outside board.
                 for square, dests in valid_pawn_take_dests.items():
                         print(square, dests)
-                return valid_pawn_ranges
+                return valid_pawn_take_dests
 
         def _get_valid_rook_dests(self):
 
@@ -952,22 +958,19 @@ start = time.time()
 player = Controller()
 player.move("d5", "e5")
 player.move("h8", "h7")
-player.move("e5", "f5")
+#player.move("e5", "f5")
 
 end = time.time()
 
 print("Time Taken: ", end-start)
 
 
+start = time.time()
 
-        
-# start = time.time()
+testrookrange = PieceMoveRanges()
 
-# testrookrange = PieceMoveRanges()
-# testrookrange._get_valid_rook_dests()
-
-# end = time.time()
-# print("Time Taken: ", end-start)
+end = time.time()
+print("Time Taken: ", end-start)
 
 
 
