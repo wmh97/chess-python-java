@@ -87,16 +87,13 @@ class AlternatingBoard(Board):
                        
                 return board
        
-       
         def _generate_forward_row(self, length):
                 return self._generate_row(length,
                                           "+", "-")   # "+" = white, "-" = black
        
-               
         def _generate_reverse_row(self, length):
                 return self._generate_row(length,
                                           "-", "+")
-       
                
         def _generate_row(self, length,
                           cell1, cell2 ):
@@ -112,7 +109,6 @@ class AlternatingBoard(Board):
 
 class ChessBoard(AlternatingBoard):
        
-
         squares_map = []
         rotated_squares_map = []
         WIDTH = None
@@ -152,9 +148,6 @@ class ChessBoard(AlternatingBoard):
                         linked_map.update(linked_row)
                        
                 self._linked_map = linked_map
-
-                #print(self._linked_map)
-
                 return self._linked_map
        
         def _print_chess_squares(self):
@@ -222,7 +215,7 @@ class RotateBoard180():
                
         def __call__(self):
                 self._rotate_board()
-                self.rotate_squares(ChessBoard.squares_map)
+                #self.rotate_squares(ChessBoard.squares_map)
                
         def _rotate_board(self):
                 self._reverse_linked(
@@ -262,7 +255,7 @@ class SetChessPieces():
                 self.position_list = self._store_position_list(
                         position, positions
                 )
-               
+        
         @staticmethod
         def _store_position_list(position,
                                  positions):
@@ -271,7 +264,7 @@ class SetChessPieces():
                 for extra_position in positions:
                         position_list.append(extra_position)
                 return position_list
-               
+
         @property
         def position(self):
                 return self._position
@@ -429,42 +422,8 @@ class MovePawn(MovePiece):
                 return False
 
         def _get_valid_dest(self):
-                # valid_range = self._get_valid_range()
-                # valid_dest = self._get_valid_orthog_dest(
-                #         valid_range
-                # )
                 valid_dest = PieceMoveRanges.VALID_PAWN_DESTS[self.start_pos]
-
                 return valid_dest
-               
-        # def _get_valid_range(self):
-        #         valid_range = 1
-        #         if self.start_pos in ChessBoard.squares_map[-2]:
-        #                 valid_range = 2
-        #         return valid_range
-               
-        # def _get_valid_orthog_dest(self, valid_range):
-        #         valid_dest = []
-        #         valid_range = Board._board_range(
-        #                 valid_range
-        #         )
-        #         flag_break = False
-        #         for down, rank in enumerate(
-        #                 ChessBoard.squares_map):
-        #                         for right, square in enumerate(
-        #                                 rank
-        #                         ):
-        #                                 if self.start_pos == square:
-        #                                         for range in valid_range:
-        #                                                 valid_dest.append(
-        #                                                 ChessBoard.squares_map
-        #                                                 [down-range][right])
-        #                                         flag_break = True # break to avoid going through the loop 
-        #                                         break             # beyond finding the right square.
-        #                         if flag_break:
-        #                                 break                                                       
-        #         print("Valid Dests: ", valid_dest)
-        #         return valid_dest
 
 
 class MoveRook(MovePawn):
@@ -495,13 +454,7 @@ class MoveRook(MovePawn):
                 return False
 
         def _get_valid_dest(self):
-
                 valid_dest = PieceMoveRanges.VALID_ROOK_DESTS[self.start_pos]
-                # valid_range_up, valid_range_down, valid_range_left, valid_range_right = self._get_valid_range()
-                # valid_dest = self._get_valid_orthog_dest(
-                #         valid_range_up, valid_range_down,
-                #         valid_range_left, valid_range_right
-                # )
                 valid_dest = self._truncate_dest_list(valid_dest)
                 return valid_dest
 
@@ -521,70 +474,6 @@ class MoveRook(MovePawn):
                 print("Valid Rook Dests Right: ", right)
                 
                 return valid_dest_lists
-
-        # def _get_valid_range(self):
-                
-        #         valid_range_up = ChessBoard.HEIGHT - int(self.start_pos[1])
-        #         valid_range_down = (ChessBoard.HEIGHT - 1) - (ChessBoard.HEIGHT - int(self.start_pos[1]))
-
-        #         valid_range_left = 0
-        #         valid_range_right = ChessBoard.WIDTH - 1
-        #         for square in ChessBoard.squares_map[valid_range_up]:
-        #                 if self.start_pos == square:
-        #                         break
-        #                 valid_range_left += 1
-        #                 valid_range_right -= 1
-
-        #         return (valid_range_up, valid_range_down, 
-        #                 valid_range_left, valid_range_right)
-
-        # def _get_valid_orthog_dest(self, valid_range_up, valid_range_down, 
-        #                                  valid_range_left, valid_range_right):
-        #         valid_dest_up = []
-        #         valid_dest_down = []
-        #         valid_dest_left = []
-        #         valid_dest_right = []
-
-        #         valid_range_up = Board._board_range(valid_range_up)
-        #         valid_range_down = Board._board_range(valid_range_down)
-        #         valid_range_left = Board._board_range(valid_range_left)
-        #         valid_range_right = Board._board_range(valid_range_right)
-                
-        #         flag_break = False
-        #         for down, rank in enumerate(
-        #                 ChessBoard.squares_map):
-        #                         for right, square in enumerate(
-        #                                 rank
-        #                         ):
-        #                                 if self.start_pos == square:
-        #                                         print("square: ", square)
-                                                
-        #                                         for range in valid_range_up:
-        #                                                 valid_dest_up.append(
-        #                                                 ChessBoard.squares_map
-        #                                                 [down-range][right])
-        #                                         for range in valid_range_down:
-        #                                                 valid_dest_down.append(
-        #                                                 ChessBoard.squares_map
-        #                                                 [down+range][right])    
-        #                                         for range in valid_range_left:                                                   
-        #                                                 valid_dest_left.append(
-        #                                                 ChessBoard.squares_map
-        #                                                 [down][right-range]) 
-        #                                         for range in valid_range_right:
-        #                                                 valid_dest_right.append(
-        #                                                 ChessBoard.squares_map
-        #                                                 [down][right+range])
-        #                                         flag_break = True
-        #                                         break
-        #                         if flag_break:
-        #                                 break
-                                
-
-        #         valid_dest = [valid_dest_up, valid_dest_down, 
-        #                 valid_dest_left, valid_dest_right]
-
-        #         return valid_dest
 
 
 class PawnTake(MovePawn):
@@ -613,51 +502,26 @@ class PawnTake(MovePawn):
 
     def _get_valid_dest(self):
             valid_dest = PieceMoveRanges.VALID_PAWN_TAKE_DESTS
-        #     valid_range_up, valid_range_along = self._get_valid_range()
-        #     valid_dest = self._get_valid_diag_dest(
-        #             valid_range_up, 
-        #             valid_range_along
-        #     )
             return valid_dest
 
-    # diagonal range
-#     def _get_valid_range(self):
-#             valid_range_up = 1
-#             valid_range_along = 1
-#             return (valid_range_up, valid_range_along)
-            
-#     def _get_valid_diag_dest(self, valid_range_up, valid_range_along):
-#             valid_dest = []
-            
-#             flag_break = False
-#             for down, rank in enumerate(
-#                     ChessBoard.squares_map):
-#                             for right, square in enumerate(
-#                                     rank
-#                             ):
-#                                     if self.start_pos == square:
-#                                             valid_dest.append(
-#                                                 ChessBoard.squares_map
-#                                                 [down-valid_range_up][right+valid_range_along]
-#                                             )
-#                                             valid_dest.append(
-#                                                 ChessBoard.squares_map
-#                                                 [down-valid_range_up][right-valid_range_along]
-#                                             )
-#                                             flag_break = True
-#                                             break
-#                             if flag_break:
-#                                     break
-                                                    
-#             print("Valid Pawn Take Dests: ", valid_dest)
-#             return valid_dest
 
 class TrackPieces:
        
+        WHITE_MOVE = True
+        BLACK_MOVE = False
+
+        WHITE_POSITIONS = []
+        BLACK_POSITIONS = []
+        
         def __init__(self, white_positions,
                            black_positions):
-                self._white_positions = white_positions
-                self._black_positions = black_positions
+                
+                self._initial_white_positions = white_positions
+                self._initial_black_positions = black_positions
+
+                TrackPieces.WHITE_POSITIONS = self._initial_white_positions
+                TrackPieces.BLACK_POSITIONS = self._initial_black_positions
+
                 self._taken_by_white = []
                 self._taken_by_black = []
                
@@ -668,70 +532,70 @@ class TrackPieces:
                 self._print_colour_taken()
 
         def update_take(self, target_position, piece_taken):
-            if self._white_move:
-                self._black_positions.remove(target_position)
+            if TrackPieces.WHITE_MOVE:
+                TrackPieces.BLACK_POSITIONS.remove(target_position)
                 self._taken_by_white.append(piece_taken)
-            if self._black_move:
-                self._white_positions.remove(target_position)
+            if TrackPieces.BLACK_MOVE:
+                TrackPieces.WHITE_POSITIONS.remove(target_position)
                 self._taken_by_black.append(piece_taken)
 
         def query_take(self, target_position):
-            if self._white_move:
-                if target_position in self._black_positions:
+            if TrackPieces.WHITE_MOVE:
+                if target_position in TrackPieces.BLACK_POSITIONS:
                     return True
-            if self._black_move:
-                if target_position in self._white_positions:
+            if TrackPieces.BLACK_MOVE:
+                if target_position in TrackPieces.WHITE_POSITIONS:
                     return True
             return False
 
         def validate_colour_move(self, current_position):
-            if self._white_move:
-                if current_position in self._white_positions:
+            if TrackPieces.WHITE_MOVE:
+                if current_position in TrackPieces.WHITE_POSITIONS:
                     return True
-            if self._black_move:
-                if current_position in self._black_positions:
+            if TrackPieces.BLACK_MOVE:
+                if current_position in TrackPieces.BLACK_POSITIONS:
                     return True
             return False
         
         def update_colour_position(self, old_position, new_position):
-            if self._white_move:
-                self._white_positions.remove(old_position)
-                self._white_positions.append(new_position)
-            if self._black_move:
-                self._black_positions.remove(old_position)
-                self._black_positions.append(new_position)
+            if TrackPieces.WHITE_MOVE:
+                TrackPieces.WHITE_POSITIONS.remove(old_position)
+                TrackPieces.WHITE_POSITIONS.append(new_position)
+            if TrackPieces.BLACK_MOVE:
+                TrackPieces.BLACK_POSITIONS.remove(old_position)
+                TrackPieces.BLACK_POSITIONS.append(new_position)
 
         def _print_colour_taken(self):
-            if self._white_move:
+            if TrackPieces.WHITE_MOVE:
                 print("Taken by White: ", self._taken_by_white)
-            if self._black_move:
+            if TrackPieces.BLACK_MOVE:
                 print("Taken by Black: ", self._taken_by_black)
         
         def _print_colour_positions(self):
-            if self._white_move:
-                print("White: ", self._white_positions)
-            if self._black_move:
-                print("Black: ", self._black_positions)
+            if TrackPieces.WHITE_MOVE:
+                print("White: ", TrackPieces.WHITE_POSITIONS)
+            if TrackPieces.BLACK_MOVE:
+                print("Black: ", TrackPieces.BLACK_POSITIONS)
        
         def _get_colour(self):
                 if MovePiece.MOVE_NUMBER % 2 != 0:
-                        self._black_move = False
-                        self._white_move = True
+                        TrackPieces.BLACK_MOVE = False
+                        TrackPieces.WHITE_MOVE = True
                         PieceMoveRanges.VALID_PAWN_DESTS = PieceMoveRanges.VALID_PAWN_DESTS_UP
                         PieceMoveRanges.VALID_PAWN_TAKE_DESTS = PieceMoveRanges.VALID_PAWN_TAKE_DESTS_UP
 
                         return
-                self._white_move = False
-                self._black_move = True
+                TrackPieces.WHITE_MOVE = False
+                TrackPieces.BLACK_MOVE = True
                 PieceMoveRanges.VALID_PAWN_DESTS = PieceMoveRanges.VALID_PAWN_DESTS_DOWN
                 PieceMoveRanges.VALID_PAWN_TAKE_DESTS = PieceMoveRanges.VALID_PAWN_TAKE_DESTS_DOWN
                 return
                
         def _print_turn(self):
                 print("Move: ", MovePiece.MOVE_NUMBER)
-                if self._white_move:
+                if TrackPieces.WHITE_MOVE:
                         print("White to move")
-                if self._black_move:
+                if TrackPieces.BLACK_MOVE:
                         print("Black to move")
 
 
@@ -755,14 +619,70 @@ class PieceMoveRanges:
                         ChessBoard.rotated_squares_map
                 )
 
-                PieceMoveRanges.VALID_TAKE_PAWN_DESTS_UP = self._get_valid_pawn_take_dests(
+                PieceMoveRanges.VALID_PAWN_TAKE_DESTS_UP = self._get_valid_pawn_take_dests(
                         ChessBoard.squares_map
                 )
-                PieceMoveRanges.VALID_TAKE_PAWN_DESTS_DOWN = self._get_valid_pawn_take_dests(
+                PieceMoveRanges.VALID_PAWN_TAKE_DESTS_DOWN = self._get_valid_pawn_take_dests(
                         ChessBoard.rotated_squares_map
                 )
 
                 PieceMoveRanges.VALID_ROOK_DESTS = self._get_valid_rook_dests()
+
+        # get take dests/ranges for all pieces on the board.
+        # *** not currently implemented ***
+        def get_board_take_dests(self, valid_dest_dict):
+                
+                # results added to a separate dict.
+                # need to add condition below for different truncation
+                # for knights.
+                board_take_dests = {}
+                
+                for square, dest_lists in valid_dest_dict.items():
+                        # if square has a piece on it...
+                        if len(self.linked_map[square]) == 2:
+                                get_board_take_dests[square] = dest_lists
+                                for dest_list in dest_lists:
+                                        for dest_square in dest_list:
+                                                # if there is another piece within that pieces
+                                                # valid dests...
+                                                if len(self.linked_map[dest_square]):
+                                                        # if its a white or black move, compare the square to pieces of
+                                                        # the same and opposite colours and truncate accordingly.
+                                                        if TrackPieces.WHITE_MOVE:
+                                                                # if same colour truncate from incl that square.
+                                                                if dest_square in TrackPieces.WHITE_POSITIONS:
+                                                                        print(square, self.linked_map[square][1])
+                                                                        print(dest_list, "Blocked At:", dest_square)
+                                                                        board_take_dests[dest.square] += dest_list[
+                                                                                0:dest_list.index(dest_square)
+                                                                        ]
+                                                                        print("Truncating to: ", dest_list)
+                                                                # if opposite colour truncate after that square.
+                                                                if dest_square in TrackPieces.BLACK_POSITIONS:
+                                                                        print(square, self.linked_map[square][1])
+                                                                        print(dest_list, "Blocked By Opponent At:", dest_square)
+                                                                        board_take_dests[dest.square] += dest_list[
+                                                                                0:dest_list.index(dest_square)+1
+                                                                        ]
+                                                                        print("Truncating to: ", dest_list)
+                                                        if TrackPieces.BLACK_MOVE:
+                                                                if dest_square in TrackPieces.BLACK_POSITIONS:
+                                                                        print(square, self.linked_map[square][1])
+                                                                        print(dest_list, "Blocked At:", dest_square)
+                                                                        board_take_dests[dest.square] += dest_list[
+                                                                                0:dest_list.index(dest_square)
+                                                                        ] 
+                                                                        print("Truncating to: ", dest_list)
+                                                                if dest_square in TrackPieces.BLACK_POSITIONS:
+                                                                        print(square, self.linked_map[square][1])
+                                                                        print(dest_list, "Blocked By Opponent At:", dest_square)
+                                                                        board_take_dests[dest.square] += dest_list[
+                                                                                0:dest_list.index(dest_square)+1
+                                                                        ]
+                                                                        print("Truncating to: ", dest_list) 
+
+
+
 
         def _get_valid_pawn_dests(self, squares_map):
                 # This returns lists of pawn dests - specifically in one direction
@@ -889,8 +809,8 @@ class Controller:
                 self._setup_board()
 
                 self.track = TrackPieces(
-                        self._white_positions,
-                        self._black_positions
+                        self._initial_white_positions,
+                        self._initial_black_positions
                 )
                 self._display_board()
        
@@ -900,7 +820,7 @@ class Controller:
                
         def _setup_white_pieces(self):
                
-                self._white_positions = [] 
+                self._initial_white_positions = [] 
                 self._white_pawns = SetPawn(
                         self.board.linked_map, "d8", "h5",
                                                "d3", "c5"
@@ -908,31 +828,29 @@ class Controller:
                         #                        "c2", "d2",
                         #                        "e2", "f2",
                         #                        "g2", "h2" 
-                    )
+                )
                 self._white_rook = SetRook(
                         self.board.linked_map, "d5"
                 )
-                self._white_positions += self._white_pawns.position_list
-                self._white_positions += self._white_rook.position_list
+                self._initial_white_positions += self._white_pawns.position_list
+                self._initial_white_positions += self._white_rook.position_list
 
         def _setup_black_pieces(self):
 
-                self._black_positions = []
+                self._initial_black_positions = []
                 self._black_pawns = SetPawn(
                         self.board.linked_map, "h8"
-
                         # self.board.linked_map, "a7", "b7",
                         #                        "c7", "d7",
                         #                        "e7", "f7",
                         #                        "g7", "h7" 
-                    )
-                self._black_positions += self._black_pawns.position_list
+                )
+                self._initial_black_positions += self._black_pawns.position_list
 
         def move(self, start_pos, end_pos):
                 
                 if not self.track.validate_colour_move(start_pos):
                     raise ValueError("Not Your Turn/Invalid Move")
-                
                 
                 piece = self.board.linked_map[start_pos][-1]
                 if piece == "p":
@@ -987,6 +905,10 @@ player = Controller()
 player.move("d5", "e5")
 player.move("h8", "h7")
 player.move("e5", "f5")
+player.move("h7", "h6")
+player.move("f5", "g5")
+player.move("h6", "g5")
+player.move("c5", "c6")
 
 end = time.time()
 
