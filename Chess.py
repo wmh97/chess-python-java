@@ -726,16 +726,32 @@ class TrackPieces:
 
 class PieceMoveRanges:
 
-        VALID_PAWN_DESTS = {}
-        VALID_PAWN_TAKE_DESTS = {}
+        VALID_PAWN_DESTS_UP = {}
+        VALID_PAWN_DESTS_DOWN = {}
+
+        VALID_PAWN_TAKE_DESTS_UP = {}
+        VALID_PAWN_TAKE_DESTS_DOWN = {}
+
         VALID_ROOK_DESTS = {}
         
         def __init__(self):
-                PieceMoveRanges.VALID_PAWN_DESTS = self._get_valid_pawn_dests()
-                PieceMoveRanges.VALID_TAKE_PAWN_DESTS = self._get_valid_pawn_take_dests()
+                PieceMoveRanges.VALID_PAWN_DESTS_UP = self._get_valid_pawn_dests(
+                        ChessBoard.squares_map
+                )
+                PieceMoveRanges.VALID_PAWN_DESTS_DOWN = self._get_valid_pawn_dests(
+                        ChessBoard.rotated_squares_map
+                )
+
+                PieceMoveRanges.VALID_TAKE_PAWN_DESTS_UP = self._get_valid_pawn_take_dests(
+                        ChessBoard.squares_map
+                )
+                PieceMoveRanges.VALID_TAKE_PAWN_DESTS_DOWN = self._get_valid_pawn_take_dests(
+                        ChessBoard.rotated_squares_map
+                )
+
                 PieceMoveRanges.VALID_ROOK_DESTS = self._get_valid_rook_dests()
 
-        def _get_valid_pawn_dests(self):
+        def _get_valid_pawn_dests(self, squares_map):
                 # This returns lists of pawn dests - specifically in one direction
                 # up the board.
                 valid_pawn_dests = {}
@@ -743,28 +759,26 @@ class PieceMoveRanges:
                 valid_start_range = 2
                 valid_range = 1
 
-                for down, rank in enumerate(ChessBoard.squares_map):
+                for down, rank in enumerate(squares_map):
                         for right, square in enumerate(rank):
                                 valid_pawn_dests[square] = [ [] ]  # up dests
                                 if down == (ChessBoard.HEIGHT - 1) - 1:
                                         valid_pawn_dests[square][0].append(
-                                                ChessBoard.squares_map
-                                                        [down-valid_range][right]
+                                                squares_map[down-valid_range][right]
                                         )
                                         valid_pawn_dests[square][0].append(
-                                                ChessBoard.squares_map
-                                                        [down-valid_start_range][right]
+                                                squares_map[down-valid_start_range][right]
                                         )
                                 elif down > 0:
                                         valid_pawn_dests[square][0].append(
-                                                ChessBoard.squares_map
-                                                        [down-valid_range][right]
+                                                squares_map[down-valid_range][right]
                                         )
+                print("Pawn Dests:")
                 for square, dests in valid_pawn_dests.items():
                         print(square, dests)
                 return valid_pawn_dests
 
-        def _get_valid_pawn_take_dests(self):
+        def _get_valid_pawn_take_dests(self, squares_map):
                 # This returns lists of pawn dests - specifically in one direction
                 # up the board.
                 valid_pawn_take_dests = {}
@@ -772,26 +786,27 @@ class PieceMoveRanges:
                 valid_range_up = 1
                 valid_range_along = 1
 
-                for down, rank in enumerate(ChessBoard.squares_map):
+                for down, rank in enumerate(squares_map):
                         for right, square in enumerate(rank):
-                                valid_pawn_take_dests[square] = [ [],   # up-left dests
-                                                                  [] ]  # up-right dests
+                                valid_pawn_take_dests[square] = [ [],   # up-left dests in the direction of white or black.
+                                                                  [] ]  # up-right dests in the direction of white or black.
                                 if down > 0:
                                         try:
                                                 # make sure we are not looping over the 
                                                 # other side of the board.
                                                 if (right-1) >= 0:
                                                         valid_pawn_take_dests[square][0].append(
-                                                                ChessBoard.squares_map
-                                                                        [down-valid_range_up][right-valid_range_along]
+                                                                squares_map
+                                                                [down-valid_range_up][right-valid_range_along]
                                                         )
                                                 valid_pawn_take_dests[square][1].append(
-                                                        ChessBoard.squares_map
-                                                                [down-valid_range_up][right+valid_range_along]
+                                                        squares_map
+                                                        [down-valid_range_up][right+valid_range_along]
                                                 )
                                         except IndexError:
                                                 pass # pass for index out of range - don't
                                                      # try to generate dests for outside board.
+                print("Pawn Take Dests:")
                 for square, dests in valid_pawn_take_dests.items():
                         print(square, dests)
                 return valid_pawn_take_dests
@@ -809,8 +824,7 @@ class PieceMoveRanges:
 
                                         valid_range_up = ChessBoard.HEIGHT - int(square[1])
                                         valid_range_down = ( (ChessBoard.HEIGHT - 1) 
-                                                             - (ChessBoard.HEIGHT 
-                                                             - int(square[1]))       )
+                                                             - (ChessBoard.HEIGHT - int(square[1])) )
 
                                         valid_range_left = 0
                                         valid_range_right = ChessBoard.WIDTH - 1
@@ -845,6 +859,7 @@ class PieceMoveRanges:
                                                         ChessBoard.squares_map
                                                                 [down][right+range]
                                                 )
+                print("Valid Rook Dests:")
                 for square, dests in valid_rook_dests.items():
                         print(square, dests)
                         
