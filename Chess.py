@@ -215,7 +215,7 @@ class RotateBoard180():
                
         def __call__(self):
                 self._rotate_board()
-                self.rotate_squares(ChessBoard.squares_map) ########################## need to keep this in for now???
+                self.rotate_squares(ChessBoard.squares_map) # This needs to stay in for printing the board.
                
         def _rotate_board(self):
                 self._reverse_linked(
@@ -498,6 +498,9 @@ class PawnTake(MovePawn):
             valid_dest = PieceMoveRanges.TRUNCATED_BOARD_TAKE_DESTS[self.start_pos]
             return valid_dest
 
+# class RookTake(PawnTake):
+#         def __init__(self,)
+
 
 class TrackPieces:
        
@@ -725,7 +728,6 @@ class PieceMoveRanges:
                 return truncated_board_take_dests
 
         # get take dests/ranges for all pieces on the board.
-        # *** not currently implemented ***
         def _get_truncated_board_dests_per_turn(self, valid_board_dests):
                 
                 # results added to a separate dict.
@@ -946,7 +948,7 @@ class Controller:
 
         def move(self, start_pos, end_pos):
                 
-                self.callibrate() ###
+                self.callibrate()
                 
                 if not self.track.validate_colour_move(start_pos):
                     raise ValueError("Not Your Turn/Invalid Move")
@@ -985,10 +987,40 @@ class Controller:
                
                 elif piece not in list("rbkQKp"):
                         raise ValueError("No Piece Here")
+
+        def add(self, colour_piece, position, *positions):
+                # for debug and testing purposes only.
+                
+                position_list = []
+                position_list.append(position)
+                if positions:
+                        for extra_position in list(positions):
+                                position_list.append(extra_position)
+                for square in position_list:
+                        if len(self.board.linked_map[square]) == 2:
+                                raise ValueError("Can't add piece here")
+
+                colour = colour_piece[0]
+                piece = colour_piece[1]
+                if colour == "w":
+                        TrackPieces.WHITE_POSITIONS += position_list
+                elif colour == "b":
+                        TrackPieces.BLACK_POSITIONS += position_list
+                else:
+                        raise ValueError("Invalid Colour")
+
+                if piece == "p":
+                        new_piece = SetPawn( self.board.linked_map,
+                                                          position,
+                                                         *positions )                                             
+                if piece == "r":
+                        new_piece = SetRook( self.board.linked_map,
+                                                          position ) # rook not currently accepting *args
+                self._display_board()
        
         def _display_board(self):
                 self.track()
-                self.callibrate() ###
+                self.callibrate()
                 self.board()
        
         def _refresh_board(self):
@@ -1002,7 +1034,6 @@ import time
 start = time.time()
 
 player = Controller()
-
 player.move("d5", "e5")
 player.move("h8", "h7")
 player.move("e5", "f5")
