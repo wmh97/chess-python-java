@@ -991,6 +991,10 @@ class Controller:
         def add(self, colour_piece, position, *positions):
                 # for debug and testing purposes only.
                 
+                piece = colour_piece[1]
+                if piece not in list("rbkQKp"):
+                        raise ValueError("Invalid Piece Specified")
+
                 position_list = []
                 position_list.append(position)
                 if positions:
@@ -1001,7 +1005,6 @@ class Controller:
                                 raise ValueError("Can't add piece here")
 
                 colour = colour_piece[0]
-                piece = colour_piece[1]
                 if colour == "w":
                         TrackPieces.WHITE_POSITIONS += position_list
                 elif colour == "b":
