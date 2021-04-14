@@ -416,8 +416,8 @@ class MovePawn(MovePiece):
                 return False
 
         def _get_valid_dest(self):
-                valid_dest = PieceMoveRanges.VALID_PAWN_DESTS[self.start_pos]
-                #valid_dest = PieceMoveRanges.TRUNCATED_BOARD_DESTS[self.start_pos]
+                #valid_dest = PieceMoveRanges.VALID_PAWN_DESTS[self.start_pos]
+                valid_dest = PieceMoveRanges.TRUNCATED_BOARD_DESTS[self.start_pos]
                 return valid_dest
 
 
@@ -449,26 +449,26 @@ class MoveRook(MovePawn):
                 return False
 
         def _get_valid_dest(self):
-                valid_dest = PieceMoveRanges.VALID_ROOK_DESTS[self.start_pos]
-                valid_dest = self._truncate_dest_list(valid_dest)
+                valid_dest = PieceMoveRanges.TRUNCATED_BOARD_DESTS[self.start_pos]
+                # valid_dest = self._truncate_dest_list(valid_dest)
                 return valid_dest
 
-        def _truncate_dest_list(self, valid_dest_lists):
-                # truncates the dest list if there is a piece blocking it.
-                for dest_list in valid_dest_lists:
-                        for square in dest_list:
-                                if len(self.linked_map[square]) == 2:
-                                        print(dest_list, "Blocked At:", square)
-                                        del dest_list[dest_list.index(square):]
-                                        print("Truncating to: ", dest_list)
+        # def _truncate_dest_list(self, valid_dest_lists):
+        #         # truncates the dest list if there is a piece blocking it.
+        #         for dest_list in valid_dest_lists:
+        #                 for square in dest_list:
+        #                         if len(self.linked_map[square]) == 2:
+        #                                 print(dest_list, "Blocked At:", square)
+        #                                 del dest_list[dest_list.index(square):]
+        #                                 print("Truncating to: ", dest_list)
                 
-                up, down, left, right = valid_dest_lists
-                print("Valid Rook Dests Up: ", up)
-                print("Valid Rook Dests Down: ", down)
-                print("Valid Rook Dests Left: ", left)
-                print("Valid Rook Dests Right: ", right)
+        #         up, down, left, right = valid_dest_lists
+        #         print("Valid Rook Dests Up: ", up)
+        #         print("Valid Rook Dests Down: ", down)
+        #         print("Valid Rook Dests Left: ", left)
+        #         print("Valid Rook Dests Right: ", right)
                 
-                return valid_dest_lists
+        #         return valid_dest_lists
 
 
 class PawnTake(MovePawn):
@@ -496,7 +496,7 @@ class PawnTake(MovePawn):
         return False
 
     def _get_valid_dest(self):
-            valid_dest = PieceMoveRanges.VALID_PAWN_TAKE_DESTS
+            valid_dest = PieceMoveRanges.TRUNCATED_BOARD_TAKE_DESTS[self.start_pos]
             return valid_dest
 
 
@@ -576,14 +576,14 @@ class TrackPieces:
                 if MovePiece.MOVE_NUMBER % 2 != 0:
                         TrackPieces.BLACK_MOVE = False
                         TrackPieces.WHITE_MOVE = True
-                        PieceMoveRanges.VALID_PAWN_DESTS = PieceMoveRanges.VALID_PAWN_DESTS_UP
-                        PieceMoveRanges.VALID_PAWN_TAKE_DESTS = PieceMoveRanges.VALID_PAWN_TAKE_DESTS_UP
+                        # PieceMoveRanges.VALID_PAWN_DESTS = PieceMoveRanges.VALID_PAWN_DESTS_UP
+                        # PieceMoveRanges.VALID_PAWN_TAKE_DESTS = PieceMoveRanges.VALID_PAWN_TAKE_DESTS_UP
 
                         return
                 TrackPieces.WHITE_MOVE = False
                 TrackPieces.BLACK_MOVE = True
-                PieceMoveRanges.VALID_PAWN_DESTS = PieceMoveRanges.VALID_PAWN_DESTS_DOWN
-                PieceMoveRanges.VALID_PAWN_TAKE_DESTS = PieceMoveRanges.VALID_PAWN_TAKE_DESTS_DOWN
+                # PieceMoveRanges.VALID_PAWN_DESTS = PieceMoveRanges.VALID_PAWN_DESTS_DOWN
+                # PieceMoveRanges.VALID_PAWN_TAKE_DESTS = PieceMoveRanges.VALID_PAWN_TAKE_DESTS_DOWN
                 return
                
         def _print_turn(self):
