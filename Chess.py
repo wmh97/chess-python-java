@@ -611,7 +611,9 @@ class PieceMoveRanges:
 
         VALID_ROOK_DESTS = {}
         
-        def __init__(self):
+        def __init__(self, linked_map):
+                self.linked_map = linked_map
+
                 PieceMoveRanges.VALID_PAWN_DESTS_UP = self._get_valid_pawn_dests(
                         ChessBoard.squares_map
                 )
@@ -628,61 +630,87 @@ class PieceMoveRanges:
 
                 PieceMoveRanges.VALID_ROOK_DESTS = self._get_valid_rook_dests()
 
+                ###self._generate_board_dests()
+
+        def _generate_board_dests(self):
+                valid_board_dests, valid_board_take_dests = self._get_board_dests_per_turn()
+                truncated_board_dests = self._get_truncated_board_dests_per_turn(
+                        valid_board_dests
+                )
+                truncated_board_take_dests = self._get_truncated_board_dests_per_turn(
+                        valid_board_take_dests
+                )
+                print("Truncated Move Dests:")
+                print(truncated_board_dests)
+                print("Truncated Take Dests:")
+                print(truncated_board_take_dests)
+ 
+        def _get_board_dests_per_turn(self):
+                # get valid move destinations for all pieces on the board, without truncation.
+                
+                valid_board_dests = {}
+                valid_board_take_dests = {}
+
+                for square in TrackPieces.WHITE_POSITIONS + TrackPieces.BLACK_POSITIONS:
+                        piece = self.linked_map[square][1]
+
+                        if piece == "p":
+                                # use up or down direction for pawns depending on the piece's colour.
+                                if square in TrackPieces.WHITE_POSITIONS:
+                                        valid_board_dests[square] = PieceMoveRanges.VALID_PAWN_DESTS_UP[square]
+                                        valid_board_take_dests[square] = PieceMoveRanges.VALID_PAWN_TAKE_DESTS_UP[square]
+                                if square in TrackPieces.BLACK_POSITIONS:
+                                        valid_board_dests[square] = PieceMoveRanges.VALID_PAWN_DESTS_DOWN[square]
+                                        valid_board_take_dests[square] = PieceMoveRanges.VALID_PAWN_TAKE_DESTS_DOWN[square]
+                        if piece == "r":
+                                valid_board_dests[square] = PieceMoveRanges.VALID_ROOK_DESTS[square]
+                                valid_board_take_dests[square] = PieceMoveRanges.VALID_ROOK_DESTS[square]
+
+                return (valid_board_dests, valid_board_take_dests)
+        
+        
         # get take dests/ranges for all pieces on the board.
         # *** not currently implemented ***
-        def get_board_take_dests(self, valid_dest_dict):
+        def _get_truncated_board_dests_per_turn(self, valid_board_dests):
                 
                 # results added to a separate dict.
                 # need to add condition below for different truncation
                 # for knights.
-                board_take_dests = {}
-                
-                for square, dest_lists in valid_dest_dict.items():
-                        # if square has a piece on it...
-                        if len(self.linked_map[square]) == 2:
-                                get_board_take_dests[square] = dest_lists
-                                for dest_list in dest_lists:
-                                        for dest_square in dest_list:
-                                                # if there is another piece within that pieces
-                                                # valid dests...
-                                                if len(self.linked_map[dest_square]) == 2:
-                                                        # if its a white or black move, compare the square to pieces of
-                                                        # the same and opposite colours and truncate accordingly.
-                                                        if square in TrackPieces.WHITE_POSITIONS:                            # even though each turn
-                                                                # if same colour truncate from incl that square.             # one side's pieces haven't moved their
-                                                                if dest_square in TrackPieces.WHITE_POSITIONS:               # range/dests may be changed by
-                                                                        print(square, self.linked_map[square][1])            # movement of the opponent's piece.
-                                                                        print(dest_list, "Blocked At:", dest_square)
-                                                                        board_take_dests[dest.square] += dest_list[
-                                                                                0:dest_list.index(dest_square)
-                                                                        ]
-                                                                        print("Truncating to: ", dest_list)
-                                                                # if opposite colour truncate after that square.
-                                                                if dest_square in TrackPieces.BLACK_POSITIONS:
-                                                                        print(square, self.linked_map[square][1])
-                                                                        print(dest_list, "Blocked By Opponent At:", dest_square)
-                                                                        board_take_dests[dest.square] += dest_list[
-                                                                                0:dest_list.index(dest_square)+1
-                                                                        ]
-                                                                        print("Truncating to: ", dest_list)
-                                                        if square in TrackPieces.BLACK_POSITIONS:
-                                                                if dest_square in TrackPieces.BLACK_POSITIONS:
-                                                                        print(square, self.linked_map[square][1])
-                                                                        print(dest_list, "Blocked At:", dest_square)
-                                                                        board_take_dests[dest.square] += dest_list[
-                                                                                0:dest_list.index(dest_square)
-                                                                        ] 
-                                                                        print("Truncating to: ", dest_list)
-                                                                if dest_square in TrackPieces.WHITE_POSITIONS:
-                                                                        print(square, self.linked_map[square][1])
-                                                                        print(dest_list, "Blocked By Opponent At:", dest_square)
-                                                                        board_take_dests[dest.square] += dest_list[
-                                                                                0:dest_list.index(dest_square)+1
-                                                                        ]
-                                                                        print("Truncating to: ", dest_list) 
+                truncated_board_dests = {}
 
-
-
+                for square in TrackPieces.WHITE_POSITIONS + TrackPieces.BLACK_POSITIONS:
+                        dest_lists = valid_board_dests[square]
+                        truncated_board_dests[square] = dest_lists # initialising the list for that square to contain the dest lists.
+                        for dest_list in truncated_board_dests[square]:
+                                for dest_square in dest_list:
+                                        if dest_square in TrackPieces.WHITE_POSITIONS + TrackPieces.BLACK_POSITIONS:
+                                                # if its a white or black move, compare the square to pieces of
+                                                # the same and opposite colours and truncate accordingly.
+                                                if square in TrackPieces.WHITE_POSITIONS:                            # even though each turn
+                                                        # if same colour truncate from incl that square.             # one side's pieces haven't moved their
+                                                        if dest_square in TrackPieces.WHITE_POSITIONS:               # range/dests may be changed by
+                                                                print(square, self.linked_map[square][1])            # movement of the opponent's piece.
+                                                                print(dest_list, "Blocked At:", dest_square)
+                                                                del dest_list[dest_list.index(dest_square):]
+                                                                print("Truncating to: ", dest_list)
+                                                        # if opposite colour truncate after that square.
+                                                        if dest_square in TrackPieces.BLACK_POSITIONS:
+                                                                print(square, self.linked_map[square][1])
+                                                                print(dest_list, "Blocked By Opponent At:", dest_square)
+                                                                del dest_list[dest_list.index(dest_square)+1:]
+                                                                print("Truncating to: ", dest_list)
+                                                if square in TrackPieces.BLACK_POSITIONS:
+                                                        if dest_square in TrackPieces.BLACK_POSITIONS:
+                                                                print(square, self.linked_map[square][1])
+                                                                print(dest_list, "Blocked At:", dest_square)
+                                                                del dest_list[dest_list.index(dest_square):]
+                                                                print("Truncating to: ", dest_list)
+                                                        if dest_square in TrackPieces.WHITE_POSITIONS:
+                                                                print(square, self.linked_map[square][1])
+                                                                print(dest_list, "Blocked By Opponent At:", dest_square)
+                                                                del dest_list[dest_list.index(dest_square)+1:]
+                                                                print("Truncating to: ", dest_list)
+                return truncated_board_dests
 
         def _get_valid_pawn_dests(self, squares_map):
                 # This returns lists of pawn dests - specifically in one direction
@@ -802,7 +830,9 @@ class Controller:
        
         def __init__(self):
                 self.board = ChessBoard()
-                self.callibrate = PieceMoveRanges()
+                self.callibrate = PieceMoveRanges(
+                        self.board.linked_map
+                )
                 self.rotate = RotateBoard180(
                         self.board.linked_map
                 )
@@ -902,13 +932,16 @@ import time
 start = time.time()
 
 player = Controller()
+
+player.callibrate._generate_board_dests()
 player.move("d5", "e5")
-player.move("h8", "h7")
-player.move("e5", "f5")
-player.move("h7", "h6")
-player.move("f5", "g5")
-player.move("h6", "g5")
-player.move("c5", "c6")
+
+# player.move("h8", "h7")
+# player.move("e5", "f5")
+# player.move("h7", "h6")
+# player.move("f5", "g5")
+# player.move("h6", "g5")
+# player.move("c5", "c6")
 
 end = time.time()
 
