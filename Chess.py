@@ -439,7 +439,6 @@ class MoveRook(MovePawn):
                 self.linked_map[self.start_pos].pop() ############
                 self.linked_map[self.end_pos].append(piece) ######
 
-
         def _validate_move(self):
                 valid_dest = self._get_valid_dest()
                 for dest_list in valid_dest:
@@ -660,16 +659,27 @@ class PieceMoveRanges:
 
                         if piece == "p":
                                 # use up or down direction for pawns depending on the piece's colour.
+                                # creating copies of the dictionary entries so that the originals are not changed.
                                 if square in TrackPieces.WHITE_POSITIONS:
-                                        valid_board_dests[square] = PieceMoveRanges.VALID_PAWN_DESTS_UP[square]
-                                        valid_board_take_dests[square] = PieceMoveRanges.VALID_PAWN_TAKE_DESTS_UP[square]
-                                if square in TrackPieces.BLACK_POSITIONS:
-                                        valid_board_dests[square] = PieceMoveRanges.VALID_PAWN_DESTS_DOWN[square]
-                                        valid_board_take_dests[square] = PieceMoveRanges.VALID_PAWN_TAKE_DESTS_DOWN[square]
-                        if piece == "r":
-                                valid_board_dests[square] = PieceMoveRanges.VALID_ROOK_DESTS[square]
-                                valid_board_take_dests[square] = PieceMoveRanges.VALID_ROOK_DESTS[square]
+                                        valid_board_dests[square] = [[dest_square for dest_square in dest_list] 
+                                                                      for dest_list in PieceMoveRanges.VALID_PAWN_DESTS_UP[square]]
 
+                                        valid_board_take_dests[square] = [[dest_square for dest_square in dest_list] 
+                                                                           for dest_list in PieceMoveRanges.VALID_PAWN_TAKE_DESTS_UP[square]]   
+                                if square in TrackPieces.BLACK_POSITIONS:                                                                     
+                                        
+                                        valid_board_dests[square] = [[dest_square for dest_square in dest_list]
+                                                                      for dest_list in PieceMoveRanges.VALID_PAWN_DESTS_DOWN[square]]
+                                        
+                                        valid_board_take_dests[square] = [[dest_square for dest_square in dest_list]
+                                                                           for dest_list in PieceMoveRanges.VALID_PAWN_TAKE_DESTS_DOWN[square]]
+                        if piece == "r":
+                                valid_board_dests[square] = [[dest_square for dest_square in dest_list]
+                                                              for dest_list in PieceMoveRanges.VALID_ROOK_DESTS[square]]
+                                
+                                valid_board_take_dests[square] = [[dest_square for dest_square in dest_list]
+                                                                   for dest_list in PieceMoveRanges.VALID_ROOK_DESTS[square]]
+                                                                   
                 return (valid_board_dests, valid_board_take_dests)
         
         # Needs further testing.
@@ -926,7 +936,7 @@ class Controller:
 
                 self._initial_black_positions = []
                 self._black_pawns = SetPawn(
-                        self.board.linked_map, "h8", "c6"
+                        self.board.linked_map, "h8"#, "c6"
                         # self.board.linked_map, "a7", "b7",
                         #                        "c7", "d7",
                         #                        "e7", "f7",
@@ -935,6 +945,8 @@ class Controller:
                 self._initial_black_positions += self._black_pawns.position_list
 
         def move(self, start_pos, end_pos):
+                
+                self.callibrate() ###
                 
                 if not self.track.validate_colour_move(start_pos):
                     raise ValueError("Not Your Turn/Invalid Move")
@@ -976,6 +988,7 @@ class Controller:
        
         def _display_board(self):
                 self.track()
+                self.callibrate() ###
                 self.board()
        
         def _refresh_board(self):
@@ -990,14 +1003,13 @@ start = time.time()
 
 player = Controller()
 
-player.callibrate._generate_board_dests()
 player.move("d5", "e5")
-# player.move("h8", "h7")
-# player.move("e5", "f5")
-# player.move("h7", "h6")
-# player.move("f5", "g5")
-# player.move("h6", "g5")
-# player.move("c5", "c6")
+player.move("h8", "h7")
+player.move("e5", "f5")
+player.move("h7", "h6")
+player.move("f5", "g5")
+player.move("h6", "g5")
+player.move("c5", "c6")
 
 end = time.time()
 
