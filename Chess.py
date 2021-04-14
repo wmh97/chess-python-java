@@ -292,8 +292,7 @@ class SetKing(SetChessPieces):
         def __init__(self, linked_map, position):
                 super().__init__(linked_map, position)
                
-        def _set_position(self, position,
-                                piece="K"):
+        def _set_position(self, position, piece="K"):
                 super()._set_position(position, piece)
 
 class SetQueen(SetChessPieces):
@@ -301,8 +300,7 @@ class SetQueen(SetChessPieces):
         def __init__(self, linked_map, position):
                 super().__init__(linked_map, position)
                
-        def _set_position(self, position,
-                                piece="Q"):
+        def _set_position(self, position, piece="Q"):
                 super()._set_position(position, piece)
                
 
@@ -311,8 +309,7 @@ class SetBishop(SetChessPieces):
         def __init__(self, linked_map, position):
                 super().__init__(linked_map, position)
                
-        def _set_position(self, position,
-                                piece="b"):
+        def _set_position(self, position, piece="b"):
                 super()._set_position(position, piece)
 
 
@@ -321,8 +318,7 @@ class SetKnight(SetChessPieces):
         def __init__(self, linked_map, position):
                 super().__init__(linked_map, position)
                
-        def _set_position(self, position,
-                                piece="k"):
+        def _set_position(self, position, piece="k"):
                 super()._set_position(position, piece)
                
 
@@ -331,8 +327,7 @@ class SetRook(SetChessPieces):
         def __init__(self, linked_map, position):
                 super().__init__(linked_map, position)
                
-        def _set_position(self, position,
-                                piece="r"):
+        def _set_position(self, position, piece="r"):
                 super()._set_position(position, piece)
                
 
@@ -346,8 +341,7 @@ class SetPawn(SetChessPieces):
                         for position in positions:
                                 self.position = position
                        
-        def _set_position(self, position,
-                                piece="p"):
+        def _set_position(self, position, piece="p"):
                 super()._set_position(position, piece)
 
 
@@ -423,6 +417,7 @@ class MovePawn(MovePiece):
 
         def _get_valid_dest(self):
                 valid_dest = PieceMoveRanges.VALID_PAWN_DESTS[self.start_pos]
+                #valid_dest = PieceMoveRanges.TRUNCATED_BOARD_DESTS[self.start_pos]
                 return valid_dest
 
 
@@ -610,6 +605,9 @@ class PieceMoveRanges:
         VALID_PAWN_TAKE_DESTS_DOWN = {}
 
         VALID_ROOK_DESTS = {}
+
+        TRUNCATED_BOARD_DESTS = {}
+        TRUNCATED_BOARD_TAKE_DESTS = {}
         
         def __init__(self, linked_map):
                 self.linked_map = linked_map
@@ -629,21 +627,27 @@ class PieceMoveRanges:
                 )
 
                 PieceMoveRanges.VALID_ROOK_DESTS = self._get_valid_rook_dests()
-
-                ###self._generate_board_dests()
+        
+        def __call__(self): # not yet used - needs testing first.
+                self._generate_board_dests()
 
         def _generate_board_dests(self):
+                PieceMoveRanges.TRUNCATED_BOARD_DESTS = {}
+                PieceMoveRanges.TRUNCATED_BOARD_TAKE_DESTS = {} # May not be necessart to reset these - need to test.
+                
                 valid_board_dests, valid_board_take_dests = self._get_board_dests_per_turn()
-                truncated_board_dests = self._get_truncated_board_dests_per_turn(
+                PieceMoveRanges.TRUNCATED_BOARD_DESTS = self._get_truncated_board_dests_per_turn(
                         valid_board_dests
                 )
-                truncated_board_take_dests = self._get_truncated_board_dests_per_turn(
+
+                PieceMoveRanges.TRUNCATED_BOARD_TAKE_DESTS = self._get_truncated_board_take_dests_per_turn(
                         valid_board_take_dests
                 )
+
                 print("Truncated Move Dests:")
-                print(truncated_board_dests)
+                print(PieceMoveRanges.TRUNCATED_BOARD_DESTS)
                 print("Truncated Take Dests:")
-                print(truncated_board_take_dests)
+                print(PieceMoveRanges.TRUNCATED_BOARD_TAKE_DESTS)
  
         def _get_board_dests_per_turn(self):
                 # get valid move destinations for all pieces on the board, without truncation.
@@ -668,7 +672,48 @@ class PieceMoveRanges:
 
                 return (valid_board_dests, valid_board_take_dests)
         
-        
+        # Needs further testing.
+        def _get_truncated_board_take_dests_per_turn(self, valid_board_take_dests):
+
+                # need to add condition below for different truncation
+                # for knights.
+                truncated_board_take_dests = {}
+
+                for square in TrackPieces.WHITE_POSITIONS + TrackPieces.BLACK_POSITIONS:
+                        
+                        dest_lists = valid_board_take_dests[square]
+                        truncated_board_take_dests[square] = dest_lists
+                        
+                        # only the pawn take destinations will differ between the move dests
+                        # and the take dests.
+                        if self.linked_map[square][1] == "p":
+                                for dest_list in truncated_board_take_dests[square]:
+                                        for dest_square in dest_list:
+                                                if dest_square in TrackPieces.WHITE_POSITIONS + TrackPieces.BLACK_POSITIONS:
+                                                        if square in TrackPieces.WHITE_POSITIONS:                            
+                                                                if dest_square in TrackPieces.WHITE_POSITIONS:               
+                                                                        print(square, self.linked_map[square][1])            
+                                                                        print(dest_list, "Blocked At:", dest_square)
+                                                                        del dest_list[dest_list.index(dest_square):]
+                                                                        print("Truncating to: ", dest_list)
+                                                                if dest_square in TrackPieces.BLACK_POSITIONS:
+                                                                        print(square, self.linked_map[square][1])
+                                                                        print(dest_list, "Blocked By Opponent At:", dest_square)
+                                                                        del dest_list[dest_list.index(dest_square)+1:]
+                                                                        print("Truncating to: ", dest_list)
+                                                        if square in TrackPieces.BLACK_POSITIONS:
+                                                                if dest_square in TrackPieces.BLACK_POSITIONS:
+                                                                        print(square, self.linked_map[square][1])
+                                                                        print(dest_list, "Blocked At:", dest_square)
+                                                                        del dest_list[dest_list.index(dest_square):]
+                                                                        print("Truncating to: ", dest_list)
+                                                                if dest_square in TrackPieces.WHITE_POSITIONS:
+                                                                        print(square, self.linked_map[square][1])
+                                                                        print(dest_list, "Blocked By Opponent At:", dest_square)
+                                                                        del dest_list[dest_list.index(dest_square)+1:]
+                                                                        print("Truncating to: ", dest_list)
+                return truncated_board_take_dests
+
         # get take dests/ranges for all pieces on the board.
         # *** not currently implemented ***
         def _get_truncated_board_dests_per_turn(self, valid_board_dests):
@@ -697,7 +742,12 @@ class PieceMoveRanges:
                                                         if dest_square in TrackPieces.BLACK_POSITIONS:
                                                                 print(square, self.linked_map[square][1])
                                                                 print(dest_list, "Blocked By Opponent At:", dest_square)
-                                                                del dest_list[dest_list.index(dest_square)+1:]
+                                                                
+                                                                if self.linked_map[square][1] == "p":                  # if the current piece is a pawn then 
+                                                                        del dest_list[dest_list.index(dest_square):]   # an opponent piece will block it too 
+                                                                else:                                                  # as it can't take forward.
+                                                                        del dest_list[dest_list.index(dest_square)+1:]       
+                                                                
                                                                 print("Truncating to: ", dest_list)
                                                 if square in TrackPieces.BLACK_POSITIONS:
                                                         if dest_square in TrackPieces.BLACK_POSITIONS:
@@ -708,9 +758,16 @@ class PieceMoveRanges:
                                                         if dest_square in TrackPieces.WHITE_POSITIONS:
                                                                 print(square, self.linked_map[square][1])
                                                                 print(dest_list, "Blocked By Opponent At:", dest_square)
-                                                                del dest_list[dest_list.index(dest_square)+1:]
+
+                                                                if self.linked_map[square][1] == "p":                  # if the current piece is a pawn then 
+                                                                        del dest_list[dest_list.index(dest_square):]   # an opponent piece will block it too 
+                                                                else:                                                  # as it can't take forward.
+                                                                        del dest_list[dest_list.index(dest_square)+1:]
+        
                                                                 print("Truncating to: ", dest_list)
                 return truncated_board_dests
+
+
 
         def _get_valid_pawn_dests(self, squares_map):
                 # This returns lists of pawn dests - specifically in one direction
@@ -853,7 +910,7 @@ class Controller:
                 self._initial_white_positions = [] 
                 self._white_pawns = SetPawn(
                         self.board.linked_map, "d8", "h5",
-                                               "d3", "c5"
+                                               "d3", "c5",
                         # self.board.linked_map, "a2", "b2",
                         #                        "c2", "d2",
                         #                        "e2", "f2",
@@ -869,7 +926,7 @@ class Controller:
 
                 self._initial_black_positions = []
                 self._black_pawns = SetPawn(
-                        self.board.linked_map, "h8"
+                        self.board.linked_map, "h8", "c6"
                         # self.board.linked_map, "a7", "b7",
                         #                        "c7", "d7",
                         #                        "e7", "f7",
@@ -885,14 +942,14 @@ class Controller:
                 piece = self.board.linked_map[start_pos][-1]
                 if piece == "p":
                         
-                        if not self.track.query_take(end_pos):
+                        if not self.track.query_take(end_pos): 
                             move = MovePawn(
                                     self.board.linked_map,
                                     start_pos,
                                     end_pos
                             )
-                        else:
-                            #raise ValueError("Potential Take")
+                        else: # use take if end pos is in the list of positions
+                              # for the opposite colour.
                             take = PawnTake(
                                 self.board.linked_map,
                                 start_pos,
@@ -935,7 +992,6 @@ player = Controller()
 
 player.callibrate._generate_board_dests()
 player.move("d5", "e5")
-
 # player.move("h8", "h7")
 # player.move("e5", "f5")
 # player.move("h7", "h6")
