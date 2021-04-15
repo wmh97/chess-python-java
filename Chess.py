@@ -452,23 +452,6 @@ class MoveRook(MovePawn):
                 # valid_dest = self._truncate_dest_list(valid_dest)
                 return valid_dest
 
-        # def _truncate_dest_list(self, valid_dest_lists):
-        #         # truncates the dest list if there is a piece blocking it.
-        #         for dest_list in valid_dest_lists:
-        #                 for square in dest_list:
-        #                         if len(self.linked_map[square]) == 2:
-        #                                 print(dest_list, "Blocked At:", square)
-        #                                 del dest_list[dest_list.index(square):]
-        #                                 print("Truncating to: ", dest_list)
-                
-        #         up, down, left, right = valid_dest_lists
-        #         print("Valid Rook Dests Up: ", up)
-        #         print("Valid Rook Dests Down: ", down)
-        #         print("Valid Rook Dests Left: ", left)
-        #         print("Valid Rook Dests Right: ", right)
-                
-        #         return valid_dest_lists
-
 
 class PawnTake(MovePawn):
     # if target square in take range...
@@ -479,7 +462,7 @@ class PawnTake(MovePawn):
     def _execute_move(self, piece="p"):
             if self._validate_move():
                     self.linked_map[self.end_pos].pop()
-                    super(MovePawn, self)._execute_move(piece="p") # Trimming the MRO so we use the code from MovePiece
+                    super(MovePawn, self)._execute_move(piece) # Trimming the MRO so we use the code from MovePiece
 
     def _end_pos(self, end_pos):
         if self._validate_position(end_pos):
@@ -498,8 +481,14 @@ class PawnTake(MovePawn):
             valid_dest = PieceMoveRanges.TRUNCATED_BOARD_TAKE_DESTS[self.start_pos]
             return valid_dest
 
-# class RookTake(PawnTake):
-#         def __init__(self,)
+
+class RookTake(PawnTake):
+        
+        def __init__(self, linked_map, start_pos, end_pos):
+                super().__init__(linked_map, start_pos, end_pos)
+
+        def _execute_move(self, piece="r"):
+                super()._execute_move(piece)
 
 
 class TrackPieces:
@@ -643,6 +632,7 @@ class PieceMoveRanges:
                 )
 
                 PieceMoveRanges.TRUNCATED_BOARD_TAKE_DESTS = self._get_truncated_board_take_dests_per_turn(
+                        valid_board_dests, # when this gets here it has been truncated by the previous call.
                         valid_board_take_dests
                 )
 
@@ -686,7 +676,8 @@ class PieceMoveRanges:
                 return (valid_board_dests, valid_board_take_dests)
         
         # Needs further testing.
-        def _get_truncated_board_take_dests_per_turn(self, valid_board_take_dests):
+        def _get_truncated_board_take_dests_per_turn(self, truncated_board_dests,
+                                                           valid_board_take_dests):
 
                 # need to add condition below for different truncation
                 # for knights.
@@ -694,12 +685,11 @@ class PieceMoveRanges:
 
                 for square in TrackPieces.WHITE_POSITIONS + TrackPieces.BLACK_POSITIONS:
                         
-                        dest_lists = valid_board_take_dests[square]
-                        truncated_board_take_dests[square] = dest_lists
-                        
-                        # only the pawn take destinations will differ between the move dests
-                        # and the take dests.
+                        # only the pawn take destinations will differ between the truncated move dests
+                        # and the truncated take dests.
                         if self.linked_map[square][1] == "p":
+                                dest_lists = valid_board_take_dests[square]
+                                truncated_board_take_dests[square] = dest_lists
                                 for dest_list in truncated_board_take_dests[square]:
                                         for dest_square in dest_list:
                                                 if dest_square in TrackPieces.WHITE_POSITIONS + TrackPieces.BLACK_POSITIONS:
@@ -725,6 +715,10 @@ class PieceMoveRanges:
                                                                         print(dest_list, "Blocked By Opponent At:", dest_square)
                                                                         del dest_list[dest_list.index(dest_square)+1:]
                                                                         print("Truncating to: ", dest_list)
+                        else: # for pieces other than pawns, take the truncated lists from the
+                              # truncated dest lists directly.
+                                dest_lists = truncated_board_dests[square]
+                                truncated_board_take_dests[square] = dest_lists                         
                 return truncated_board_take_dests
 
         # get take dests/ranges for all pieces on the board.
@@ -976,11 +970,20 @@ class Controller:
 
                 if piece == "r":
 
-                        move = MoveRook(
-                                self.board.linked_map,
-                                start_pos,
-                                end_pos
-                        )
+                        if not self.track.query_take(end_pos):
+                                move = MoveRook(
+                                        self.board.linked_map,
+                                        start_pos,
+                                        end_pos
+                                )
+                        else: # use take if end pos is in the list of positions
+                              # for the opposite colour.
+                                take = RookTake(
+                                        self.board.linked_map,
+                                        start_pos,
+                                        end_pos
+                                )
+                                self.track.update_take(end_pos, take.piece_taken)
                         
                         self.track.update_colour_position(start_pos, end_pos)
                         self._refresh_board()                        
@@ -1044,6 +1047,7 @@ player.move("h7", "h6")
 player.move("f5", "g5")
 player.move("h6", "g5")
 player.move("c5", "c6")
+player.add("br", "h6")
 
 end = time.time()
 
