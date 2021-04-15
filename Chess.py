@@ -89,7 +89,7 @@ class AlternatingBoard(Board):
        
         def _generate_forward_row(self, length):
                 return self._generate_row(length,
-                                          "+", "-")   # "+" = white, "-" = black
+                                          "+", "-")   # "X" = white, "O" = black
        
         def _generate_reverse_row(self, length):
                 return self._generate_row(length,
@@ -136,6 +136,7 @@ class ChessBoard(AlternatingBoard):
         def __call__(self):
                 #self._print_chess_squares()
                 self._render_board()
+                self._render_board_with_colour()
        
         def _link_squares_map(self):
                
@@ -181,6 +182,62 @@ class ChessBoard(AlternatingBoard):
                         else:
                                 board_row.append(value[-1])
                                 print(rank_numbers[rank_index]+"|", " ".join(board_row), "|"+rank_numbers[rank_index])
+                                board_row.clear()
+                                counter = 0
+                                rank_index += 1    
+                
+                print(horizontal_border)
+                print()
+
+        def _render_board_with_colour(self):
+                
+                file_letters = []
+                rank_numbers = []
+                for square in next(iter(ChessBoard.squares_map)):
+                        file_letters.append(
+                                square[0]
+                        )
+                for rank in ChessBoard.squares_map:
+                        rank_numbers.append(
+                                rank[0][1]
+                        )
+
+                horizontal_border = '{:>33}'.format("   ".join(file_letters)) 
+                print(horizontal_border)
+
+                counter = 0
+                rank_index = 0
+                board_row = []
+                top_edge_printed = False
+                for key, value in self.linked_map.items():
+                        if counter < 7:
+                                counter +=1
+
+                                print_square = ""
+                                if key in TrackPieces.WHITE_POSITIONS:
+                                        print_square = ""
+                                        print_square = " " + value[-1] + " "
+                                elif key in TrackPieces.BLACK_POSITIONS:
+                                        print_square = ""
+                                        print_square = "=" + value[-1] + "="
+                                else:
+                                        print_square = " " + value[-1] + " "
+                                board_row.append(print_square)
+
+                        else:
+                                print_square = ""
+                                if key in TrackPieces.WHITE_POSITIONS:
+                                        print_square = ""
+                                        print_square = " " + value[-1] + " "
+                                elif key in TrackPieces.BLACK_POSITIONS:
+                                        print_square = ""
+                                        print_square = "=" + value[-1] + "="
+                                else:
+                                        print_square = " " + value[-1] + " "
+                                board_row.append(print_square)
+                                                                
+                                print(rank_numbers[rank_index]+"|", " ".join(board_row), "|"+rank_numbers[rank_index])
+
                                 board_row.clear()
                                 counter = 0
                                 rank_index += 1    
@@ -1040,14 +1097,14 @@ import time
 start = time.time()
 
 player = Controller()
-player.move("d5", "e5")
-player.move("h8", "h7")
-player.move("e5", "f5")
-player.move("h7", "h6")
-player.move("f5", "g5")
-player.move("h6", "g5")
-player.move("c5", "c6")
-player.add("br", "h6")
+# player.move("d5", "e5")
+# player.move("h8", "h7")
+# player.move("e5", "f5")
+# player.move("h7", "h6")
+# player.move("f5", "g5")
+# player.move("h6", "g5")
+# player.move("c5", "c6")
+# player.add("br", "h6")
 
 end = time.time()
 
