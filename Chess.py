@@ -381,8 +381,16 @@ class SetKnight(SetChessPieces):
 
 class SetRook(SetChessPieces):
        
-        def __init__(self, linked_map, position):
-                super().__init__(linked_map, position)
+        def __init__(self, linked_map, position,
+                                      *positions):
+                super().__init__(linked_map, position,
+                                            *positions)
+                if positions:
+                        for position in positions:
+                                self.position = position
+
+        # def __init__(self, linked_map, position):
+        #         super().__init__(linked_map, position)
                
         def _set_position(self, position, piece="r"):
                 super()._set_position(position, piece)
@@ -482,19 +490,20 @@ class MoveRook(MovePawn):
 
         def __init__(self, linked_map, start_pos,
                                          end_pos):
-                #super().__init__(linked_map, start_pos,
-                #                             end_pos)
+                super().__init__(linked_map, start_pos,
+                                            end_pos)
                 
-                self.linked_map = linked_map   ##### Change this block to super() when ready (with necessary args)
-                self.start_pos = start_pos
-                self.end_pos = end_pos
-                self._validate_move()
-                self._execute_move()
-                MovePiece.MOVE_NUMBER += 1
+                # self.linked_map = linked_map   ##### Change this block to super() when ready (with necessary args)
+                # self.start_pos = start_pos
+                # self.end_pos = end_pos
+                # self._validate_move()
+                # self._execute_move()
+                # MovePiece.MOVE_NUMBER += 1
 
         def _execute_move(self, piece="r"):   #################### change this to super() (with necessary args).
-                self.linked_map[self.start_pos].pop() ############
-                self.linked_map[self.end_pos].append(piece) ######
+                super()._execute_move(piece)
+                # self.linked_map[self.start_pos].pop() ############
+                # self.linked_map[self.end_pos].append(piece) ######
 
         def _validate_move(self):
                 valid_dest = self._get_valid_dest()
@@ -508,6 +517,19 @@ class MoveRook(MovePawn):
                 valid_dest = PieceMoveRanges.TRUNCATED_BOARD_DESTS[self.start_pos]
                 # valid_dest = self._truncate_dest_list(valid_dest)
                 return valid_dest
+
+
+# class MoveRook(MovePawn):
+
+#         def __init__(self, linked_map, start_pos,
+#                                          end_pos):
+#                 super().__init__(linked_map, start_pos,
+#                                             end_pos)
+
+#         def _execute_move(self, piece="k"):
+#                 super()._execute_move(piece)
+
+
 
 
 class PawnTake(MovePawn):
@@ -624,14 +646,9 @@ class TrackPieces:
                 if MovePiece.MOVE_NUMBER % 2 != 0:
                         TrackPieces.BLACK_MOVE = False
                         TrackPieces.WHITE_MOVE = True
-                        # PieceMoveRanges.VALID_PAWN_DESTS = PieceMoveRanges.VALID_PAWN_DESTS_UP
-                        # PieceMoveRanges.VALID_PAWN_TAKE_DESTS = PieceMoveRanges.VALID_PAWN_TAKE_DESTS_UP
-
                         return
                 TrackPieces.WHITE_MOVE = False
                 TrackPieces.BLACK_MOVE = True
-                # PieceMoveRanges.VALID_PAWN_DESTS = PieceMoveRanges.VALID_PAWN_DESTS_DOWN
-                # PieceMoveRanges.VALID_PAWN_TAKE_DESTS = PieceMoveRanges.VALID_PAWN_TAKE_DESTS_DOWN
                 return
                
         def _print_turn(self):
@@ -653,6 +670,7 @@ class PieceMoveRanges:
         VALID_PAWN_TAKE_DESTS_DOWN = {}
 
         VALID_ROOK_DESTS = {}
+        VALID_KNIGHT_DESTS = {}
 
         TRUNCATED_BOARD_DESTS = {}
         TRUNCATED_BOARD_TAKE_DESTS = {}
@@ -675,6 +693,7 @@ class PieceMoveRanges:
                 )
 
                 PieceMoveRanges.VALID_ROOK_DESTS = self._get_valid_rook_dests()
+                # PieceMoveRanges.VALID_KNIGHT_DESTS = self._get_valid_knight_dests()
         
         def __call__(self): # not yet used - needs testing first.
                 self._generate_board_dests()
@@ -946,6 +965,107 @@ class PieceMoveRanges:
                 return valid_rook_dests
 
 
+        def _get_valid_knight_dests(self, test_square):
+
+                valid_knight_dests = {}
+                for down, rank in enumerate(ChessBoard.squares_map):
+                                for right, square in enumerate(rank):
+
+                                        ######### this if statement is just for testing so that we can
+                                        ######### test for one square at a time.
+                                        if square == test_square:
+                                                valid_knight_dests[square] = [ [],  # up-left range
+                                                                        [],  # up-right range
+                                                                        [],  # down-left range
+                                                                        [],  # down-right range
+                                                                        [],  # left-up
+                                                                        [],  # left-down
+                                                                        [],  # right-up
+                                                                        [] ] # right-down
+
+                                                valid_range_vert = 2    # Must be 2 only.
+                                                valid_range_along = 1
+
+                                                # first block is for vertical range greater than horizontal range
+                                                if down > 1:                                        
+                                                        try:    
+                                                                if (right-1) >= 0:
+                                                                        # up-left
+                                                                        valid_knight_dests[square][0].append(
+                                                                                ChessBoard.squares_map
+                                                                                        [down-valid_range_vert][right-valid_range_along]
+                                                                        )
+
+                                                                # up-right
+                                                                valid_knight_dests[square][1].append(
+                                                                        ChessBoard.squares_map
+                                                                                [down-valid_range_vert][right+valid_range_along]
+                                                                )
+
+                                                        except IndexError:
+                                                                pass
+
+                                                if down < (ChessBoard.HEIGHT - 2):
+                                                        try:
+                                                                if (right-1) >= 0:
+                                                                        # down-left
+                                                                        valid_knight_dests[square][2].append(
+                                                                                ChessBoard.squares_map
+                                                                                        [down+valid_range_vert][right-valid_range_along]
+                                                                        )
+                                                                # down-right
+                                                                valid_knight_dests[square][3].append(
+                                                                        ChessBoard.squares_map
+                                                                                [down+valid_range_vert][right+valid_range_along]
+                                                                )
+                                                        except IndexError:
+                                                                pass                                                     
+                                                
+                                                
+                                                
+                                                # second block is for horizontal range greater than vertical range.
+                                                valid_range_along = 2
+                                                valid_range_vert = 1
+
+                                                # for along-up directions
+                                                if down > 0:
+                                                        try:
+                                                                if (right-2) >=0:
+                                                                        # left-up
+                                                                        valid_knight_dests[square][4].append(
+                                                                                ChessBoard.squares_map
+                                                                                        [down-valid_range_vert][right-valid_range_along]
+                                                                        )
+                                                                # right-up
+                                                                valid_knight_dests[square][6].append(
+                                                                        ChessBoard.squares_map
+                                                                                [down-valid_range_vert][right+valid_range_along]
+                                                                )
+                                                        except IndexError:
+                                                                pass
+
+                                                # for along-down directions
+                                                if down < (ChessBoard.HEIGHT - 1):
+                                                        try:
+                                                                if (right-2) >= 0:
+                                                                        # left-down
+                                                                        valid_knight_dests[square][5].append(
+                                                                                ChessBoard.squares_map
+                                                                                        [down+valid_range_vert][right-valid_range_along]
+                                                                        )                                                        
+                                                                # right-down
+                                                                valid_knight_dests[square][7].append(
+                                                                        ChessBoard.squares_map
+                                                                                [down+valid_range_vert][right+valid_range_along]
+                                                                )
+                                                        except IndexError:
+                                                                pass
+                print("Valid Knight Dests:")
+                for square, dests in valid_knight_dests.items():
+                        print(square, dests)
+                return valid_knight_dests
+
+
 class Controller:
        
         def __init__(self):
@@ -1078,7 +1198,8 @@ class Controller:
                                                          *positions )                                             
                 if piece == "r":
                         new_piece = SetRook( self.board.linked_map,
-                                                          position ) # rook not currently accepting *args
+                                                          position,
+                                                         *positions ) # rook not currently accepting *args
                 self._display_board()
        
         def _display_board(self):
@@ -1097,13 +1218,13 @@ import time
 start = time.time()
 
 player = Controller()
-# player.move("d5", "e5")
-# player.move("h8", "h7")
-# player.move("e5", "f5")
-# player.move("h7", "h6")
-# player.move("f5", "g5")
-# player.move("h6", "g5")
-# player.move("c5", "c6")
+player.move("d5", "e5")
+player.move("h8", "h7")
+player.move("e5", "f5")
+player.move("h7", "h6")
+player.move("f5", "g5")
+player.move("h6", "g5")
+player.move("c5", "c6")
 # player.add("br", "h6")
 
 end = time.time()
