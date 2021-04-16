@@ -216,10 +216,10 @@ class ChessBoard(AlternatingBoard):
                                 print_square = ""
                                 if key in TrackPieces.WHITE_POSITIONS:
                                         print_square = ""
-                                        print_square = " " + value[-1] + " "
+                                        print_square = "(" + value[-1] + ")"
                                 elif key in TrackPieces.BLACK_POSITIONS:
                                         print_square = ""
-                                        print_square = "=" + value[-1] + "="
+                                        print_square = "[" + value[-1] + "]"
                                 else:
                                         print_square = " " + value[-1] + " "
                                 board_row.append(print_square)
@@ -228,10 +228,10 @@ class ChessBoard(AlternatingBoard):
                                 print_square = ""
                                 if key in TrackPieces.WHITE_POSITIONS:
                                         print_square = ""
-                                        print_square = " " + value[-1] + " "
+                                        print_square = "(" + value[-1] + ")"
                                 elif key in TrackPieces.BLACK_POSITIONS:
                                         print_square = ""
-                                        print_square = "=" + value[-1] + "="
+                                        print_square = "[" + value[-1] + "]"
                                 else:
                                         print_square = " " + value[-1] + " "
                                 board_row.append(print_square)
@@ -363,8 +363,13 @@ class SetQueen(SetChessPieces):
 
 class SetBishop(SetChessPieces):
        
-        def __init__(self, linked_map, position):
-                super().__init__(linked_map, position)
+        def __init__(self, linked_map, position,
+                                      *positions):
+                super().__init__(linked_map, position,
+                                            *positions)
+                if positions:
+                        for position in positions:
+                                self.position = position
                
         def _set_position(self, position, piece="b"):
                 super()._set_position(position, piece)
@@ -494,18 +499,32 @@ class MoveRook(MovePawn):
                                          end_pos):
                 super().__init__(linked_map, start_pos,
                                             end_pos)
-                
-                # self.linked_map = linked_map   ##### Change this block to super() when ready (with necessary args)
-                # self.start_pos = start_pos
-                # self.end_pos = end_pos
-                # self._validate_move()
-                # self._execute_move()
-                # MovePiece.MOVE_NUMBER += 1
 
-        def _execute_move(self, piece="r"):   #################### change this to super() (with necessary args).
+        def _execute_move(self, piece="r"):
                 super()._execute_move(piece)
-                # self.linked_map[self.start_pos].pop() ############
-                # self.linked_map[self.end_pos].append(piece) ######
+
+        def _validate_move(self):
+                valid_dest = self._get_valid_dest()
+                for dest_list in valid_dest:
+                        if self.end_pos in dest_list:
+                                return True
+                raise ValueError("Invalid Move")
+                return False
+
+        def _get_valid_dest(self):
+                valid_dest = PieceMoveRanges.TRUNCATED_BOARD_DESTS[self.start_pos]
+                return valid_dest
+
+
+class MoveKnight(MovePawn):
+
+        def __init__(self, linked_map, start_pos,
+                                         end_pos):
+                super().__init__(linked_map, start_pos,
+                                            end_pos)
+
+        def _execute_move(self, piece="k"):
+                super()._execute_move(piece)
 
         def _validate_move(self):
                 valid_dest = self._get_valid_dest()
@@ -521,14 +540,14 @@ class MoveRook(MovePawn):
                 return valid_dest
 
 
-class MoveKnight(MovePawn):
+class MoveBishop(MovePawn):
 
         def __init__(self, linked_map, start_pos,
                                          end_pos):
                 super().__init__(linked_map, start_pos,
                                             end_pos)
 
-        def _execute_move(self, piece="k"):
+        def _execute_move(self, piece="b"):
                 super()._execute_move(piece)
 
         def _validate_move(self):
@@ -589,6 +608,15 @@ class KnightTake(PawnTake):
                 super().__init__(linked_map, start_pos, end_pos)
 
         def _execute_move(self, piece="k"):
+                super()._execute_move(piece)
+
+
+class BishopTake(PawnTake):
+        
+        def __init__(self, linked_map, start_pos, end_pos):
+                super().__init__(linked_map, start_pos, end_pos)
+
+        def _execute_move(self, piece="b"):
                 super()._execute_move(piece)
 
 
@@ -716,7 +744,9 @@ class PieceMoveRanges:
 
                 PieceMoveRanges.VALID_ROOK_DESTS = self._get_valid_rook_dests()
                 PieceMoveRanges.VALID_KNIGHT_DESTS = self._get_valid_knight_dests()
-        
+                PieceMoveRanges.VALID_BISHOP_DESTS = self._get_valid_bishop_dests()        
+
+
         def __call__(self): # not yet used - needs testing first.
                 self._generate_board_dests()
 
@@ -777,6 +807,13 @@ class PieceMoveRanges:
                                 
                                 valid_board_take_dests[square] = [[dest_square for dest_square in dest_list]
                                                                    for dest_list in PieceMoveRanges.VALID_KNIGHT_DESTS[square]]
+
+                        if piece == "b":
+                                valid_board_dests[square] = [[dest_square for dest_square in dest_list]
+                                                              for dest_list in PieceMoveRanges.VALID_BISHOP_DESTS[square]]
+                                
+                                valid_board_take_dests[square] = [[dest_square for dest_square in dest_list]
+                                                                   for dest_list in PieceMoveRanges.VALID_BISHOP_DESTS[square]]
 
                 return (valid_board_dests, valid_board_take_dests)
         
@@ -1089,65 +1126,64 @@ class PieceMoveRanges:
                         print(square, dests)
                 return valid_knight_dests
 
-        def _get_valid_bishop_dests(self, test_square):
+        def _get_valid_bishop_dests(self):
 
                 valid_bishop_dests = {}
 
                 for down, rank in enumerate(ChessBoard.squares_map):
                                 for right, square in enumerate(rank):
-                                        
-                                        if square == test_square:
-                                                valid_bishop_dests[square] = [ [],  # up-left range
-                                                                               [],  # up-right range
-                                                                               [],  # down-left range
-                                                                               [] ] # down-right range
+                            
+                                        valid_bishop_dests[square] = [ [],  # up-left range
+                                                                       [],  # up-right range
+                                                                       [],  # down-left range
+                                                                       [] ] # down-right range
 
-                                                valid_range_up = ChessBoard.HEIGHT - int(square[1])
-                                                valid_range_down = ( (ChessBoard.HEIGHT - 1) 
-                                                                     - (ChessBoard.HEIGHT - int(square[1])) )
+                                        valid_range_up = ChessBoard.HEIGHT - int(square[1])
+                                        valid_range_down = ( (ChessBoard.HEIGHT - 1) 
+                                                                - (ChessBoard.HEIGHT - int(square[1])) )
 
-                                                valid_range_left = 0
-                                                valid_range_right = ChessBoard.WIDTH - 1
-                                                for position in ChessBoard.squares_map[valid_range_up]:
-                                                        if position == square:
-                                                                break
-                                                        valid_range_left += 1
-                                                        valid_range_right -= 1
+                                        valid_range_left = 0
+                                        valid_range_right = ChessBoard.WIDTH - 1
+                                        for position in ChessBoard.squares_map[valid_range_up]:
+                                                if position == square:
+                                                        break
+                                                valid_range_left += 1
+                                                valid_range_right -= 1
 
-                                                valid_range_up_left = Board._board_range(
-                                                        min(valid_range_up, valid_range_left)
+                                        valid_range_up_left = Board._board_range(
+                                                min(valid_range_up, valid_range_left)
+                                        )
+                                        valid_range_up_right = Board._board_range(
+                                                min(valid_range_up, valid_range_right)
+                                        )
+
+                                        valid_range_down_left = Board._board_range(
+                                                min(valid_range_down, valid_range_left)
+                                        )
+                                        valid_range_down_right = Board._board_range(
+                                                min(valid_range_down, valid_range_right)
+                                        )
+
+                                        for range in valid_range_up_left:
+                                                valid_bishop_dests[square][0].append(
+                                                        ChessBoard.squares_map
+                                                                [down-range][right-range]
+                                                ) 
+                                        for range in valid_range_up_right:
+                                                valid_bishop_dests[square][1].append(
+                                                        ChessBoard.squares_map
+                                                                [down-range][right+range]
                                                 )
-                                                valid_range_up_right = Board._board_range(
-                                                        min(valid_range_up, valid_range_right)
+                                        for range in valid_range_down_left:
+                                                valid_bishop_dests[square][2].append(
+                                                        ChessBoard.squares_map
+                                                                [down+range][right-range]
                                                 )
-
-                                                valid_range_down_left = Board._board_range(
-                                                        min(valid_range_down, valid_range_left)
+                                        for range in valid_range_down_right:
+                                                valid_bishop_dests[square][3].append(
+                                                        ChessBoard.squares_map
+                                                                [down+range][right+range]
                                                 )
-                                                valid_range_down_right = Board._board_range(
-                                                        min(valid_range_down, valid_range_right)
-                                                )
-
-                                                for range in valid_range_up_left:
-                                                        valid_bishop_dests[square][0].append(
-                                                                ChessBoard.squares_map
-                                                                        [down-range][right-range]
-                                                        ) 
-                                                for range in valid_range_up_right:
-                                                        valid_bishop_dests[square][1].append(
-                                                                ChessBoard.squares_map
-                                                                        [down-range][right+range]
-                                                        )
-                                                for range in valid_range_down_left:
-                                                        valid_bishop_dests[square][2].append(
-                                                                ChessBoard.squares_map
-                                                                        [down+range][right-range]
-                                                        )
-                                                for range in valid_range_down_right:
-                                                        valid_bishop_dests[square][3].append(
-                                                                ChessBoard.squares_map
-                                                                        [down+range][right+range]
-                                                        )
                 print("Valid Bishop Dests:")
                 for square, dests in valid_bishop_dests.items():
                         print(square, dests)
@@ -1272,6 +1308,25 @@ class Controller:
                         self.track.update_colour_position(start_pos, end_pos)
                         self._refresh_board()        
 
+                if piece == "b":
+                        if not self.track.query_take(end_pos):
+                                move = MoveBishop(
+                                        self.board.linked_map,
+                                        start_pos,
+                                        end_pos
+                                )
+                        else:# use take if end pos is in the list of positions
+                              # for the opposite colour.
+                                take = BishopTake(
+                                        self.board.linked_map,
+                                        start_pos,
+                                        end_pos
+                                )
+                                self.track.update_take(end_pos, take.piece_taken)
+                        
+                        self.track.update_colour_position(start_pos, end_pos)
+                        self._refresh_board() 
+
                 elif piece not in list("rbkQKp"):
                         raise ValueError("No Piece Here")
 
@@ -1306,11 +1361,16 @@ class Controller:
                 if piece == "r":
                         new_piece = SetRook( self.board.linked_map,
                                                           position,
-                                                         *positions ) # rook not currently accepting *args
+                                                         *positions ) 
                 if piece == "k":
                         new_piece = SetKnight( self.board.linked_map,
                                                             position,
                                                            *positions ) 
+
+                if piece == "b":
+                        new_piece = SetBishop( self.board.linked_map,
+                                                            position,
+                                                           *positions )
 
                 self._display_board()
        
