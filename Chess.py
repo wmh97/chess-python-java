@@ -354,8 +354,13 @@ class SetKing(SetChessPieces):
 
 class SetQueen(SetChessPieces):
        
-        def __init__(self, linked_map, position):
-                super().__init__(linked_map, position)
+        def __init__(self, linked_map, position,
+                                      *positions):
+                super().__init__(linked_map, position,
+                                            *positions)
+                if positions:
+                        for position in positions:
+                                self.position = position
                
         def _set_position(self, position, piece="Q"):
                 super()._set_position(position, piece)
@@ -564,6 +569,30 @@ class MoveBishop(MovePawn):
                 return valid_dest
 
 
+class MoveQueen(MovePawn):
+
+        def __init__(self, linked_map, start_pos,
+                                         end_pos):
+                super().__init__(linked_map, start_pos,
+                                            end_pos)
+
+        def _execute_move(self, piece="Q"):
+                super()._execute_move(piece)
+
+        def _validate_move(self):
+                valid_dest = self._get_valid_dest()
+                for dest_list in valid_dest:
+                        if self.end_pos in dest_list:
+                                return True
+                raise ValueError("Invalid Move")
+                return False
+
+        def _get_valid_dest(self):
+                valid_dest = PieceMoveRanges.TRUNCATED_BOARD_DESTS[self.start_pos]
+                # valid_dest = self._truncate_dest_list(valid_dest)
+                return valid_dest
+
+
 class PawnTake(MovePawn):
     # if target square in take range...
     
@@ -617,6 +646,15 @@ class BishopTake(PawnTake):
                 super().__init__(linked_map, start_pos, end_pos)
 
         def _execute_move(self, piece="b"):
+                super()._execute_move(piece)
+
+
+class QueenTake(PawnTake):
+        
+        def __init__(self, linked_map, start_pos, end_pos):
+                super().__init__(linked_map, start_pos, end_pos)
+
+        def _execute_move(self, piece="Q"):
                 super()._execute_move(piece)
 
 
@@ -721,6 +759,8 @@ class PieceMoveRanges:
 
         VALID_ROOK_DESTS = {}
         VALID_KNIGHT_DESTS = {}
+        VALID_BISHOP_DESTS = {}
+        VALID_QUEEN_DESTS = {}
 
         TRUNCATED_BOARD_DESTS = {}
         TRUNCATED_BOARD_TAKE_DESTS = {}
@@ -745,6 +785,11 @@ class PieceMoveRanges:
                 PieceMoveRanges.VALID_ROOK_DESTS = self._get_valid_rook_dests()
                 PieceMoveRanges.VALID_KNIGHT_DESTS = self._get_valid_knight_dests()
                 PieceMoveRanges.VALID_BISHOP_DESTS = self._get_valid_bishop_dests()        
+                
+                PieceMoveRanges.VALID_QUEEN_DESTS = self._get_valid_queen_dests(
+                        PieceMoveRanges.VALID_ROOK_DESTS,
+                        PieceMoveRanges.VALID_BISHOP_DESTS
+                )
 
 
         def __call__(self): # not yet used - needs testing first.
@@ -814,6 +859,13 @@ class PieceMoveRanges:
                                 
                                 valid_board_take_dests[square] = [[dest_square for dest_square in dest_list]
                                                                    for dest_list in PieceMoveRanges.VALID_BISHOP_DESTS[square]]
+
+                        if piece == "Q":
+                                valid_board_dests[square] = [[dest_square for dest_square in dest_list]
+                                                              for dest_list in PieceMoveRanges.VALID_QUEEN_DESTS[square]]
+                                
+                                valid_board_take_dests[square] = [[dest_square for dest_square in dest_list]
+                                                                   for dest_list in PieceMoveRanges.VALID_QUEEN_DESTS[square]]
 
                 return (valid_board_dests, valid_board_take_dests)
         
@@ -1189,6 +1241,21 @@ class PieceMoveRanges:
                         print(square, dests)
                 return valid_bishop_dests
 
+        def _get_valid_queen_dests(self, valid_orthog_dests, valid_diag_dests):
+                # combination of valid_rook_dests and valid_bishop_dests to
+                # make up the valid queen dests.
+
+                # merging the two dictionaries together - without modifying
+                # the dictionaries in-place.
+                valid_queen_dests = {square: dest_lists + valid_diag_dests[square] 
+                                     for square, dest_lists in valid_orthog_dests.items()}
+                
+                print("Valid Queen Dests:")
+                for square, dests in valid_queen_dests.items():
+                        print(square, dests)
+
+                return valid_queen_dests
+
 
 class Controller:
        
@@ -1327,6 +1394,25 @@ class Controller:
                         self.track.update_colour_position(start_pos, end_pos)
                         self._refresh_board() 
 
+                if piece == "Q":
+                        if not self.track.query_take(end_pos):
+                                move = MoveQueen(
+                                        self.board.linked_map,
+                                        start_pos,
+                                        end_pos
+                                )
+                        else:# use take if end pos is in the list of positions
+                              # for the opposite colour.
+                                take = QueenTake(
+                                        self.board.linked_map,
+                                        start_pos,
+                                        end_pos
+                                )
+                                self.track.update_take(end_pos, take.piece_taken)
+                        
+                        self.track.update_colour_position(start_pos, end_pos)
+                        self._refresh_board() 
+
                 elif piece not in list("rbkQKp"):
                         raise ValueError("No Piece Here")
 
@@ -1369,6 +1455,11 @@ class Controller:
 
                 if piece == "b":
                         new_piece = SetBishop( self.board.linked_map,
+                                                            position,
+                                                           *positions )
+
+                if piece == "Q":
+                        new_piece = SetQueen( self.board.linked_map,
                                                             position,
                                                            *positions )
 
