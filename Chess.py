@@ -1000,7 +1000,6 @@ class PieceMoveRanges:
                 for down, rank in enumerate(ChessBoard.squares_map):
                                 for right, square in enumerate(rank):
 
-
                                         valid_knight_dests[square] = [ [],  # up-left range
                                                                        [],  # up-right range
                                                                        [],  # down-left range
@@ -1048,8 +1047,6 @@ class PieceMoveRanges:
                                                 except IndexError:
                                                         pass                                                     
                                         
-                                        
-                                        
                                         # second block is for horizontal range greater than vertical range.
                                         valid_range_along = 2
                                         valid_range_vert = 1
@@ -1091,6 +1088,70 @@ class PieceMoveRanges:
                 for square, dests in valid_knight_dests.items():
                         print(square, dests)
                 return valid_knight_dests
+
+        def _get_valid_bishop_dests(self, test_square):
+
+                valid_bishop_dests = {}
+
+                for down, rank in enumerate(ChessBoard.squares_map):
+                                for right, square in enumerate(rank):
+                                        
+                                        if square == test_square:
+                                                valid_bishop_dests[square] = [ [],  # up-left range
+                                                                               [],  # up-right range
+                                                                               [],  # down-left range
+                                                                               [] ] # down-right range
+
+                                                valid_range_up = ChessBoard.HEIGHT - int(square[1])
+                                                valid_range_down = ( (ChessBoard.HEIGHT - 1) 
+                                                                     - (ChessBoard.HEIGHT - int(square[1])) )
+
+                                                valid_range_left = 0
+                                                valid_range_right = ChessBoard.WIDTH - 1
+                                                for position in ChessBoard.squares_map[valid_range_up]:
+                                                        if position == square:
+                                                                break
+                                                        valid_range_left += 1
+                                                        valid_range_right -= 1
+
+                                                valid_range_up_left = Board._board_range(
+                                                        min(valid_range_up, valid_range_left)
+                                                )
+                                                valid_range_up_right = Board._board_range(
+                                                        min(valid_range_up, valid_range_right)
+                                                )
+
+                                                valid_range_down_left = Board._board_range(
+                                                        min(valid_range_down, valid_range_left)
+                                                )
+                                                valid_range_down_right = Board._board_range(
+                                                        min(valid_range_down, valid_range_right)
+                                                )
+
+                                                for range in valid_range_up_left:
+                                                        valid_bishop_dests[square][0].append(
+                                                                ChessBoard.squares_map
+                                                                        [down-range][right-range]
+                                                        ) 
+                                                for range in valid_range_up_right:
+                                                        valid_bishop_dests[square][1].append(
+                                                                ChessBoard.squares_map
+                                                                        [down-range][right+range]
+                                                        )
+                                                for range in valid_range_down_left:
+                                                        valid_bishop_dests[square][2].append(
+                                                                ChessBoard.squares_map
+                                                                        [down+range][right-range]
+                                                        )
+                                                for range in valid_range_down_right:
+                                                        valid_bishop_dests[square][3].append(
+                                                                ChessBoard.squares_map
+                                                                        [down+range][right+range]
+                                                        )
+                print("Valid Bishop Dests:")
+                for square, dests in valid_bishop_dests.items():
+                        print(square, dests)
+                return valid_bishop_dests
 
 
 class Controller:
@@ -1277,9 +1338,9 @@ player = Controller()
 # player.move("h6", "g5")
 # player.move("c5", "c6")
 
-player.add("wk", "d4")
-player.add("br", "e2")
-player.move("d4", "e2")
+# player.add("wk", "d4")
+# player.add("br", "e2")
+# player.move("d4", "e2")
 
 end = time.time()
 
