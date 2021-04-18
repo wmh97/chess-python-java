@@ -525,7 +525,6 @@ class MoveKnight(MovePawn):
                 super()._execute_move(piece)
 
 
-
 class MoveBishop(MovePawn):
 
         def __init__(self, linked_map, start_pos,
@@ -557,6 +556,120 @@ class MoveKing(MovePawn):
 
         def _execute_move(self, piece="K"):
                 super()._execute_move(piece)
+
+
+class Castle(MovePiece):
+        
+        def __init__(self, linked_map, start_pos, end_pos):
+
+                super().__init__(linked_map, start_pos, end_pos)
+                # self.linked_map = linked_map
+                # self.start_pos = start_pos
+                # self.end_pos = end_pos
+                # self._execute_castle()
+                
+                # # Make sure we are still incrementing the 
+                # MovePiece.MOVE_NUMBER += 1
+        
+        def _execute_move(self):
+                self._execute_castle()
+        
+        def _execute_castle(self):
+                old_rook_pos, new_rook_pos = self._get_castling_positions()
+                
+                self.linked_map[self.start_pos].pop()
+                self.linked_map[self.end_pos].append("K")
+                
+                self.linked_map[old_rook_pos].pop()
+                self.linked_map[new_rook_pos].append("r")
+
+                if TrackPieces.WHITE_MOVE:
+                        TrackPieces.WHITE_POSITIONS.remove(old_rook_pos)
+                        TrackPieces.WHITE_POSITIONS.append(new_rook_pos)
+
+                if TrackPieces.BLACK_MOVE:
+                        TrackPieces.BLACK_POSITIONS.remove(old_rook_pos)
+                        TrackPieces.BLACK_POSITIONS.append(new_rook_pos)                        
+
+                print("old rook pos returned", old_rook_pos)
+                print("new rook pos returned", new_rook_pos)
+
+        def _get_castling_positions(self):
+
+                # finding the rook the closest to the end pos.
+                if TrackPieces.WHITE_MOVE:
+                        back_row = TrackPieces.BACK_ROW_WHITE
+                        rook_distances = self._get_back_row_rooks( back_row,
+                                                                   TrackPieces.WHITE_KING_HAS_MOVED, 
+                                                                   TrackPieces.WHITE_ROOKS_HAVE_MOVED)
+
+                if TrackPieces.BLACK_MOVE:
+                        back_row = TrackPieces.BACK_ROW_BLACK
+                        rook_distances = self._get_back_row_rooks( back_row,
+                                                                   TrackPieces.BLACK_KING_HAS_MOVED, 
+                                                                   TrackPieces.BLACK_ROOKS_HAVE_MOVED)
+
+                closest_rook = self._get_closest_rook(rook_distances, back_row)
+
+                old_rook_pos, new_rook_pos = self._get_new_rook_positions(rook_distances, closest_rook, back_row)
+
+                return (old_rook_pos, new_rook_pos)
+        
+        def _get_back_row_rooks(self, back_row, king_moved, rook_status_dict):
+
+                if not king_moved:
+                        rook_distances = {}
+                        for rook, has_moved in rook_status_dict.items():
+                                # getting the rook that is closest to the king dest position.
+                                rook_distances[rook] = ( back_row.index(rook) - back_row.index(self.end_pos) )
+                        return rook_distances  
+                else:
+                        raise ValueError("Cannot castle as King has moved.")
+
+        def _get_closest_rook(self, rook_distances, back_row):
+                
+                closest_rook = min(rook_distances, key=lambda rook: abs(rook_distances[rook]))
+
+                print(
+                        back_row.index(self.start_pos), back_row.index(closest_rook)
+                )
+
+                # spaces inbetween the king and rook either side.
+                back_row_castle_side_left = back_row[back_row.index(closest_rook)+1:back_row.index(self.start_pos)]
+                back_row_castle_side_right = back_row[back_row.index(self.start_pos)+1:back_row.index(closest_rook)]
+
+                # making sure there are no pieces in between the king and rook.
+                if back_row_castle_side_left:                
+                        for inbetween_square in back_row_castle_side_left:
+                                if len(self.linked_map[inbetween_square]) == 2:
+                                        raise ValueError("Cannot castle as pieces are in the way.")
+
+                if back_row_castle_side_right:                
+                        for inbetween_square in back_row_castle_side_right:
+                                if len(self.linked_map[inbetween_square]) == 2:
+                                        raise ValueError("Cannot castle as pieces are in the way.")
+
+                if TrackPieces.WHITE_MOVE:
+                        if TrackPieces.WHITE_ROOKS_HAVE_MOVED[closest_rook]:
+                                raise ValueError("Cannot castle as Rook has already moved.")
+
+                if TrackPieces.BLACK_MOVE:
+                        if TrackPieces.BLACK_ROOKS_HAVE_MOVED[closest_rook]:
+                                raise ValueError("Cannot castle as Rook has already moved.")
+
+                return closest_rook
+   
+        def _get_new_rook_positions(self, rook_distances, closest_rook, back_row):
+                
+                # +ve index numbers show castling to the right.
+                if rook_distances[closest_rook] > 0: # right - rook is one to left of king
+                        new_rook_pos_index = back_row.index(self.end_pos) - 1
+                        new_rook_pos = back_row[new_rook_pos_index]
+                        return (closest_rook, new_rook_pos)
+                if rook_distances[closest_rook] < 0: # left - rook is one to right of king
+                        new_rook_pos_index = back_row.index(self.end_pos) + 1
+                        new_rook_pos = back_row[new_rook_pos_index]
+                        return (closest_rook, new_rook_pos)        
 
 
 class PawnTake(MovePawn):
@@ -659,10 +772,20 @@ class TrackPieces:
 
         WHITE_POSITIONS = []
         BLACK_POSITIONS = []
-        
-        def __init__(self, white_positions,
-                           black_positions):
+
+        # Keeping track for castling
+        WHITE_KING_HAS_MOVED = False
+        BLACK_KING_HAS_MOVED = False
+        WHITE_ROOKS_HAVE_MOVED = {}
+        BLACK_ROOKS_HAVE_MOVED = {}
+        BACK_ROW_WHITE = []
+        BACK_ROW_BLACK = []
+
+        def __init__(self, linked_map, white_positions,
+                                       black_positions):
                 
+                self.linked_map = linked_map
+
                 self._initial_white_positions = white_positions
                 self._initial_black_positions = black_positions
 
@@ -671,12 +794,40 @@ class TrackPieces:
 
                 self._taken_by_white = []
                 self._taken_by_black = []
+
+                TrackPieces.BACK_ROW_WHITE = ChessBoard.squares_map[ChessBoard.HEIGHT-1]
+                TrackPieces.BACK_ROW_BLACK = ChessBoard.squares_map[0]
+                self.detect_rook_positions()
                
         def __call__(self):
                 self._get_colour()
                 self._print_turn()
                 self._print_colour_positions()
                 self._print_colour_taken()
+
+        def detect_rook_positions(self):
+                
+                # on initialisation store rook positions as 'not moved'.
+                for square, contents in self.linked_map.items():
+                        if contents[-1] == "r":
+                                if square in TrackPieces.WHITE_POSITIONS:
+                                        TrackPieces.WHITE_ROOKS_HAVE_MOVED[square] = False
+                                if square in TrackPieces.BLACK_POSITIONS:
+                                        TrackPieces.BLACK_ROOKS_HAVE_MOVED[square] = False
+        
+        @staticmethod
+        def update_rook_moves(start_pos):
+                if TrackPieces.WHITE_MOVE:
+                        TrackPieces.WHITE_ROOKS_HAVE_MOVED[start_pos] = True
+                if TrackPieces.BLACK_MOVE:
+                        TrackPieces.BLACK_ROOKS_HAVE_MOVED[start_pos] = True
+
+        @staticmethod
+        def update_king_move():
+                if TrackPieces.WHITE_MOVE:
+                        TrackPieces.WHITE_KING_HAS_MOVED = True
+                if TrackPieces.BLACK_MOVE:
+                        TrackPieces.BLACK_KING_HAS_MOVED = True
 
         def update_take(self, target_position, piece_taken):
             if TrackPieces.WHITE_MOVE:
@@ -686,7 +837,8 @@ class TrackPieces:
                 TrackPieces.WHITE_POSITIONS.remove(target_position)
                 self._taken_by_black.append(piece_taken)
 
-        def query_take(self, target_position):
+        @staticmethod
+        def query_take(target_position):
             if TrackPieces.WHITE_MOVE:
                 if target_position in TrackPieces.BLACK_POSITIONS:
                     return True
@@ -695,7 +847,8 @@ class TrackPieces:
                     return True
             return False
 
-        def validate_colour_move(self, current_position):
+        @staticmethod
+        def validate_colour_move(current_position):
             if TrackPieces.WHITE_MOVE:
                 if current_position in TrackPieces.WHITE_POSITIONS:
                     return True
@@ -704,7 +857,8 @@ class TrackPieces:
                     return True
             return False
         
-        def update_colour_position(self, old_position, new_position):
+        @staticmethod
+        def update_colour_position(old_position, new_position):
             if TrackPieces.WHITE_MOVE:
                 TrackPieces.WHITE_POSITIONS.remove(old_position)
                 TrackPieces.WHITE_POSITIONS.append(new_position)
@@ -718,7 +872,8 @@ class TrackPieces:
             #if TrackPieces.BLACK_MOVE:
             print("Taken by Black: ", self._taken_by_black)
         
-        def _print_colour_positions(self):
+        @staticmethod
+        def _print_colour_positions():
             #if TrackPieces.WHITE_MOVE:
             print("White: ", TrackPieces.WHITE_POSITIONS)
             #if TrackPieces.BLACK_MOVE:
@@ -1364,6 +1519,7 @@ class Controller:
                 self._setup_board()
 
                 self.track = TrackPieces(
+                        self.board.linked_map,
                         self._initial_white_positions,
                         self._initial_black_positions
                 )
@@ -1390,6 +1546,11 @@ class Controller:
                 # self._initial_white_positions += self._white_pawns.position_list
                 # self._initial_white_positions += self._white_rook.position_list
 
+                # ***** for setting rooks, need to include: ******
+                        # Update rook positions to keep track of whether they
+                        # have been moved.
+                        # self.track.detect_rook_positions()
+
         def _setup_black_pieces(self):
 
                 self._initial_black_positions = []
@@ -1401,6 +1562,11 @@ class Controller:
                 #         #                        "g7", "h7" 
                 # )
                 # self._initial_black_positions += self._black_pawns.position_list
+
+                # ***** for setting rooks, need to include: ******
+                        # Update rook positions to keep track of whether they
+                        # have been moved.
+                        # self.track.detect_rook_positions()
 
         def move(self, start_pos, end_pos):
                 
@@ -1450,6 +1616,14 @@ class Controller:
                                 )
                                 self.track.update_take(end_pos, take.piece_taken)
                         
+                        if TrackPieces.WHITE_MOVE:
+                                if start_pos in TrackPieces.WHITE_ROOKS_HAVE_MOVED.keys():
+                                        self.track.update_rook_moves(start_pos)
+
+                        if TrackPieces.BLACK_MOVE:
+                                if start_pos in TrackPieces.BLACK_ROOKS_HAVE_MOVED.keys():
+                                        self.track.update_rook_moves(start_pos)
+
                         self.track.update_colour_position(start_pos, end_pos)
                         self._refresh_board()                        
 
@@ -1511,13 +1685,44 @@ class Controller:
                         self._refresh_board() 
 
                 if piece == "K":
-                        if not self.track.query_take(end_pos):
+                        # check for castling - end pos two squares left or right of 
+                        if (start_pos in TrackPieces.BACK_ROW_WHITE and
+                            end_pos in TrackPieces.BACK_ROW_WHITE and 
+                            end_pos == TrackPieces.BACK_ROW_WHITE[TrackPieces.BACK_ROW_WHITE.index(start_pos)+2] 
+                            or 
+                            start_pos in TrackPieces.BACK_ROW_WHITE and 
+                            end_pos in TrackPieces.BACK_ROW_WHITE and 
+                            end_pos == TrackPieces.BACK_ROW_WHITE[TrackPieces.BACK_ROW_WHITE.index(start_pos)-2]):
+
+                                if TrackPieces.WHITE_MOVE:
+                                                white_castle = Castle(
+                                                        self.board.linked_map,
+                                                        start_pos,
+                                                        end_pos
+                                                )
+
+                        if (start_pos in TrackPieces.BACK_ROW_BLACK and
+                            end_pos in TrackPieces.BACK_ROW_BLACK and 
+                            end_pos == TrackPieces.BACK_ROW_BLACK[TrackPieces.BACK_ROW_BLACK.index(start_pos)+2] 
+                            or 
+                            start_pos in TrackPieces.BACK_ROW_BLACK and 
+                            end_pos in TrackPieces.BACK_ROW_BLACK and 
+                            end_pos == TrackPieces.BACK_ROW_BLACK[TrackPieces.BACK_ROW_BLACK.index(start_pos)-2]):
+                                
+                                if TrackPieces.BLACK_MOVE:
+                                                black_castle = Castle(
+                                                        self.board.linked_map,
+                                                        start_pos,
+                                                        end_pos
+                                                )
+                        
+                        elif not self.track.query_take(end_pos):
                                 move = MoveKing(
                                         self.board.linked_map,
                                         start_pos,
                                         end_pos
                                 )
-                        else:# use take if end pos is in the list of positions
+                        else: # use take if end pos is in the list of positions
                               # for the opposite colour.
                                 take = KingTake(
                                         self.board.linked_map,
@@ -1526,6 +1731,8 @@ class Controller:
                                 )
                                 self.track.update_take(end_pos, take.piece_taken)
                         
+                        # this is executing every turn...
+                        self.track.update_king_move()
                         self.track.update_colour_position(start_pos, end_pos)
                         self._refresh_board() 
 
@@ -1563,7 +1770,10 @@ class Controller:
                 if piece == "r":
                         new_piece = SetRook( self.board.linked_map,
                                                           position,
-                                                         *positions ) 
+                                                         *positions )
+                        # Update rook positions to keep track of whether they
+                        # have been moved.
+                        self.track.detect_rook_positions()
                 if piece == "k":
                         new_piece = SetKnight( self.board.linked_map,
                                                             position,
@@ -1585,7 +1795,17 @@ class Controller:
                                                          *positions )
 
                 self._display_board()
+
+        def white(self):
+                # change to white turn - for debugging.
+                TrackPieces.WHITE_MOVE = True
+                TrackPieces.BLACK_MOVE = False
        
+        def black(self):
+                # change to black turn - for debugging.
+                TrackPieces.WHITE_MOVE = False
+                TrackPieces.BLACK_MOVE = True
+
         def _display_board(self):
                 self.track()
                 self.callibrate()
@@ -1596,7 +1816,16 @@ class Controller:
                 self.rotate()
                 self.track()
                 self.board()
-       
+
+
+             
+
+
+
+
+
+
+
 import time
 
 start = time.time()
@@ -1605,36 +1834,39 @@ player = Controller()
 
 
 # Below is the chess setup for white and black.
-player.add("wp", "a2", "b2", "c2",
-                 "d2", "e2", "f2",
-                 "g2", "h2")
-player.add("bp", "a7", "b7", "c7",
-                 "d7", "e7", "f7",
-                 "g7", "h7")
+# player.add("wp", "a2", "b2", "c2",
+#                  "d2", "e2", "f2",
+#                  "g2", "h2")
+# player.add("bp", "a7", "b7", "c7",
+#                  "d7", "e7", "f7",
+#                  "g7", "h7")
 
 player.add("wr", "a1", "h1")                
-player.add("wk", "b1", "g1")
-player.add("wb", "c1", "f1")
-player.add("wQ", "d1")
+# player.add("wk", "b1", "g1")
+# player.add("wb", "c1", "f1")
+# player.add("wQ", "d1")
 player.add("wK", "e1")
 
 player.add("br", "a8", "h8")                
-player.add("bk", "b8", "g8")
-player.add("bb", "c8", "f8")
-player.add("bQ", "d8")
+# player.add("bk", "b8", "g8")
+# player.add("bb", "c8", "f8")
+# player.add("bQ", "d8")
 player.add("bK", "e8")
+
+
+player.move("e1", "e2")
+player.move("e8", "c8")
+player.move("e2", "e1")
+
 
 end = time.time()
 
 print("Time Taken: ", end-start)
 
+# t = TestCastle(player.board.linked_map, "e1", "c1")
+# t._execute_castle()
 
-# start = time.time()
 
-# testrookrange = PieceMoveRanges()
-
-# end = time.time()
-# print("Time Taken: ", end-start)
 
 
 
