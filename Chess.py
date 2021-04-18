@@ -499,9 +499,8 @@ class MovePawn(MovePiece):
                 return False
 
         def _get_valid_dest(self):
-                #valid_dest = PieceMoveRanges.VALID_PAWN_DESTS[self.start_pos]
                 valid_dest = PieceMoveRanges.TRUNCATED_BOARD_DESTS[self.start_pos]
-                return valid_dest
+                return valid_dest  
 
 
 class MoveRook(MovePawn):
@@ -514,18 +513,6 @@ class MoveRook(MovePawn):
         def _execute_move(self, piece="r"):
                 super()._execute_move(piece)
 
-        def _validate_move(self):
-                valid_dest = self._get_valid_dest()
-                for dest_list in valid_dest:
-                        if self.end_pos in dest_list:
-                                return True
-                raise ValueError("Invalid Move")
-                return False
-
-        def _get_valid_dest(self):
-                valid_dest = PieceMoveRanges.TRUNCATED_BOARD_DESTS[self.start_pos]
-                return valid_dest
-
 
 class MoveKnight(MovePawn):
 
@@ -537,18 +524,6 @@ class MoveKnight(MovePawn):
         def _execute_move(self, piece="k"):
                 super()._execute_move(piece)
 
-        def _validate_move(self):
-                valid_dest = self._get_valid_dest()
-                for dest_list in valid_dest:
-                        if self.end_pos in dest_list:
-                                return True
-                raise ValueError("Invalid Move")
-                return False
-
-        def _get_valid_dest(self):
-                valid_dest = PieceMoveRanges.TRUNCATED_BOARD_DESTS[self.start_pos]
-                # valid_dest = self._truncate_dest_list(valid_dest)
-                return valid_dest
 
 
 class MoveBishop(MovePawn):
@@ -561,19 +536,6 @@ class MoveBishop(MovePawn):
         def _execute_move(self, piece="b"):
                 super()._execute_move(piece)
 
-        def _validate_move(self):
-                valid_dest = self._get_valid_dest()
-                for dest_list in valid_dest:
-                        if self.end_pos in dest_list:
-                                return True
-                raise ValueError("Invalid Move")
-                return False
-
-        def _get_valid_dest(self):
-                valid_dest = PieceMoveRanges.TRUNCATED_BOARD_DESTS[self.start_pos]
-                # valid_dest = self._truncate_dest_list(valid_dest)
-                return valid_dest
-
 
 class MoveQueen(MovePawn):
 
@@ -585,19 +547,6 @@ class MoveQueen(MovePawn):
         def _execute_move(self, piece="Q"):
                 super()._execute_move(piece)
 
-        def _validate_move(self):
-                valid_dest = self._get_valid_dest()
-                for dest_list in valid_dest:
-                        if self.end_pos in dest_list:
-                                return True
-                raise ValueError("Invalid Move")
-                return False
-
-        def _get_valid_dest(self):
-                valid_dest = PieceMoveRanges.TRUNCATED_BOARD_DESTS[self.start_pos]
-                # valid_dest = self._truncate_dest_list(valid_dest)
-                return valid_dest
-
 
 class MoveKing(MovePawn):
 
@@ -608,19 +557,6 @@ class MoveKing(MovePawn):
 
         def _execute_move(self, piece="K"):
                 super()._execute_move(piece)
-
-        def _validate_move(self):
-                valid_dest = self._get_valid_dest()
-                for dest_list in valid_dest:
-                        if self.end_pos in dest_list:
-                                return True
-                raise ValueError("Invalid Move")
-                return False
-
-        def _get_valid_dest(self):
-                valid_dest = PieceMoveRanges.TRUNCATED_BOARD_DESTS[self.start_pos]
-                # valid_dest = self._truncate_dest_list(valid_dest)
-                return valid_dest
 
 
 class PawnTake(MovePawn):
@@ -695,6 +631,25 @@ class KingTake(PawnTake):
 
         def _execute_move(self, piece="K"):
                 super()._execute_move(piece)
+
+
+class PromotePawn():
+        
+        def __init__(self, linked_map, end_pos):
+                self.linked_map = linked_map
+                self.end_pos = end_pos
+                self._promote_pawn()
+
+        def _promote_pawn(self):
+                valid_promotion = False
+                while valid_promotion == False:
+                        promotion = input("Which Piece would you like to promote to: r, b, k, Q? ")
+                        if promotion not in list("rbkQ"):
+                                raise ValueError("Can't promote to that piece.")
+                        else:
+                                valid_promotion = True
+                self.linked_map[self.end_pos].pop()
+                self.linked_map[self.end_pos].append(promotion) 
 
 
 class TrackPieces:
@@ -1463,6 +1418,9 @@ class Controller:
                                     start_pos,
                                     end_pos
                             )
+                            if end_pos in ChessBoard.squares_map[0] or end_pos in ChessBoard.squares_map[ChessBoard.HEIGHT-1]:
+                                    promotion = PromotePawn(self.board.linked_map, end_pos)
+
                         else: # use take if end pos is in the list of positions
                               # for the opposite colour.
                             take = PawnTake(
@@ -1665,20 +1623,6 @@ player.add("bk", "b8", "g8")
 player.add("bb", "c8", "f8")
 player.add("bQ", "d8")
 player.add("bK", "e8")
-
-
-
-# player.move("d5", "e5")
-# player.move("h8", "h7")
-# player.move("e5", "f5")
-# player.move("h7", "h6")
-# player.move("f5", "g5")
-# player.move("h6", "g5")
-# player.move("c5", "c6")
-
-# player.add("wk", "d4")
-# player.add("br", "e2")
-# player.move("d4", "e2")
 
 end = time.time()
 
