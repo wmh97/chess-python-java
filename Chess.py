@@ -805,6 +805,35 @@ class TrackPieces:
                 self._print_colour_positions()
                 self._print_colour_taken()
 
+        # each call, finds out if white is in check, and if black is in check.
+        # if a colour is in check then it can only move if that move makes it no longer in check.
+        # if e.g. after white move and then white in check, its an invalid move.
+        # ... then need to find some way to reverse the move ...
+        def detect_check(self):
+
+                TrackPieces.WHITE_IN_CHECK = False
+                for position in TrackPieces.WHITE_POSITIONS:
+                        if self.linked_map[position][-1] == "K":
+                                for square in TrackPieces.BLACK_POSITIONS:
+                                        for dest_lists in PieceMoveRanges.TRUNCATED_BOARD_TAKE_DESTS[square]:
+                                                for dest_list in dest_lists:
+                                                        if position in dest_list:
+                                                                TrackPieces.WHITE_IN_CHECK = True
+                                                                #return "White in Check!"
+                TrackPieces.BLACK_IN_CHECK = False
+                for position in TrackPieces.BLACK_POSITIONS:
+                        # finding the king position(s!)
+                        if self.linked_map[position][-1] == "K":
+                                # getting the dest lists for each white position
+                                for square in TrackPieces.WHITE_POSITIONS:
+                                        # looking at the take ranges for each of those squares.
+                                        for dest_lists in PieceMoveRanges.TRUNCATED_BOARD_TAKE_DESTS[square]:
+                                                for dest_list in dest_lists:
+                                                        # in check if the king position is in a dest list.
+                                                        if position in dest_list:
+                                                                TrackPieces.BLACK_IN_CHECK = True
+                                                                #return "Black in Check!"
+
         def detect_rook_positions(self):
                 
                 # on initialisation store rook positions as 'not moved'.
