@@ -781,6 +781,9 @@ class TrackPieces:
         BACK_ROW_WHITE = []
         BACK_ROW_BLACK = []
 
+        WHITE_IN_CHECK = False
+        BLACK_IN_CHECK = False
+
         def __init__(self, linked_map, white_positions,
                                        black_positions):
                 
@@ -805,6 +808,16 @@ class TrackPieces:
                 self._print_colour_positions()
                 self._print_colour_taken()
 
+        @staticmethod
+        def get_temp_data(linked_map, white_pos, black_pos):
+                temp_linked_map = {square: [content for content in square_contents] 
+                                   for (square, square_contents) in linked_map.items()}
+
+                temp_white_pos = [position for position in white_pos]
+                temp_black_pos = [position for position in black_pos]
+
+                return (temp_linked_map, temp_white_pos, temp_black_pos)
+
         # each call, finds out if white is in check, and if black is in check.
         # if a colour is in check then it can only move if that move makes it no longer in check.
         # if e.g. after white move and then white in check, its an invalid move.
@@ -819,6 +832,7 @@ class TrackPieces:
                                                 for dest_list in dest_lists:
                                                         if position in dest_list:
                                                                 TrackPieces.WHITE_IN_CHECK = True
+                                                                print("White in Check!")
                                                                 #return "White in Check!"
                 TrackPieces.BLACK_IN_CHECK = False
                 for position in TrackPieces.BLACK_POSITIONS:
@@ -832,6 +846,7 @@ class TrackPieces:
                                                         # in check if the king position is in a dest list.
                                                         if position in dest_list:
                                                                 TrackPieces.BLACK_IN_CHECK = True
+                                                                print("Black in Check!")
                                                                 #return "Black in Check!"
 
         def detect_rook_positions(self):
@@ -1600,6 +1615,13 @@ class Controller:
         def move(self, start_pos, end_pos):
                 
                 self.callibrate() # should do this at the beginning or the end of the move - or both?
+
+                # get temp linked map - revert back to this if we make an invalid 'in-check' move.
+                temp_linked_map, temp_white_pos, temp_black_pos = self.track.get_temp_data(
+                        self.board.linked_map, 
+                        TrackPieces.WHITE_POSITIONS,
+                        TrackPieces.BLACK_POSITIONS        
+                )
                 
                 if not self.track.validate_colour_move(start_pos):
                     raise ValueError("Not Your Turn/Invalid Move")
@@ -1626,7 +1648,24 @@ class Controller:
                             self.track.update_take(end_pos, take.piece_taken)
 
                         self.track.update_colour_position(start_pos, end_pos)
-                        self._refresh_board()
+
+                        # calc new move/take dests and then
+                        # detect whether the player whose turn it is, is in check.
+                        # if in check, reverse the turn and allow the player to move again.
+                        self.callibrate()
+                        self.track.detect_check()
+                        if ( 
+                             TrackPieces.WHITE_MOVE and TrackPieces.WHITE_IN_CHECK
+                             or
+                             TrackPieces.BLACK_MOVE and TrackPieces.BLACK_IN_CHECK 
+                        ):
+                                self.board.linked_map = temp_linked_map
+                                TrackPieces.WHITE_POSITIONS = temp_white_pos
+                                TrackPieces.BLACK_POSITIONS = temp_black_pos
+                                MovePiece.MOVE_NUMBER -= 1
+                                raise ValueError("Invalid Move - In Check!")
+                        else:
+                                self._refresh_board()
 
                 if piece == "r":
 
@@ -1645,16 +1684,30 @@ class Controller:
                                 )
                                 self.track.update_take(end_pos, take.piece_taken)
                         
-                        if TrackPieces.WHITE_MOVE:
-                                if start_pos in TrackPieces.WHITE_ROOKS_HAVE_MOVED.keys():
-                                        self.track.update_rook_moves(start_pos)
-
-                        if TrackPieces.BLACK_MOVE:
-                                if start_pos in TrackPieces.BLACK_ROOKS_HAVE_MOVED.keys():
-                                        self.track.update_rook_moves(start_pos)
-
                         self.track.update_colour_position(start_pos, end_pos)
-                        self._refresh_board()                        
+
+                        self.callibrate()
+                        self.track.detect_check()
+                        if ( 
+                             TrackPieces.WHITE_MOVE and TrackPieces.WHITE_IN_CHECK
+                             or
+                             TrackPieces.BLACK_MOVE and TrackPieces.BLACK_IN_CHECK 
+                        ):
+                                self.board.linked_map = temp_linked_map
+                                TrackPieces.WHITE_POSITIONS = temp_white_pos
+                                TrackPieces.BLACK_POSITIONS = temp_black_pos
+                                MovePiece.MOVE_NUMBER -= 1
+                                raise ValueError("Invalid Move - In Check!")
+                        else:
+                                if TrackPieces.WHITE_MOVE:
+                                        if start_pos in TrackPieces.WHITE_ROOKS_HAVE_MOVED.keys():
+                                                self.track.update_rook_moves(start_pos)
+
+                                if TrackPieces.BLACK_MOVE:
+                                        if start_pos in TrackPieces.BLACK_ROOKS_HAVE_MOVED.keys():
+                                                self.track.update_rook_moves(start_pos)
+
+                                self._refresh_board()                        
 
                 if piece == "k":
                         if not self.track.query_take(end_pos):
@@ -1673,7 +1726,21 @@ class Controller:
                                 self.track.update_take(end_pos, take.piece_taken)
                         
                         self.track.update_colour_position(start_pos, end_pos)
-                        self._refresh_board()        
+
+                        self.callibrate()
+                        self.track.detect_check()
+                        if ( 
+                             TrackPieces.WHITE_MOVE and TrackPieces.WHITE_IN_CHECK
+                             or
+                             TrackPieces.BLACK_MOVE and TrackPieces.BLACK_IN_CHECK 
+                        ):
+                                self.board.linked_map = temp_linked_map
+                                TrackPieces.WHITE_POSITIONS = temp_white_pos
+                                TrackPieces.BLACK_POSITIONS = temp_black_pos
+                                MovePiece.MOVE_NUMBER -= 1
+                                raise ValueError("Invalid Move - In Check!")
+                        else:
+                                self._refresh_board()        
 
                 if piece == "b":
                         if not self.track.query_take(end_pos):
@@ -1692,7 +1759,21 @@ class Controller:
                                 self.track.update_take(end_pos, take.piece_taken)
                         
                         self.track.update_colour_position(start_pos, end_pos)
-                        self._refresh_board() 
+                        
+                        self.callibrate()
+                        self.track.detect_check()
+                        if ( 
+                             TrackPieces.WHITE_MOVE and TrackPieces.WHITE_IN_CHECK
+                             or
+                             TrackPieces.BLACK_MOVE and TrackPieces.BLACK_IN_CHECK 
+                        ):
+                                self.board.linked_map = temp_linked_map
+                                TrackPieces.WHITE_POSITIONS = temp_white_pos
+                                TrackPieces.BLACK_POSITIONS = temp_black_pos
+                                MovePiece.MOVE_NUMBER -= 1
+                                raise ValueError("Invalid Move - In Check!")
+                        else:                        
+                                self._refresh_board() 
 
                 if piece == "Q":
                         if not self.track.query_take(end_pos):
@@ -1711,7 +1792,21 @@ class Controller:
                                 self.track.update_take(end_pos, take.piece_taken)
                         
                         self.track.update_colour_position(start_pos, end_pos)
-                        self._refresh_board() 
+
+                        self.callibrate()
+                        self.track.detect_check()
+                        if ( 
+                             TrackPieces.WHITE_MOVE and TrackPieces.WHITE_IN_CHECK
+                             or
+                             TrackPieces.BLACK_MOVE and TrackPieces.BLACK_IN_CHECK 
+                        ):
+                                self.board.linked_map = temp_linked_map
+                                TrackPieces.WHITE_POSITIONS = temp_white_pos
+                                TrackPieces.BLACK_POSITIONS = temp_black_pos
+                                MovePiece.MOVE_NUMBER -= 1
+                                raise ValueError("Invalid Move - In Check!")                 
+                        else:
+                                self._refresh_board() 
 
                 if piece == "K":
                         # check for castling - end pos two squares left or right of 
@@ -1730,7 +1825,7 @@ class Controller:
                                                         end_pos
                                                 )
 
-                        if (start_pos in TrackPieces.BACK_ROW_BLACK and
+                        elif (start_pos in TrackPieces.BACK_ROW_BLACK and
                             end_pos in TrackPieces.BACK_ROW_BLACK and 
                             end_pos == TrackPieces.BACK_ROW_BLACK[TrackPieces.BACK_ROW_BLACK.index(start_pos)+2] 
                             or 
@@ -1760,10 +1855,32 @@ class Controller:
                                 )
                                 self.track.update_take(end_pos, take.piece_taken)
                         
-                        # this is executing every turn...
-                        self.track.update_king_move()
                         self.track.update_colour_position(start_pos, end_pos)
-                        self._refresh_board() 
+
+                        self.callibrate()
+                        self.track.detect_check()
+                        if ( 
+                             TrackPieces.WHITE_MOVE and TrackPieces.WHITE_IN_CHECK
+                             or
+                             TrackPieces.BLACK_MOVE and TrackPieces.BLACK_IN_CHECK 
+                        ):
+                                # ************we set the board class linked map back but other classes
+                                # have been passed these instances which are now the linked
+                                # map after the castle as this assignment does not change them
+                                # back.... ******************
+                                # .... maybe change linked map to one class variable that is
+                                # referenced everywhere ....... ???????
+                                self.board.linked_map = temp_linked_map
+                                TrackPieces.WHITE_POSITIONS = temp_white_pos
+                                TrackPieces.BLACK_POSITIONS = temp_black_pos
+                                MovePiece.MOVE_NUMBER -= 1
+                                
+                                # Add this back in
+                                #raise ValueError("Invalid Move - In Check!")
+                        else:                       
+                                # this is executing every turn...
+                                self.track.update_king_move()
+                                self._refresh_board() 
 
                 elif piece not in list("rbkQKp"):
                         raise ValueError("No Piece Here")
@@ -1822,6 +1939,9 @@ class Controller:
                         new_piece = SetKing( self.board.linked_map,
                                                           position,
                                                          *positions )
+
+                self.callibrate()
+                self.track.detect_check()
 
                 self._display_board()
 
@@ -1882,10 +2002,15 @@ player.add("br", "a8", "h8")
 # player.add("bQ", "d8")
 player.add("bK", "e8")
 
+#player.move("e1", "g1")
 
-player.move("e1", "e2")
-player.move("e8", "c8")
-player.move("e2", "e1")
+#player.move("e1", "e2")
+#player.move("e8", "c8")
+#player.move("e2", "e1")
+
+player.add("br", "c8", "g8")
+player.move("e1", "g1")
+player._display_board()
 
 
 end = time.time()
