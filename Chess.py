@@ -784,6 +784,9 @@ class TrackPieces:
         WHITE_IN_CHECK = False
         BLACK_IN_CHECK = False
 
+        WHITE_SURROUNDING_CHECK = False
+        BLACK_SURROUNDING_CHECK = False
+
         def __init__(self, linked_map, white_positions,
                                        black_positions):
                 
@@ -817,6 +820,127 @@ class TrackPieces:
                 temp_black_pos = [position for position in black_pos]
 
                 return (temp_linked_map, temp_white_pos, temp_black_pos)
+
+        def detect_stale_or_check_mate(self):
+                self._detect_surrounding_check()
+                if TrackPieces.WHITE_IN_CHECK and TrackPieces.WHITE_SURROUNDING_CHECK:
+                        print("********************")
+                        print("*****BLACK WINS*****")
+                        print("********************")
+                        quit()
+                if TrackPieces.BLACK_IN_CHECK and TrackPieces.BLACK_SURROUNDING_CHECK:
+                        print("********************")
+                        print("*****WHITE WINS*****")
+                        print("********************")
+                        quit()
+                if (
+                        TrackPieces.WHITE_SURROUNDING_CHECK and not TrackPieces.WHITE_IN_CHECK
+                        or
+                        TrackPieces.BLACK_SURROUNDING_CHECK and not TrackPieces.BLACK_IN_CHECK
+                ):
+                        print("********************")
+                        print("*****STALE-MATE*****")
+                        print("********************")
+                        quit()
+        # if a king is in check then find if it is in checkmate by looking at the
+        # the truncated dest for that piece and seeing if all the squares in it
+        # are in check too.
+        def _detect_surrounding_check(self):
+
+
+                TrackPieces.WHITE_SURROUNDING_CHECK = False
+                surrounding_check_flags = []
+
+                # find king position and store
+                for position in TrackPieces.WHITE_POSITIONS:
+                        if self.linked_map[position][-1] == "K":
+                                # get the dest lists for that king
+                                for dest_list in PieceMoveRanges.TRUNCATED_BOARD_CHECK_TAKE_DESTS[position]:
+                                        # getting each dest square for the king
+                                        for square in dest_list:      
+                                                # append true to check flags if that square is in check
+                                                if self._detect_if_square_in_check(
+                                                        square, 
+                                                        opponent_positions=TrackPieces.BLACK_POSITIONS
+                                                ):
+                                                        surrounding_check_flags.append(True)
+                                                # adding too many falses - for dest squares of opponents not just kings.
+                                                # want false if a dest is not in check
+                                                else:
+                                                        surrounding_check_flags.append(False)
+
+                if surrounding_check_flags and all(in_check == True for in_check in surrounding_check_flags):
+                        TrackPieces.WHITE_SURROUNDING_CHECK = True
+                surrounding_check_flags = []
+
+                # TrackPieces.WHITE_SURROUNDING_CHECK = False
+                # surrounding_check_flags = []
+                # # find king position and store
+                # for position in TrackPieces.WHITE_POSITIONS:
+                #         if self.linked_map[position][-1] == "K":
+                #                 # find truncated dest lists (all the squares that king
+                #                 # can move to).
+                #                 for dest_list in PieceMoveRanges.TRUNCATED_BOARD_TAKE_DESTS[position]:
+                                        
+                #                         # if all of the king dests in an opponent dest list.
+                #                         for dest in dest_list:
+                #                                 # for each square the king can move to, see if it is in the
+                #                                 # take dests of the opposite colour.
+                #                                 for square in TrackPieces.BLACK_POSITIONS:
+                #                                         # looking at the dest lists for each black piece
+                #                                         for opp_dest_list in PieceMoveRanges.TRUNCATED_BOARD_TAKE_DESTS[square]:
+                #                                                 # if our king dest is in a dest list of an opponent piece.
+                #                                                 if dest in opp_dest_list:
+                #                                                         surrounding_check_flags.append(True)
+                #                                                         break ##### because all we need to know is that it is in one of the dest lists ?????
+                #                         # adding too many falses - for dest squares of opponents not just kings.
+                #                         # want false if a dest is not in check
+                #                         else:
+                #                                 surrounding_check_flags.append(False)
+                # if surrounding_check_flags and all(in_check == True for in_check in surrounding_check_flags):
+                #         TrackPieces.WHITE_SURROUNDING_CHECK = True
+                # surrounding_check_flags = []
+
+
+
+                TrackPieces.BLACK_SURROUNDING_CHECK = False
+                surrounding_check_flags = []
+                # find king position and store
+                for position in TrackPieces.BLACK_POSITIONS:
+                        if self.linked_map[position][-1] == "K":
+                                # find truncated dest lists (all the squares that king
+                                # can move to).
+                                for dest_list in PieceMoveRanges.TRUNCATED_BOARD_TAKE_DESTS[position]:
+                                        
+                                        # if all of the king dests in an opponent dest list.
+                                        for dest in dest_list:
+                                                # for each square the king can move to, see if it is in the
+                                                # take dests of the opposite colour.
+                                                for square in TrackPieces.WHITE_POSITIONS:
+                                                        # looking at the dest lists for each black piece
+                                                        for opp_dest_list in PieceMoveRanges.TRUNCATED_BOARD_TAKE_DESTS[square]:
+                                                                # if our king dest is in a dest list of an opponent piece.
+                                                                if dest in opp_dest_list:
+                                                                        surrounding_check_flags.append(True)
+                                                                else:
+                                                                        surrounding_check_flags.append(False)
+                if surrounding_check_flags and all(in_check == True for in_check in surrounding_check_flags):
+                        TrackPieces.BLACK_SURROUNDING_CHECK = True
+                surrounding_check_flags = []
+                                
+        # implement this in detect_check below too *****
+        @staticmethod
+        def _detect_if_square_in_check(square, *, opponent_positions=[]):
+                for position in opponent_positions:
+                        # look at opponents dest lists for each of their pieces
+                        # need not just take dests................... *****************
+                        for dest_list in PieceMoveRanges.TRUNCATED_BOARD_CHECK_TAKE_DESTS[position]:
+                                # return when we first our position is in the opponents
+                                # take range.
+                                if square in dest_list:
+                                        return True
+                return False
+
 
         # each call, finds out if white is in check, and if black is in check.
         # if a colour is in check then it can only move if that move makes it no longer in check.
@@ -959,6 +1083,9 @@ class PieceMoveRanges:
         TRUNCATED_BOARD_DESTS = {}
         TRUNCATED_BOARD_TAKE_DESTS = {}
         
+        TRUNCATED_BOARD_CHECK_DESTS = {}
+        TRUNCATED_BOARD_CHECK_TAKE_DESTS = {}
+        
         def __init__(self, linked_map):
                 self.linked_map = linked_map
 
@@ -1009,6 +1136,20 @@ class PieceMoveRanges:
                 print("Truncated Take Dests:")
                 print(PieceMoveRanges.TRUNCATED_BOARD_TAKE_DESTS)
  
+                # These are regenerated every turn... might be a bit inefficient?
+                PieceMoveRanges.TRUNCATED_BOARD_CHECK_DESTS = {}
+                PieceMoveRanges.TRUNCATED_BOARD_CHECK_TAKE_DESTS = {} # May not be necessart to reset these - need to test.
+
+                valid_board_check_dests, valid_board_check_take_dests = self._get_board_dests_per_turn()
+                PieceMoveRanges.TRUNCATED_BOARD_CHECK_DESTS = self._get_truncated_board_check_dests_per_turn(
+                        valid_board_check_dests
+                )
+
+                PieceMoveRanges.TRUNCATED_BOARD_CHECK_TAKE_DESTS = self._get_truncated_board_check_take_dests_per_turn(
+                        valid_board_check_dests, # when this gets here it has been truncated by the previous call.
+                        valid_board_check_take_dests
+                )
+
         def _get_board_dests_per_turn(self):
                 # get valid move destinations for all pieces on the board, without truncation.
                 
@@ -1070,7 +1211,62 @@ class PieceMoveRanges:
                                                                    for dest_list in PieceMoveRanges.VALID_KING_DESTS[square]]
 
                 return (valid_board_dests, valid_board_take_dests)
-        
+
+        def _get_truncated_board_check_take_dests_per_turn(self, truncated_board_dests,
+                                                                 valid_board_take_dests):
+
+                # need to add condition below for different truncation
+                # for knights.
+                truncated_board_check_take_dests = {}
+
+                for square in TrackPieces.WHITE_POSITIONS + TrackPieces.BLACK_POSITIONS:
+                        
+                        # only the pawn take destinations will differ between the truncated move dests
+                        # and the truncated take dests.
+                        if self.linked_map[square][1] == "p":
+                                dest_lists = valid_board_take_dests[square]
+                                truncated_board_check_take_dests[square] = dest_lists
+                                for dest_list in truncated_board_check_take_dests[square]:
+                                        for dest_square in dest_list:
+                                                if dest_square in TrackPieces.WHITE_POSITIONS + TrackPieces.BLACK_POSITIONS:                         
+                                                        print(square, self.linked_map[square][1])
+                                                        print(dest_list, "Blocked By Opponent At:", dest_square)
+                                                        del dest_list[dest_list.index(dest_square)+1:]
+                                                        print("Truncating to: ", dest_list)
+                        else: # for pieces other than pawns, take the truncated lists from the
+                              # truncated dest lists directly.
+                                dest_lists = truncated_board_dests[square]
+                                truncated_board_check_take_dests[square] = dest_lists                         
+                return truncated_board_check_take_dests
+
+        # get take dests/ranges for all pieces on the board.
+        def _get_truncated_board_check_dests_per_turn(self, valid_board_dests):
+                
+                # results added to a separate dict.
+                # need to add condition below for different truncation
+                # for knights.
+                truncated_board_check_dests = {}
+
+                for square in TrackPieces.WHITE_POSITIONS + TrackPieces.BLACK_POSITIONS:
+                        dest_lists = valid_board_dests[square]
+                        truncated_board_check_dests[square] = dest_lists # initialising the list for that square to contain the dest lists.
+                        for dest_list in truncated_board_check_dests[square]:
+                                for dest_square in dest_list:
+                                        if dest_square in TrackPieces.WHITE_POSITIONS + TrackPieces.BLACK_POSITIONS:                         
+                                                print(square, self.linked_map[square][1])
+                                                print(dest_list, "Blocked By Opponent At:", dest_square)
+                                                
+                                                if self.linked_map[square][1] == "p":                  # if the current piece is a pawn then 
+                                                        del dest_list[dest_list.index(dest_square):]   # an opponent piece will block it too
+                                                                                                        # as it can't take forward.
+                                                elif self.linked_map[square][1] == "K" and self.linked_map[dest_square][1] == "K":
+                                                        del dest_list[dest_list.index(dest_square):] # making it so you cant take a king with a king
+                                                else:                                                
+                                                        del dest_list[dest_list.index(dest_square)+1:]       
+                                                
+                                                print("Truncating to: ", dest_list)
+                return truncated_board_check_dests
+
         # Needs further testing.
         def _get_truncated_board_take_dests_per_turn(self, truncated_board_dests,
                                                            valid_board_take_dests):
@@ -1149,8 +1345,8 @@ class PieceMoveRanges:
                                                                         del dest_list[dest_list.index(dest_square):]   # an opponent piece will block it too
                                                                                                                        # as it can't take forward.
                                                                 elif self.linked_map[square][1] == "K" and self.linked_map[dest_square][1] == "K":
-                                                                        del dest_list[dest_list.index(dest_square):] # *** making it so you cant take a king with a king
-                                                                else:                                                # but need to make it so you cant go near a king ***
+                                                                        del dest_list[dest_list.index(dest_square):] # making it so you cant take a king with a king
+                                                                else:                                                
                                                                         del dest_list[dest_list.index(dest_square)+1:]       
                                                                 
                                                                 print("Truncating to: ", dest_list)
@@ -1168,8 +1364,8 @@ class PieceMoveRanges:
                                                                         del dest_list[dest_list.index(dest_square):]   # an opponent piece will block it too
                                                                                                                        # as it can't take forward.
                                                                 elif self.linked_map[square][1] == "K" and self.linked_map[dest_square][1] == "K":
-                                                                        del dest_list[dest_list.index(dest_square):] # *** making it so you cant take a king with a king
-                                                                else:                                                # but need to make it so you cant go near a king ***                                               
+                                                                        del dest_list[dest_list.index(dest_square):] # making it so you cant take a king with a king
+                                                                else:                                                                                              
                                                                         del dest_list[dest_list.index(dest_square)+1:]
         
                                                                 print("Truncating to: ", dest_list)
@@ -1652,14 +1848,21 @@ class Controller:
                         # calc new move/take dests and then
                         # detect whether the player whose turn it is, is in check.
                         # if in check, reverse the turn and allow the player to move again.
+                        #
+                        # *** extract this code into a function with different behaviour
+                        # per piece so that the code isnt duplicated ***
                         self.callibrate()
                         self.track.detect_check()
+                        self.track.detect_stale_or_check_mate()
                         if ( 
                              TrackPieces.WHITE_MOVE and TrackPieces.WHITE_IN_CHECK
                              or
                              TrackPieces.BLACK_MOVE and TrackPieces.BLACK_IN_CHECK 
                         ):
                                 self.board.linked_map = temp_linked_map
+                                self.track.linked_map = temp_linked_map
+                                self.callibrate.linked_map = temp_linked_map
+                                self.rotate.linked_map = temp_linked_map
                                 TrackPieces.WHITE_POSITIONS = temp_white_pos
                                 TrackPieces.BLACK_POSITIONS = temp_black_pos
                                 MovePiece.MOVE_NUMBER -= 1
@@ -1688,12 +1891,16 @@ class Controller:
 
                         self.callibrate()
                         self.track.detect_check()
+                        self.track.detect_stale_or_check_mate()
                         if ( 
                              TrackPieces.WHITE_MOVE and TrackPieces.WHITE_IN_CHECK
                              or
                              TrackPieces.BLACK_MOVE and TrackPieces.BLACK_IN_CHECK 
                         ):
                                 self.board.linked_map = temp_linked_map
+                                self.track.linked_map = temp_linked_map
+                                self.callibrate.linked_map = temp_linked_map
+                                self.rotate.linked_map = temp_linked_map
                                 TrackPieces.WHITE_POSITIONS = temp_white_pos
                                 TrackPieces.BLACK_POSITIONS = temp_black_pos
                                 MovePiece.MOVE_NUMBER -= 1
@@ -1729,12 +1936,16 @@ class Controller:
 
                         self.callibrate()
                         self.track.detect_check()
+                        self.track.detect_stale_or_check_mate()
                         if ( 
                              TrackPieces.WHITE_MOVE and TrackPieces.WHITE_IN_CHECK
                              or
                              TrackPieces.BLACK_MOVE and TrackPieces.BLACK_IN_CHECK 
                         ):
                                 self.board.linked_map = temp_linked_map
+                                self.track.linked_map = temp_linked_map
+                                self.callibrate.linked_map = temp_linked_map
+                                self.rotate.linked_map = temp_linked_map
                                 TrackPieces.WHITE_POSITIONS = temp_white_pos
                                 TrackPieces.BLACK_POSITIONS = temp_black_pos
                                 MovePiece.MOVE_NUMBER -= 1
@@ -1762,12 +1973,16 @@ class Controller:
                         
                         self.callibrate()
                         self.track.detect_check()
+                        self.track.detect_stale_or_check_mate()
                         if ( 
                              TrackPieces.WHITE_MOVE and TrackPieces.WHITE_IN_CHECK
                              or
                              TrackPieces.BLACK_MOVE and TrackPieces.BLACK_IN_CHECK 
                         ):
                                 self.board.linked_map = temp_linked_map
+                                self.track.linked_map = temp_linked_map
+                                self.callibrate.linked_map = temp_linked_map
+                                self.rotate.linked_map = temp_linked_map
                                 TrackPieces.WHITE_POSITIONS = temp_white_pos
                                 TrackPieces.BLACK_POSITIONS = temp_black_pos
                                 MovePiece.MOVE_NUMBER -= 1
@@ -1795,12 +2010,16 @@ class Controller:
 
                         self.callibrate()
                         self.track.detect_check()
+                        self.track.detect_stale_or_check_mate()
                         if ( 
                              TrackPieces.WHITE_MOVE and TrackPieces.WHITE_IN_CHECK
                              or
                              TrackPieces.BLACK_MOVE and TrackPieces.BLACK_IN_CHECK 
                         ):
                                 self.board.linked_map = temp_linked_map
+                                self.track.linked_map = temp_linked_map
+                                self.callibrate.linked_map = temp_linked_map
+                                self.rotate.linked_map = temp_linked_map
                                 TrackPieces.WHITE_POSITIONS = temp_white_pos
                                 TrackPieces.BLACK_POSITIONS = temp_black_pos
                                 MovePiece.MOVE_NUMBER -= 1
@@ -1859,24 +2078,25 @@ class Controller:
 
                         self.callibrate()
                         self.track.detect_check()
+                        self.track.detect_stale_or_check_mate()
                         if ( 
                              TrackPieces.WHITE_MOVE and TrackPieces.WHITE_IN_CHECK
                              or
                              TrackPieces.BLACK_MOVE and TrackPieces.BLACK_IN_CHECK 
                         ):
-                                # ************we set the board class linked map back but other classes
-                                # have been passed these instances which are now the linked
-                                # map after the castle as this assignment does not change them
-                                # back.... ******************
-                                # .... maybe change linked map to one class variable that is
-                                # referenced everywhere ....... ???????
+                                # to-do: change the linked map variable to a class variable
+                                # so that we don't have to keep track of several instances which
+                                # should all be the same anyway.
                                 self.board.linked_map = temp_linked_map
+                                self.track.linked_map = temp_linked_map
+                                self.callibrate.linked_map = temp_linked_map
+                                self.rotate.linked_map = temp_linked_map
                                 TrackPieces.WHITE_POSITIONS = temp_white_pos
                                 TrackPieces.BLACK_POSITIONS = temp_black_pos
                                 MovePiece.MOVE_NUMBER -= 1
                                 
                                 # Add this back in
-                                #raise ValueError("Invalid Move - In Check!")
+                                raise ValueError("Invalid Move - In Check!")
                         else:                       
                                 # this is executing every turn...
                                 self.track.update_king_move()
@@ -1942,6 +2162,7 @@ class Controller:
 
                 self.callibrate()
                 self.track.detect_check()
+                self.track.detect_stale_or_check_mate()
 
                 self._display_board()
 
@@ -1996,20 +2217,26 @@ player.add("wr", "a1", "h1")
 # player.add("wQ", "d1")
 player.add("wK", "e1")
 
-player.add("br", "a8", "h8")                
+# player.add("br", "a8", "h8")                
 # player.add("bk", "b8", "g8")
 # player.add("bb", "c8", "f8")
 # player.add("bQ", "d8")
-player.add("bK", "e8")
+# player.add("bK", "e8")
 
-#player.move("e1", "g1")
+
+
+player.add("br", "h3", "f2", "f3")
+player.move("e1", "g1")
+
+
+
+# player.move("e1", "g1")
 
 #player.move("e1", "e2")
 #player.move("e8", "c8")
 #player.move("e2", "e1")
 
-player.add("br", "c8", "g8")
-player.move("e1", "g1")
+
 player._display_board()
 
 
@@ -2017,24 +2244,3 @@ end = time.time()
 
 print("Time Taken: ", end-start)
 
-# t = TestCastle(player.board.linked_map, "e1", "c1")
-# t._execute_castle()
-
-
-
-
-
-
-#Board([4, 4])
-#AlternatingBoard([20,2])
-
-#piece = SetCastle(board.linked_map, "a8")
-#piece = SetKnight(board.linked_map, "a7")
-#piece = SetBishop(board.linked_map, "a6")
-
-#piece = SetQueen(board.linked_map, "a5")
-#piece = SetKing(board.linked_map, "a4")
-
-#piece = SetRook(board.linked_map, "a1")
-#piece = SetKnight(board.linked_map, "a2")
-#piece = SetBishop(board.linked_map, "a3")
