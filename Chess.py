@@ -838,10 +838,74 @@ class TrackPieces:
                         or
                         TrackPieces.BLACK_SURROUNDING_CHECK and not TrackPieces.BLACK_IN_CHECK
                 ):
-                        print("********************")
-                        print("*****STALE-MATE*****")
-                        print("********************")
-                        quit()
+                        # check if non king pieces can move - if not it is stalemate.
+                        if TrackPieces.WHITE_MOVE:
+                                other_pieces_can_move = False
+                                for position in TrackPieces.WHITE_POSITIONS:
+                                        # finding non king pieces
+                                        if self.linked_map[position][-1] != "K":
+                                                # for pawns, need to consider both take dests and move dests as they are
+                                                # different.
+                                                if self.linked_map[position][-1] == "p" and position in TrackPieces.BLACK_POSITIONS:
+                                                #      self.linked_map[position][-1] != "p" 
+
+                                                        for dest_list in PieceMoveRanges.TRUNCATED_BOARD_TAKE_DESTS[position]:
+                                                                if dest_list:
+                                                                        other_pieces_can_move = True
+                                                                        break
+
+                                                for dest_list in PieceMoveRanges.TRUNCATED_BOARD_DESTS[position]:
+                                                        if dest_list:
+                                                                other_pieces_can_move = True
+                                                                break                                                                   
+
+                        if TrackPieces.BLACK_MOVE:
+                                other_pieces_can_move = False
+                                for position in TrackPieces.BLACK_POSITIONS:
+                                        # finding non king pieces
+                                        if self.linked_map[position][-1] != "K":
+                                                # for pawns, need to consider both take dests and move dests as they are
+                                                # different.
+                                                if self.linked_map[position][-1] == "p" and position in TrackPieces.WHITE_POSITIONS:
+                                                #      self.linked_map[position][-1] != "p" 
+
+                                                        for dest_list in PieceMoveRanges.TRUNCATED_BOARD_TAKE_DESTS[position]:
+                                                                if dest_list:
+                                                                        other_pieces_can_move = True
+                                                                        break
+
+                                                for dest_list in PieceMoveRanges.TRUNCATED_BOARD_DESTS[position]:
+                                                        if dest_list:
+                                                                other_pieces_can_move = True
+                                                                break      
+
+                        # other_pieces_can_move = False
+                        # if TrackPieces.BLACK_MOVE:
+                        #         for position in TrackPieces.BLACK_POSITIONS:
+                        #                 # finding non king pieces
+                        #                 if self.linked_map[position][-1] != "K":
+                        #                         # for pawns, need to consider both take dests and move dests as they are
+                        #                         # different.
+                        #                         if self.linked_map[position][-1] != "p":
+                        #                                 for dest_list in PieceMoveRanges.TRUNCATED_BOARD_TAKE_DESTS[position]:
+                        #                                         if dest_list:
+                        #                                                 other_pieces_can_move = True
+                        #                                                 break
+
+                        #                         for dest_list in PieceMoveRanges.TRUNCATED_BOARD_DESTS[position]:
+                        #                                 if dest_list:
+                        #                                         other_pieces_can_move = True
+                        #                                         break
+                        
+                        if not other_pieces_can_move:
+                                print("********************")
+                                print("*****STALE-MATE*****")
+                                print("********************")
+                                quit() 
+                        
+                        
+                        
+
         # if a king is in check then find if it is in checkmate by looking at the
         # the truncated dest for that piece and seeing if all the squares in it
         # are in check too.
@@ -2223,12 +2287,12 @@ player.add("wK", "e1")
 # player.add("bQ", "d8")
 # player.add("bK", "e8")
 
-
+player.add( "wp", "a2" )
 
 player.add("br", "h3", "f2", "f3")
 player.move("e1", "g1")
 
-
+player.add( "wp", "b1", "e1" )
 
 # player.move("e1", "g1")
 
