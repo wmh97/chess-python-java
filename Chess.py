@@ -876,35 +876,55 @@ class TrackPieces:
 
                                                 for dest_list in PieceMoveRanges.TRUNCATED_BOARD_DESTS[position]:
                                                         if dest_list:
+                                                                # ***** _detect_blocking_check() here and in the relevant places above *******
                                                                 other_pieces_can_move = True
                                                                 break      
 
-                        # other_pieces_can_move = False
-                        # if TrackPieces.BLACK_MOVE:
-                        #         for position in TrackPieces.BLACK_POSITIONS:
-                        #                 # finding non king pieces
-                        #                 if self.linked_map[position][-1] != "K":
-                        #                         # for pawns, need to consider both take dests and move dests as they are
-                        #                         # different.
-                        #                         if self.linked_map[position][-1] != "p":
-                        #                                 for dest_list in PieceMoveRanges.TRUNCATED_BOARD_TAKE_DESTS[position]:
-                        #                                         if dest_list:
-                        #                                                 other_pieces_can_move = True
-                        #                                                 break
-
-                        #                         for dest_list in PieceMoveRanges.TRUNCATED_BOARD_DESTS[position]:
-                        #                                 if dest_list:
-                        #                                         other_pieces_can_move = True
-                        #                                         break
-                        
                         if not other_pieces_can_move:
                                 print("********************")
                                 print("*****STALE-MATE*****")
                                 print("********************")
                                 quit() 
                         
-                        
-                        
+        def _detect_blocking_check(self, position): 
+                # (1) if another piece of the opposite colour has that piece in its move dests
+                # (2) if it does, then check whether that piece and the king are the only pieces
+                #     in the opposite colours pieces move dest (when looking at just one dest list)
+                #     - note would need to check if king is in the valid move range for the equivalent
+                #       non truncated list.
+                # (3) if they are then then moving that piece would result in check so set
+                #     'other_pieces_can_move' to false for that dest list.
+                #
+                # Alternatively - could attempt the move and then reverse it if in check. E.g. call 
+                # player.move and if the return value is a certain value then set other_pieces_can_move to
+                # false for that dest list.
+                
+                # get king position
+                white_king_pos = []
+                for square in TrackPieces.WHITE_POSITIONS:
+                        if self.linked_map[square][-1] == "K":
+                                white_king_pos.append(square)
+
+                ###### start again #############
+                if TrackPieces.WHITE_MOVE:
+                        for opponent_position in TrackPieces.BLACK_POSITIONS:
+                                # might need to consider difference for pawns and other pieces as they have
+                                # different take dir to move dir.
+                                for dest_list in PieceMoveRanges.TRUNCATED_BOARD_DESTS[opponent_position]:
+                                        if position in dest_list:
+                                                for king_pos in white_king_pos:
+                                                        # i.e if pos and king pos in dest list of opp pos
+                                                        if king_pos in dest_list:
+                                                                # check if there is another piece in that dest list
+                                                                for dest_square in dest_list:
+                                                                        if dest_square != position and dest_square != king_pos:
+                                                                                if ( len(self.linked_map[dest_square]) == 2 
+                                                                                     and 
+                                                                                     dest_square in TrackPieces.WHITE_POSITIONS ):
+                                                                                     
+                                                                                        
+
+
 
         # if a king is in check then find if it is in checkmate by looking at the
         # the truncated dest for that piece and seeing if all the squares in it
@@ -2267,39 +2287,49 @@ start = time.time()
 player = Controller()
 
 
-# Below is the chess setup for white and black.
-# player.add("wp", "a2", "b2", "c2",
-#                  "d2", "e2", "f2",
-#                  "g2", "h2")
-# player.add("bp", "a7", "b7", "c7",
-#                  "d7", "e7", "f7",
-#                  "g7", "h7")
+# # Below is the chess setup for white and black.
+# # player.add("wp", "a2", "b2", "c2",
+# #                  "d2", "e2", "f2",
+# #                  "g2", "h2")
+# # player.add("bp", "a7", "b7", "c7",
+# #                  "d7", "e7", "f7",
+# #                  "g7", "h7")
 
-player.add("wr", "a1", "h1")                
-# player.add("wk", "b1", "g1")
-# player.add("wb", "c1", "f1")
-# player.add("wQ", "d1")
-player.add("wK", "e1")
+# player.add("wr", "a1", "h1")                
+# # player.add("wk", "b1", "g1")
+# # player.add("wb", "c1", "f1")
+# # player.add("wQ", "d1")
+# player.add("wK", "e1")
 
-# player.add("br", "a8", "h8")                
-# player.add("bk", "b8", "g8")
-# player.add("bb", "c8", "f8")
-# player.add("bQ", "d8")
-# player.add("bK", "e8")
+# # player.add("br", "a8", "h8")                
+# # player.add("bk", "b8", "g8")
+# # player.add("bb", "c8", "f8")
+# # player.add("bQ", "d8")
+# # player.add("bK", "e8")
 
-player.add( "wp", "a2" )
+# player.add( "wp", "a2" )
 
-player.add("br", "h3", "f2", "f3")
-player.move("e1", "g1")
-
-player.add( "wp", "b1", "e1" )
-
+# player.add("br", "h3", "f2", "f3")
 # player.move("e1", "g1")
 
-#player.move("e1", "e2")
-#player.move("e8", "c8")
-#player.move("e2", "e1")
+# player.add( "wp", "b1", "e1" )
 
+# # player.move("e1", "g1")
+
+# #player.move("e1", "e2")
+# #player.move("e8", "c8")
+# #player.move("e2", "e1")
+
+############TESTING STALEMATE##########
+
+player.add("bK", "a3")
+player.add("wK", "a1")
+player.add("wk", "c3", "c1")
+player.add("wp", "c2", "d3")
+player.add("bp", "a2")
+player.add("bb", "d4")
+
+# player.move("b5", "c3")
 
 player._display_board()
 
