@@ -806,7 +806,7 @@ class TrackPieces:
                 self.detect_rook_positions()
                
         def __call__(self):
-                self._get_colour()
+                self.get_colour()
                 self._print_turn()
                 self._print_colour_positions()
                 self._print_colour_taken()
@@ -839,29 +839,9 @@ class TrackPieces:
                         TrackPieces.BLACK_SURROUNDING_CHECK and not TrackPieces.BLACK_IN_CHECK
                 ):
                         # check if non king pieces can move - if not it is stalemate.
-                        if TrackPieces.WHITE_MOVE:
+                        if TrackPieces.WHITE_SURROUNDING_CHECK:
                                 other_pieces_can_move = False
                                 for position in TrackPieces.WHITE_POSITIONS:
-                                        # finding non king pieces
-                                        if self.linked_map[position][-1] != "K":
-                                                # for pawns, need to consider both take dests and move dests as they are
-                                                # different.
-                                                if self.linked_map[position][-1] == "p" and position in TrackPieces.BLACK_POSITIONS:
-                                                #      self.linked_map[position][-1] != "p" 
-
-                                                        for dest_list in PieceMoveRanges.TRUNCATED_BOARD_TAKE_DESTS[position]:
-                                                                if dest_list:
-                                                                        other_pieces_can_move = True
-                                                                        break
-
-                                                for dest_list in PieceMoveRanges.TRUNCATED_BOARD_DESTS[position]:
-                                                        if dest_list:
-                                                                other_pieces_can_move = True
-                                                                break                                                                   
-
-                        if TrackPieces.BLACK_MOVE:
-                                other_pieces_can_move = False
-                                for position in TrackPieces.BLACK_POSITIONS:
                                         # finding non king pieces
                                         if self.linked_map[position][-1] != "K":
                                                 # for pawns, need to consider both take dests and move dests as they are
@@ -874,11 +854,43 @@ class TrackPieces:
                                                                         other_pieces_can_move = True
                                                                         break
 
+                                                # checking if the piece is blocked or not.
                                                 for dest_list in PieceMoveRanges.TRUNCATED_BOARD_DESTS[position]:
                                                         if dest_list:
-                                                                # ***** _detect_blocking_check() here and in the relevant places above *******
+
+                                                                # ******* NOTE could try to pass some kind of flag
+                                                                # which makes this section of code skipped when using test_move ???? i.e when called
+                                                                # from here don't check for stalemate ?????????
+                                                                #
+                                                                # # try to move to each square in that dest list. If any of those don't result in
+                                                                # # an error then we can set other_pieces_can_move to true.
+                                                                # for dest_square in dest_list:
+                                                                        # doesn't work - just results in loop...
+                                                                        #if player.test_move(position, dest_square):
                                                                 other_pieces_can_move = True
-                                                                break      
+                                                                break
+                                                                                                                        
+
+                        # if TrackPieces.BLACK_MOVE:
+                        #         other_pieces_can_move = False
+                        #         for position in TrackPieces.BLACK_POSITIONS:
+                        #                 # finding non king pieces
+                        #                 if self.linked_map[position][-1] != "K":
+                        #                         # for pawns, need to consider both take dests and move dests as they are
+                        #                         # different.
+                        #                         if self.linked_map[position][-1] == "p" and position in TrackPieces.WHITE_POSITIONS:
+                        #                         #      self.linked_map[position][-1] != "p" 
+
+                        #                                 for dest_list in PieceMoveRanges.TRUNCATED_BOARD_TAKE_DESTS[position]:
+                        #                                         if dest_list and not self._detect_blocking_check(position) == False:
+                        #                                                 other_pieces_can_move = True
+                        #                                                 break
+
+                        #                         for dest_list in PieceMoveRanges.TRUNCATED_BOARD_DESTS[position]:
+                        #                                 if dest_list and not self._detect_blocking_check(position) == False:
+                        #                                         # ***** _detect_blocking_check() here and in the relevant places above *******
+                        #                                         other_pieces_can_move = True
+                        #                                         break      
 
                         if not other_pieces_can_move:
                                 print("********************")
@@ -887,6 +899,8 @@ class TrackPieces:
                                 quit() 
                         
         def _detect_blocking_check(self, position): 
+
+                pass
                 # (1) if another piece of the opposite colour has that piece in its move dests
                 # (2) if it does, then check whether that piece and the king are the only pieces
                 #     in the opposite colours pieces move dest (when looking at just one dest list)
@@ -898,30 +912,61 @@ class TrackPieces:
                 # Alternatively - could attempt the move and then reverse it if in check. E.g. call 
                 # player.move and if the return value is a certain value then set other_pieces_can_move to
                 # false for that dest list.
-                
+
+                # ************* NOTE need to make sure we are checking this ONLY when the piece would
+                # not be moving to the same dest list/ dest line as the one of the opponents piece that it is
+                # in... because it would still be blocking the king and therefore not in check.
+
                 # get king position
                 white_king_pos = []
                 for square in TrackPieces.WHITE_POSITIONS:
                         if self.linked_map[square][-1] == "K":
                                 white_king_pos.append(square)
 
-                ###### start again #############
                 if TrackPieces.WHITE_MOVE:
+                        piece_can_move = True
                         for opponent_position in TrackPieces.BLACK_POSITIONS:
                                 # might need to consider difference for pawns and other pieces as they have
                                 # different take dir to move dir.
+                                dest_list_counter = -1
                                 for dest_list in PieceMoveRanges.TRUNCATED_BOARD_DESTS[opponent_position]:
+                                        dest_list_counter += 1
                                         if position in dest_list:
+                                                non_trunc_dest_list = PieceMoveRanges.NON_TRUNC_BOARD_DESTS[opponent_position][dest_list_counter]
+
+                                                # truncate the dest list from after the piece that is in it.
+                                                position_index = dest_list.index(position)
+                                                non_trunc_dest_list = non_trunc_dest_list[position_index+1:]
+
                                                 for king_pos in white_king_pos:
-                                                        # i.e if pos and king pos in dest list of opp pos
-                                                        if king_pos in dest_list:
-                                                                # check if there is another piece in that dest list
-                                                                for dest_square in dest_list:
-                                                                        if dest_square != position and dest_square != king_pos:
-                                                                                if ( len(self.linked_map[dest_square]) == 2 
-                                                                                     and 
-                                                                                     dest_square in TrackPieces.WHITE_POSITIONS ):
-                                                                                     
+                                                        if king_pos in non_trunc_dest_list:
+
+                                                                # truncate to before the king pos - now this dest list
+                                                                # has the squares in betweeen the piece and the king.
+                                                                #
+                                                                # when king is directly behind piece then the 'non trunc'
+                                                                # list will become empty. In this case, 
+                                                                king_pos_index = non_trunc_dest_list.index(king_pos)
+                                                                non_trunc_dest_list = non_trunc_dest_list[:king_pos_index]
+
+                                                                # check if there is another piece in those 'inbetween squares'.
+                                                                # if there isn't, then we can mark this as other pieces cannot move.
+                                                                if not non_trunc_dest_list:
+                                                                        piece_can_move = False
+                                                                else:
+                                                                        for dest_square in non_trunc_dest_list:
+                                                                                if dest_square != position and dest_square != king_pos:
+                                                                                        if len(self.linked_map[dest_square]) != 2:
+                                                                                                # make sure this is breaking the correct loop
+                                                                                                piece_can_move = False
+                                                                                                break
+                        if piece_can_move:
+                                return True
+                        elif not piece_can_move:
+                                return False
+
+
+
                                                                                         
 
 
@@ -1131,7 +1176,8 @@ class TrackPieces:
             #if TrackPieces.BLACK_MOVE:
             print("Black: ", TrackPieces.BLACK_POSITIONS)
        
-        def _get_colour(self):
+        @staticmethod
+        def get_colour():
                 if MovePiece.MOVE_NUMBER % 2 != 0:
                         TrackPieces.BLACK_MOVE = False
                         TrackPieces.WHITE_MOVE = True
@@ -1167,6 +1213,9 @@ class PieceMoveRanges:
         TRUNCATED_BOARD_DESTS = {}
         TRUNCATED_BOARD_TAKE_DESTS = {}
         
+        NON_TRUNC_BOARD_DESTS = {}
+        NON_TRUNC_BOARD_TAKE_DESTS = {}
+
         TRUNCATED_BOARD_CHECK_DESTS = {}
         TRUNCATED_BOARD_CHECK_TAKE_DESTS = {}
         
@@ -1198,7 +1247,7 @@ class PieceMoveRanges:
 
                 PieceMoveRanges.VALID_KING_DESTS = self._get_valid_king_dests()
 
-        def __call__(self): # not yet used - needs testing first.
+        def __call__(self):
                 self._generate_board_dests()
 
         def _generate_board_dests(self):
@@ -1206,6 +1255,14 @@ class PieceMoveRanges:
                 PieceMoveRanges.TRUNCATED_BOARD_TAKE_DESTS = {} # May not be necessart to reset these - need to test.
                 
                 valid_board_dests, valid_board_take_dests = self._get_board_dests_per_turn()
+
+                # make a copy of valid_board_dests (non truncated) to be used in stalemate detection. Maybe
+                # can also use in check detection if this works?
+                for square in valid_board_dests:
+                        dest_list_copy = [[dest_square for dest_square in dest_list]
+                                         for dest_list in valid_board_dests[square]]
+                        PieceMoveRanges.NON_TRUNC_BOARD_DESTS[square] = dest_list_copy
+
                 PieceMoveRanges.TRUNCATED_BOARD_DESTS = self._get_truncated_board_dests_per_turn(
                         valid_board_dests
                 )
@@ -2189,6 +2246,51 @@ class Controller:
                 elif piece not in list("rbkQKp"):
                         raise ValueError("No Piece Here")
 
+        def test_move(self, start_pos, end_pos):
+
+                # get temp linked map - revert back to this if we do a valid move.
+                # ****** currently the move() method is handling reverting back when an
+                # 'in check' move is made. Next step is to take that functionality out into
+                # this test function.
+                temp_linked_map, temp_white_pos, temp_black_pos = self.track.get_temp_data(
+                        self.board.linked_map, 
+                        TrackPieces.WHITE_POSITIONS,
+                        TrackPieces.BLACK_POSITIONS        
+                )
+
+                try:
+                        self.move(start_pos, end_pos)
+
+                        # need to refresh board pieces are the right way round relative to the squares
+                        # ... but not sure why this is needed as the necessary parts should be contained
+                        # in move() ?????????????
+                        self._refresh_board()
+                except:
+                        print("Invalid Move")
+                        return False
+
+                # to-do: change the linked map variable to a class variable
+                # so that we don't have to keep track of several instances which
+                # should all be the same anyway.
+                #
+                # If the move was successful we revert back to the temp values
+                # and change the turn back to that of the colour it was just
+                # before test_move was called.
+                self.board.linked_map = temp_linked_map
+                self.track.linked_map = temp_linked_map
+                self.callibrate.linked_map = temp_linked_map
+                self.rotate.linked_map = temp_linked_map
+                TrackPieces.WHITE_POSITIONS = temp_white_pos
+                TrackPieces.BLACK_POSITIONS = temp_black_pos
+                MovePiece.MOVE_NUMBER -= 1
+                TrackPieces.get_colour()
+
+                
+
+                print("Valid Move")
+                return True
+
+
         def add(self, colour_piece, position, *positions):
                 # for debug and testing purposes only.
                 
@@ -2329,10 +2431,8 @@ player.add("wp", "c2", "d3")
 player.add("bp", "a2")
 player.add("bb", "d4")
 
-# player.move("b5", "c3")
-
-player._display_board()
-
+# player.test_move("c1", "e2")
+# player.move("c1", "e2")
 
 end = time.time()
 
