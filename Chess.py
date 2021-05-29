@@ -111,6 +111,9 @@ class ChessBoard(AlternatingBoard):
        
         squares_map = []
         rotated_squares_map = []
+
+        SQUARES_MAP_COORDS = {}
+
         WIDTH = None
         HEIGHT = None
        
@@ -123,8 +126,13 @@ class ChessBoard(AlternatingBoard):
 
                 self.squares_map = self._get_chess_squares()
                 self.linked_map = self._link_squares_map()
-               
+
                 ChessBoard.squares_map = self.squares_map
+
+                self.squares_map_coords = self._get_chess_squares_coords(
+                        ChessBoard.squares_map
+                )
+                ChessBoard.SQUARES_MAP_COORDS = self.squares_map_coords
 
                 # creating a duplicate squares map to reverse.
                 ChessBoard.rotated_squares_map = [[row for row in list]         # Creating copies of not only the list
@@ -245,6 +253,21 @@ class ChessBoard(AlternatingBoard):
                 print(horizontal_border)
                 print()
        
+        # testing **** dictionary of coordinates for each 
+        @staticmethod
+        def _get_chess_squares_coords(squares_map):
+
+                squares_map_coords = {}
+                
+                for down, rank in enumerate(squares_map):
+                        for right, square in enumerate(rank):
+                                print(square, down, right)
+                                squares_map_coords[square] = [down, right]
+
+                print(squares_map_coords)
+
+                return squares_map_coords
+
         @staticmethod
         def _get_chess_squares():
                 ranks = list("abcdefgh")
@@ -701,6 +724,30 @@ class PawnTake(MovePawn):
             return valid_dest
 
 
+class EnPassant(PawnTake):
+        
+        def __init__(self, linked_map, start_pos, end_pos):
+                super().__init__(linked_map, start_pos, end_pos)
+
+        ####### make it pop the end pos rather than the enpassant pos.
+        def _execute_move(self, piece="p"):
+            if self._validate_move():
+                    self.linked_map[TrackPieces.EN_PASSANT_PAWN].pop()
+                    super(MovePawn, self)._execute_move(piece) # Trimming the MRO so we use the code from MovePiece
+
+        def _check_en_passant(self, position):
+                if position in TrackPieces.EN_PASSANT_SQUARES:
+                        return True
+                return False
+
+        def _end_pos(self, end_pos): 
+            if self._validate_position(end_pos):
+                    if not self._check_en_passant(end_pos):
+                            raise ValueError("Take/Blocked")
+                    self._end_pos = end_pos
+                    return self._end_pos
+
+
 class RookTake(PawnTake):
         
         def __init__(self, linked_map, start_pos, end_pos):
@@ -787,7 +834,13 @@ class TrackPieces:
         WHITE_SURROUNDING_CHECK = False
         BLACK_SURROUNDING_CHECK = False
 
+        ### remove this ###
         SKIP_STALEMATE_DETECTION = False
+
+        # *_PAWNS contains squares of the pawns that will be taken by en-passant.
+        EN_PASSANT_PAWN = ""
+        EN_PASSANT_SQUARES = []
+        EN_PASSANT_ENABLED = False
 
         def __init__(self, linked_map, white_positions,
                                        black_positions):
@@ -822,6 +875,81 @@ class TrackPieces:
                 temp_black_pos = [position for position in black_pos]
 
                 return (temp_linked_map, temp_white_pos, temp_black_pos)
+
+        def detect_en_passant(self, start_pos, end_pos):
+        
+                TrackPieces.EN_PASSANT_ENABLED = False
+                TrackPieces.EN_PASSANT_PAWN = ""
+                TrackPieces.EN_PASSANT_SQUARES.clear()
+
+                # this is executed after the move so we can check the piece that moved
+                # by querying the end pos in the linked map.
+
+                # make sure the piece that moved is a pawn and that it moved two squares.
+                piece_moved = self.linked_map[end_pos][-1]
+                
+                vertical_distance_moved = ( ChessBoard.SQUARES_MAP_COORDS[end_pos][0] -
+                                            ChessBoard.SQUARES_MAP_COORDS[start_pos][0] )
+
+                # the en-passant square is the one behind the pawn that moved two squares,
+                # once it has moved.
+                #
+                # The direction of this will depend on if it is a white or black turn
+                # (make sure we are on the correct turn when this function is called).
+                if TrackPieces.WHITE_MOVE:
+                        # down, right
+                        new_file = ChessBoard.SQUARES_MAP_COORDS[end_pos][0] + 1
+                        new_rank = ChessBoard.SQUARES_MAP_COORDS[end_pos][1]
+                        en_passant_square = ChessBoard.squares_map[new_file][new_rank]
+                if TrackPieces.BLACK_MOVE:
+                        # down, right
+                        new_file = ChessBoard.SQUARES_MAP_COORDS[end_pos][0] - 1
+                        new_rank = ChessBoard.SQUARES_MAP_COORDS[end_pos][1]
+                        en_passant_square = ChessBoard.squares_map[new_file][new_rank]                     
+
+                # make sure that there is a pawn to the left or the right of the end_pos
+                # and that the pawn is an opposite colour.
+                print(ChessBoard.SQUARES_MAP_COORDS)
+
+                if not (ChessBoard.SQUARES_MAP_COORDS[end_pos][1] - 1) < 0:
+                        left_coords = [ ChessBoard.SQUARES_MAP_COORDS[end_pos][0],
+                                        ChessBoard.SQUARES_MAP_COORDS[end_pos][1] - 1 ]
+                        left_square = ChessBoard.squares_map[ left_coords[0] ][ left_coords[1] ]                
+                else:
+                        left_coords = False
+                        left_square = False
+                
+                if not (ChessBoard.SQUARES_MAP_COORDS[end_pos][1] + 1) < 0:
+                        right_coords = [ ChessBoard.SQUARES_MAP_COORDS[end_pos][0],
+                                        ChessBoard.SQUARES_MAP_COORDS[end_pos][1] + 1 ] 
+                        right_square = ChessBoard.squares_map[ right_coords[0] ][ right_coords[1] ]
+                else:
+                        right_coords = False
+                        right_square = False
+
+                print("left coords:", left_coords, "right coords:", right_coords)
+                print("pawn is on:", end_pos, " left:", left_square, " right:", right_square, "En-Passant square: ", en_passant_square)
+
+                if ( 
+                        piece_moved == "p" 
+                        and 
+                        abs(vertical_distance_moved) == 2
+                        and
+                        (
+                                # might not need to check if this pawn is an opposite colour as by default
+                                # en-passant can only be used if it is anyway (as we need a take dest on the
+                                # en-passant square).
+                                (left_square and self.linked_map[left_square][-1] == "p") 
+                                or 
+                                (right_square and self.linked_map[right_square][-1] == "p")
+                        )
+                ):
+                        TrackPieces.EN_PASSANT_ENABLED = True
+                        TrackPieces.EN_PASSANT_SQUARES.append(en_passant_square)
+                        TrackPieces.EN_PASSANT_PAWN = end_pos
+                        print("En-Passant enabled.")
+                else:
+                        print("No En-Passant detected.")
 
         def detect_stale_or_check_mate(self):
                 self._detect_surrounding_check()
@@ -1166,7 +1294,15 @@ class TrackPieces:
                 self._taken_by_black.append(piece_taken)
 
         @staticmethod
-        def query_take(target_position):
+        def query_take(target_position, **kwargs):
+
+            if kwargs:
+                    if kwargs["piece"] == "p":
+                        print("querying pawn take detected")
+                        if target_position in TrackPieces.EN_PASSANT_SQUARES:
+                                print("En-Passant take will be attempted.")
+                                return "EP"
+
             if TrackPieces.WHITE_MOVE:
                 if target_position in TrackPieces.BLACK_POSITIONS:
                     return True
@@ -1998,8 +2134,8 @@ class Controller:
                 
                 piece = self.board.linked_map[start_pos][-1]
                 if piece == "p":
-                        
-                        if not self.track.query_take(end_pos): 
+                        query_take = self.track.query_take(end_pos, piece="p")
+                        if not query_take: 
                             move = MovePawn(
                                     self.board.linked_map,
                                     start_pos,
@@ -2007,6 +2143,14 @@ class Controller:
                             )
                             if end_pos in ChessBoard.squares_map[0] or end_pos in ChessBoard.squares_map[ChessBoard.HEIGHT-1]:
                                     promotion = PromotePawn(self.board.linked_map, end_pos)
+                        
+                        elif query_take == "EP":
+                            take = EnPassant(
+                                self.board.linked_map,
+                                start_pos,
+                                end_pos
+                            )
+                            self.track.update_take(TrackPieces.EN_PASSANT_PAWN, take.piece_taken)
 
                         else: # use take if end pos is in the list of positions
                               # for the opposite colour.
@@ -2026,6 +2170,7 @@ class Controller:
                         # *** extract this code into a function with different behaviour
                         # per piece so that the code isnt duplicated ***
                         self.callibrate()
+                        self.track.detect_en_passant(start_pos, end_pos) # note only need to check this for pawns
                         self.track.detect_check()
                         self.track.detect_stale_or_check_mate()
                         if ( 
@@ -2456,13 +2601,13 @@ player = Controller()
 
 ############TESTING STALEMATE##########
 
-player.add("bK", "a3")
-player.add("wK", "a1")
-player.add("wk", "c3", "c1")
-player.add("wp", "c2", "d3")
-player.add("bp", "a2")
-player.add("bb", "d4")
-player.add("br", "g1")
+# player.add("bK", "a3")
+# player.add("wK", "a1")
+# player.add("wk", "c3", "c1")
+# player.add("wp", "c2", "d3")
+# player.add("bp", "a2")
+# player.add("bb", "d4")
+# player.add("br", "g1")
 
 #######################################
 
@@ -2470,6 +2615,15 @@ player.add("br", "g1")
 # player.add("wp", "a2")
 # player.add("br", "a3", "b8")
 
+#######################################
+
+# ChessBoard._get_chess_squares_coords(ChessBoard.squares_map)
+print("@@@@@@@@@@@@@@@@@@@@@@@")
+print(ChessBoard.SQUARES_MAP_COORDS)
+player.add("wp", "a2")
+player.add("bp", "b4")
+player.move("a2", "a4")
+player.move("b4", "a3")
 
 # player.test_move("c1", "e2")
 # player.move("c1", "e2")
