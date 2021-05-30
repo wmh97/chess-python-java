@@ -903,9 +903,15 @@ class TrackPieces:
                         en_passant_square = ChessBoard.squares_map[new_file][new_rank]
                 if TrackPieces.BLACK_MOVE:
                         # down, right
-                        new_file = ChessBoard.SQUARES_MAP_COORDS[end_pos][0] - 1
-                        new_rank = ChessBoard.SQUARES_MAP_COORDS[end_pos][1]
-                        en_passant_square = ChessBoard.squares_map[new_file][new_rank]                     
+                        # using "8 - ..." to account for the squares map being rotated each turn,
+                        # so the coordinates no longer hold. Might need to create a new map for reversed
+                        # coordinates ****
+                        #
+                        # check 7 - ??????????????????????????
+                        new_file = (ChessBoard.HEIGHT - 1) - (ChessBoard.SQUARES_MAP_COORDS[end_pos][0] - 1)
+                        new_rank = (ChessBoard.WIDTH - 1) - ChessBoard.SQUARES_MAP_COORDS[end_pos][1]
+
+                        en_passant_square = ChessBoard.squares_map[new_file][new_rank]                    
 
                 # make sure that there is a pawn to the left or the right of the end_pos
                 # and that the pawn is an opposite colour.
@@ -919,9 +925,9 @@ class TrackPieces:
                         left_coords = False
                         left_square = False
                 
-                if not (ChessBoard.SQUARES_MAP_COORDS[end_pos][1] + 1) < 0:
+                if not (ChessBoard.SQUARES_MAP_COORDS[end_pos][1] + 1) > 7:
                         right_coords = [ ChessBoard.SQUARES_MAP_COORDS[end_pos][0],
-                                        ChessBoard.SQUARES_MAP_COORDS[end_pos][1] + 1 ] 
+                                         ChessBoard.SQUARES_MAP_COORDS[end_pos][1] + 1 ] 
                         right_square = ChessBoard.squares_map[ right_coords[0] ][ right_coords[1] ]
                 else:
                         right_coords = False
@@ -936,6 +942,7 @@ class TrackPieces:
                         abs(vertical_distance_moved) == 2
                         and
                         (
+                                
                                 # might not need to check if this pawn is an opposite colour as by default
                                 # en-passant can only be used if it is anyway (as we need a take dest on the
                                 # en-passant square).
@@ -950,6 +957,12 @@ class TrackPieces:
                         print("En-Passant enabled.")
                 else:
                         print("No En-Passant detected.")
+
+                        # Resetting values... need to use more nested if statements above to drop
+                        # out earlier... ***
+                        # TrackPieces.EN_PASSANT_ENABLED = False
+                        # TrackPieces.EN_PASSANT_SQUARES.clear()
+                        # TrackPieces.EN_PASSANT_PAWN = ""
 
         def detect_stale_or_check_mate(self):
                 self._detect_surrounding_check()
@@ -2058,6 +2071,10 @@ class PieceMoveRanges:
 
 class Controller:
        
+        # testing for previous repetitions
+        PREV_WHITE_MOVES = []
+        PREV_BLACK_MOVES = []
+
         def __init__(self):
                 self.board = ChessBoard()
                 self.callibrate = PieceMoveRanges(
@@ -2118,6 +2135,7 @@ class Controller:
                         # have been moved.
                         # self.track.detect_rook_positions()
 
+        # ***** This method is a bit too big... consider splitting it up. *****
         def move(self, start_pos, end_pos):
                 
                 self.callibrate() # should do this at the beginning or the end of the move - or both?
@@ -2424,6 +2442,18 @@ class Controller:
                 elif piece not in list("rbkQKp"):
                         raise ValueError("No Piece Here")
 
+        @staticmethod
+        def _check_repetition(start_pos, end_pos):
+                
+                latest_move = start_pos + "-" + end_pos
+
+                # add white move and check if it was the same as the last one.
+                if TrackPieces.WHITE_MOVE:
+
+                        if len(Callibrate.PREV_WHITE_MOVES) < 3:
+                                Callibrate.PREV_WHITE_MOVES.append(start_pos)
+                        
+
         def test_move(self, start_pos, end_pos):
 
                 # get temp linked map - revert back to this if we do a valid move.
@@ -2567,24 +2597,49 @@ player = Controller()
 
 
 # # Below is the chess setup for white and black.
-# # player.add("wp", "a2", "b2", "c2",
-# #                  "d2", "e2", "f2",
-# #                  "g2", "h2")
-# # player.add("bp", "a7", "b7", "c7",
-# #                  "d7", "e7", "f7",
-# #                  "g7", "h7")
+# player.add("wp", "a2", "b2", "c2",
+#                  "d2", "e2", "f2",
+#                  "g2", "h2")
+# player.add("bp", "a7", "b7", "c7",
+#                  "d7", "e7", "f7",
+#                  "g7", "h7")
 
 # player.add("wr", "a1", "h1")                
-# # player.add("wk", "b1", "g1")
-# # player.add("wb", "c1", "f1")
-# # player.add("wQ", "d1")
+# player.add("wk", "b1", "g1")
+# player.add("wb", "c1", "f1")
+# player.add("wQ", "d1")
 # player.add("wK", "e1")
 
-# # player.add("br", "a8", "h8")                
-# # player.add("bk", "b8", "g8")
-# # player.add("bb", "c8", "f8")
-# # player.add("bQ", "d8")
-# # player.add("bK", "e8")
+# player.add("br", "a8", "h8")                
+# player.add("bk", "b8", "g8")
+# player.add("bb", "c8", "f8")
+# player.add("bQ", "d8")
+# player.add("bK", "e8")
+
+
+player.add("wp", "h2", "g3", "f2", "e3", "d4", "c5", "b3", "a2")
+player.add("wk", "f3")
+player.add("wb", "g2", "a3")
+player.add("wr", "h1", "a1")
+player.add("wQ", "d1")
+player.add("wK", "e1")
+
+player.add("bp", "h5", "g7", "f7", "e7", "d5", "b7", "a7")
+player.add("bk", "b8")
+player.add("bb", "g4", "f8")
+player.add("br", "h8", "a8")
+player.add("bQ", "f6")
+player.add("bK", "e8")
+
+
+MovePiece.MOVE_NUMBER += 1
+player.black()
+player._refresh_board()
+
+player.move("a7", "a5")
+
+##############################################
+
 
 # player.add( "wp", "a2" )
 
@@ -2618,12 +2673,14 @@ player = Controller()
 #######################################
 
 # ChessBoard._get_chess_squares_coords(ChessBoard.squares_map)
-print("@@@@@@@@@@@@@@@@@@@@@@@")
-print(ChessBoard.SQUARES_MAP_COORDS)
-player.add("wp", "a2")
-player.add("bp", "b4")
-player.move("a2", "a4")
-player.move("b4", "a3")
+# print("@@@@@@@@@@@@@@@@@@@@@@@")
+# print(ChessBoard.SQUARES_MAP_COORDS)
+# player.add("wp", "a2", "h2")
+# player.add("bp", "b4", "f6")
+# player.move("a2", "a4")
+# player.move("f6", "f5")
+# player.move("h2", "h3")
+# player.move("b4", "a3")
 
 # player.test_move("c1", "e2")
 # player.move("c1", "e2")
