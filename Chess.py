@@ -840,7 +840,12 @@ class TrackPieces:
         # *_PAWNS contains squares of the pawns that will be taken by en-passant.
         EN_PASSANT_PAWN = ""
         EN_PASSANT_SQUARES = []
+        
         EN_PASSANT_ENABLED = False
+
+        # storing to check for en-passant per colour.
+        WHITE_EN_PASSANT_ENABLED = False
+        BLACK_EN_PASSANT_ENABLED = False
 
         def __init__(self, linked_map, white_positions,
                                        black_positions):
@@ -879,6 +884,9 @@ class TrackPieces:
         def detect_en_passant(self, start_pos, end_pos):
         
                 TrackPieces.EN_PASSANT_ENABLED = False
+                TrackPieces.WHITE_EN_PASSANT_ENABLED = False
+                TrackPieces.BLACK_EN_PASSANT_ENABLED = False
+
                 TrackPieces.EN_PASSANT_PAWN = ""
                 TrackPieces.EN_PASSANT_SQUARES.clear()
 
@@ -952,6 +960,13 @@ class TrackPieces:
                         )
                 ):
                         TrackPieces.EN_PASSANT_ENABLED = True
+
+                        # to show which colour has enpassant
+                        if TrackPieces.WHITE_MOVE:
+                                TrackPieces.BLACK_EN_PASSANT_ENABLED = True
+                        if TrackPieces.BLACK_MOVE:
+                                TrackPieces.WHITE_EN_PASSANT_ENABLED = True
+
                         TrackPieces.EN_PASSANT_SQUARES.append(en_passant_square)
                         TrackPieces.EN_PASSANT_PAWN = end_pos
                         print("En-Passant enabled.")
@@ -2444,31 +2459,43 @@ class Controller:
                 elif piece not in list("rbkQKp"):
                         raise ValueError("No Piece Here")
 
+                # testing three fold repetition ***** test if this should go here *********
+                self._detect_three_fold_repetition()
+
         def _detect_three_fold_repetition(self):
                 # ends the game in a draw for three fold repetition.
                 # need to be able to handle the case where the attempted move is invalid.
                 # in this case the game position strings most recent entry will need to
                 # be popped.
                 
+                # we have the colour and opp colour the opposite to the colour who's move
+                # it is because we are calculating this at the end of the turn. So white has
+                # made it's move and it evaluates the position from the point of view of
+                # black.
                 if TrackPieces.WHITE_MOVE:
                         current_position_string =  self._get_current_position_string( 
                                 self.board.linked_map,
-                                colour="w", opp_colour="b" 
+                                colour="b", opp_colour="w" 
                         )        
-                if TrackPieces.WHITE_MOVE:
+                if TrackPieces.BLACK_MOVE:
                         current_position_string = self._get_current_position_string( 
                                 self.board.linked_map,
-                                colour="b", opp_colour="w" 
+                                colour="w", opp_colour="b" 
                         )
 
                 print(current_position_string)
 
                 # if string not already occured set it to 1 otherwise + 1 to it to show
                 # another occurance.
-                if not Controller.GAME_POSITION_STRINGS[current_position_string]: 
-                        Controller.GAME_POSITION_STRINGS[current_position_string] = 1
-                else:
+                try:
                         Controller.GAME_POSITION_STRINGS[current_position_string] += 1
+                except KeyError:
+                        Controller.GAME_POSITION_STRINGS[current_position_string] = 1
+                
+                # if not Controller.GAME_POSITION_STRINGS[current_position_string]: 
+                #         Controller.GAME_POSITION_STRINGS[current_position_string] = 1
+                # else:
+                #         Controller.GAME_POSITION_STRINGS[current_position_string] += 1
                 
                 if Controller.GAME_POSITION_STRINGS[current_position_string] == 3:
                         print("*********************************")
@@ -2537,18 +2564,19 @@ class Controller:
                         rooks_have_moved = TrackPieces.WHITE_ROOKS_HAVE_MOVED
                         king_has_moved = TrackPieces.WHITE_KING_HAS_MOVED
 
+                        opp_rooks_have_moved = TrackPieces.BLACK_ROOKS_HAVE_MOVED
+                        opp_king_has_moved = TrackPieces.BLACK_KING_HAS_MOVED
+
                 elif colour == "b" and opp_colour == "w":
                         rooks_have_moved = TrackPieces.BLACK_ROOKS_HAVE_MOVED
                         king_has_moved = TrackPieces.BLACK_KING_HAS_MOVED
 
+                        opp_rooks_have_moved = TrackPieces.WHITE_ROOKS_HAVE_MOVED
+                        opp_king_has_moved = TrackPieces.WHITE_KING_HAS_MOVED
 
                 # end segment could be '.../w-c1-e1', i.e. <coloursturn>-<castlingflag>-<enpassflag>
                 turn_data_string = ""
-
-                if TrackPieces.WHITE_MOVE:
-                        turn_data_string += "w"
-                elif TrackPieces.BLACK_MOVE:
-                        turn_data_string += "b"
+                turn_data_string += colour
 
                 # **** note this only works for one king per colour ****
                 # castling possible either side - neither rook has moved and
@@ -2559,7 +2587,7 @@ class Controller:
                         not king_has_moved
                 ):
                         turn_data_string += "-"
-                        turn_data_string += "c.1"
+                        turn_data_string += colour + ".c.1"
                 
                 # castling not possible either side - if both rooks have moved or the
                 # king has moved
@@ -2568,7 +2596,7 @@ class Controller:
                         or king_has_moved
                 ):
                         turn_data_string += "-"
-                        turn_data_string += "c.0"     
+                        turn_data_string += colour + ".c.0"     
 
                 # when castling is only possible on one side - if one of the rooks has
                 # moved and one hasn't, and the king hasn't moved.
@@ -2576,7 +2604,8 @@ class Controller:
                         True in rooks_have_moved.values()
                         and
                         False in rooks_have_moved.values()
-                        and not king_has_moved
+                        and 
+                        not king_has_moved
                 ):
                         # make sure that this is printing in the same order every time.
                         # as of python 3.9 (?) dictionaries print in order anyway?
@@ -2586,17 +2615,56 @@ class Controller:
                                 # enabled that side.
                                 if moved:
                                         turn_data_string += "-"
-                                        turn_data_string += f"c.{rook_pos}.0"
+                                        turn_data_string += colour + f".c.{rook_pos}.0"
                                 elif not moved:
                                         turn_data_string += "-"
-                                        turn_data_string += f"c.{rook_pos}.1"
+                                        turn_data_string += colour + f".c.{rook_pos}.1"
 
-                if TrackPieces.EN_PASSANT_ENABLED:
+                # same as above but getting castling capabilties of the opposite colour.
+                if (
+                        not True in opp_rooks_have_moved.values()
+                        and
+                        not opp_king_has_moved
+                ):
                         turn_data_string += "-"
-                        turn_data_string += "ep.1"
-                elif not TrackPieces.EN_PASSANT_ENABLED:
+                        turn_data_string += opp_colour + ".c.1"
+                elif (
+                        all(moved for moved in opp_rooks_have_moved.values())
+                        or opp_king_has_moved
+                ):
                         turn_data_string += "-"
-                        turn_data_string += "ep.0"                               
+                        turn_data_string += opp_colour + ".c.0"     
+                elif(
+                        True in opp_rooks_have_moved.values()
+                        and
+                        False in opp_rooks_have_moved.values()
+                        and 
+                        not opp_king_has_moved
+                ):
+                        for rook_pos, moved in rooks_have_moved.items():
+                                if moved:
+                                        turn_data_string += "-"
+                                        turn_data_string += opp_colour + f".c.{rook_pos}.0"
+                                elif not moved:
+                                        turn_data_string += "-"
+                                        turn_data_string += opp_colour + f".c.{rook_pos}.1"
+
+
+                # now calculating for en-passant - don't need to include data for
+                # both colours in string as only one colour can have en-passant at a time.
+                if TrackPieces.WHITE_MOVE and TrackPieces.WHITE_EN_PASSANT_ENABLED:
+                        turn_data_string += "-"
+                        turn_data_string += colour + ".ep.1"
+                elif TrackPieces.WHITE_MOVE and not TrackPieces.WHITE_EN_PASSANT_ENABLED:
+                        turn_data_string += "-"
+                        turn_data_string += colour + ".ep.0"                               
+
+                if TrackPieces.BLACK_MOVE and TrackPieces.BLACK_EN_PASSANT_ENABLED:
+                        turn_data_string += "-"
+                        turn_data_string += colour + ".ep.1"
+                elif TrackPieces.BLACK_MOVE and not TrackPieces.BLACK_EN_PASSANT_ENABLED:
+                        turn_data_string += "-"
+                        turn_data_string +=  colour + ".ep.0"
 
                 current_position_string += turn_data_string
 
@@ -2795,8 +2863,15 @@ player.move("a7", "a5")
 player.move("b2", "d2")
 player.move("a8", "a7")
 
-player._get_current_position_string(player.board.linked_map, colour="w", opp_colour="b")
-player._get_current_position_string(player.board.linked_map, colour="b", opp_colour="w")
+# player._get_current_position_string(player.board.linked_map, colour="w", opp_colour="b")
+# test = player._get_current_position_string(player.board.linked_map, colour="b", opp_colour="w")
+
+print(Controller.GAME_POSITION_STRINGS)
+
+# print(test in Controller.GAME_POSITION_STRINGS)
+
+for key in Controller.GAME_POSITION_STRINGS.keys():
+        print(key.split("/")[-1])
 
 asdf = 123
 ##############################################
