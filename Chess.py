@@ -1279,9 +1279,9 @@ class TrackPieces:
                 # on initialisation store rook positions as 'not moved'.
                 for square, contents in self.linked_map.items():
                         if contents[-1] == "r":
-                                if square in TrackPieces.WHITE_POSITIONS:
+                                if square in TrackPieces.WHITE_POSITIONS and square in TrackPieces.BACK_ROW_WHITE:
                                         TrackPieces.WHITE_ROOKS_HAVE_MOVED[square] = False
-                                if square in TrackPieces.BLACK_POSITIONS:
+                                if square in TrackPieces.BLACK_POSITIONS and square in TrackPieces.BACK_ROW_BLACK:
                                         TrackPieces.BLACK_ROOKS_HAVE_MOVED[square] = False
         
         @staticmethod
@@ -2072,8 +2072,7 @@ class PieceMoveRanges:
 class Controller:
        
         # testing for previous repetitions
-        PREV_WHITE_MOVES = []
-        PREV_BLACK_MOVES = []
+        GAME_POSITION_STRINGS = {}
 
         def __init__(self):
                 self.board = ChessBoard()
@@ -2141,6 +2140,9 @@ class Controller:
                 self.callibrate() # should do this at the beginning or the end of the move - or both?
 
                 # get temp linked map - revert back to this if we make an invalid 'in-check' move.
+                #
+                # *** could introduce something to make this only do this when in check ?????? 
+                # *** ......if that would be correct ????
                 temp_linked_map, temp_white_pos, temp_black_pos = self.track.get_temp_data(
                         self.board.linked_map, 
                         TrackPieces.WHITE_POSITIONS,
@@ -2442,16 +2444,166 @@ class Controller:
                 elif piece not in list("rbkQKp"):
                         raise ValueError("No Piece Here")
 
-        @staticmethod
-        def _check_repetition(start_pos, end_pos):
+        def _detect_three_fold_repetition(self):
+                # ends the game in a draw for three fold repetition.
+                # need to be able to handle the case where the attempted move is invalid.
+                # in this case the game position strings most recent entry will need to
+                # be popped.
                 
-                latest_move = start_pos + "-" + end_pos
-
-                # add white move and check if it was the same as the last one.
                 if TrackPieces.WHITE_MOVE:
+                        current_position_string =  self._get_current_position_string( 
+                                self.board.linked_map,
+                                colour="w", opp_colour="b" 
+                        )        
+                if TrackPieces.WHITE_MOVE:
+                        current_position_string = self._get_current_position_string( 
+                                self.board.linked_map,
+                                colour="b", opp_colour="w" 
+                        )
 
-                        if len(Callibrate.PREV_WHITE_MOVES) < 3:
-                                Callibrate.PREV_WHITE_MOVES.append(start_pos)
+                print(current_position_string)
+
+                # if string not already occured set it to 1 otherwise + 1 to it to show
+                # another occurance.
+                if not Controller.GAME_POSITION_STRINGS[current_position_string]: 
+                        Controller.GAME_POSITION_STRINGS[current_position_string] = 1
+                else:
+                        Controller.GAME_POSITION_STRINGS[current_position_string] += 1
+                
+                if Controller.GAME_POSITION_STRINGS[current_position_string] == 3:
+                        print("*********************************")
+                        print("***THREE-FOLD-REPETITION DRAW!***")
+                        print("*********************************")
+                        quit()
+                else:
+                        return
+
+
+        @staticmethod
+        def _get_current_position_string(linked_map, *, colour, opp_colour):
+                # Note that this method will need to be called with the colour arguments set for the
+                # appropriate turn - i.e. on the condition it is white move then use colour="w"
+                # otherwise we will populate the white turn string with black turn data.
+                
+                #
+                #  ******************************************************************
+                #  *** Careful when this is called as we want the most up to date ***
+                #  *** lists - i.e. after moves - but not if they are invalid and ***
+                #  *** will be reverted.                                          ***
+                #  ******************************************************************
+                #
+                #  (1) Three fold repetition happens when any position is repeated
+                #      three times within a game regardless of intervening moves.
+                # 
+                #  (2) a. Need to have the same players turn when the position reappears
+                #         and en-passant needs to be the same.
+                #      b. Need to also have the same calsting rights for that player too.
+                #      c. Will need to look at special cases regarding promoted rooks
+                #         and so on.
+                # 
+                #  (3) Need to create a kind of string representation of a position that
+                #      includes castling rights and en-passant status and who's turn
+                #      it is and store it somewhere.
+                #
+                #  (4) Then will need to check if there are 3 instances of this.
+                #      Note - this could be a good way to store game history.
+                #
+
+                # represented as 'a1-wr/' per position, i.e. <square>-<colour,piece>/ 
+                current_position_string = ""
+
+                # sort the position lists so that the strings come out in the same order
+                # every time and therefore arriving at the same position in different ways
+                # should give the same string.
+                white_positions = sorted(TrackPieces.WHITE_POSITIONS)
+                black_positions = sorted(TrackPieces.BLACK_POSITIONS)
+
+                # building position string for white postions...
+                white_position_string = ""
+                for position in white_positions:
+                        white_position_string += f"{position}-w{linked_map[position][-1]}"
+                        white_position_string += "/"
+                
+                # ...and for black positions
+                black_position_string = ""
+                for position in black_positions:
+                        black_position_string += f"{position}-b{linked_map[position][-1]}"
+                        black_position_string += "/"
+
+                current_position_string = white_position_string + black_position_string
+
+
+                if colour == "w" and opp_colour == "b":
+                        rooks_have_moved = TrackPieces.WHITE_ROOKS_HAVE_MOVED
+                        king_has_moved = TrackPieces.WHITE_KING_HAS_MOVED
+
+                elif colour == "b" and opp_colour == "w":
+                        rooks_have_moved = TrackPieces.BLACK_ROOKS_HAVE_MOVED
+                        king_has_moved = TrackPieces.BLACK_KING_HAS_MOVED
+
+
+                # end segment could be '.../w-c1-e1', i.e. <coloursturn>-<castlingflag>-<enpassflag>
+                turn_data_string = ""
+
+                if TrackPieces.WHITE_MOVE:
+                        turn_data_string += "w"
+                elif TrackPieces.BLACK_MOVE:
+                        turn_data_string += "b"
+
+                # **** note this only works for one king per colour ****
+                # castling possible either side - neither rook has moved and
+                # king has not moved 
+                if (
+                        not True in rooks_have_moved.values()
+                        and
+                        not king_has_moved
+                ):
+                        turn_data_string += "-"
+                        turn_data_string += "c.1"
+                
+                # castling not possible either side - if both rooks have moved or the
+                # king has moved
+                elif (
+                        all(moved for moved in rooks_have_moved.values())
+                        or king_has_moved
+                ):
+                        turn_data_string += "-"
+                        turn_data_string += "c.0"     
+
+                # when castling is only possible on one side - if one of the rooks has
+                # moved and one hasn't, and the king hasn't moved.
+                elif(
+                        True in rooks_have_moved.values()
+                        and
+                        False in rooks_have_moved.values()
+                        and not king_has_moved
+                ):
+                        # make sure that this is printing in the same order every time.
+                        # as of python 3.9 (?) dictionaries print in order anyway?
+                        for rook_pos, moved in rooks_have_moved.items():
+
+                                # 0 means castling disabled that side, 1 means castling
+                                # enabled that side.
+                                if moved:
+                                        turn_data_string += "-"
+                                        turn_data_string += f"c.{rook_pos}.0"
+                                elif not moved:
+                                        turn_data_string += "-"
+                                        turn_data_string += f"c.{rook_pos}.1"
+
+                if TrackPieces.EN_PASSANT_ENABLED:
+                        turn_data_string += "-"
+                        turn_data_string += "ep.1"
+                elif not TrackPieces.EN_PASSANT_ENABLED:
+                        turn_data_string += "-"
+                        turn_data_string += "ep.0"                               
+
+                current_position_string += turn_data_string
+
+                print(current_position_string)
+
+                return current_position_string
+
                         
 
         def test_move(self, start_pos, end_pos):
@@ -2621,7 +2773,7 @@ player.add("wp", "h2", "g3", "f2", "e3", "d4", "c5", "b3", "a2")
 player.add("wk", "f3")
 player.add("wb", "g2", "a3")
 player.add("wr", "h1", "a1")
-player.add("wQ", "d1")
+#player.add("wQ", "d1")
 player.add("wK", "e1")
 
 player.add("bp", "h5", "g7", "f7", "e7", "d5", "b7", "a7")
@@ -2636,8 +2788,17 @@ MovePiece.MOVE_NUMBER += 1
 player.black()
 player._refresh_board()
 
+player.add("wr", "b2")
+
 player.move("a7", "a5")
 
+player.move("b2", "d2")
+player.move("a8", "a7")
+
+player._get_current_position_string(player.board.linked_map, colour="w", opp_colour="b")
+player._get_current_position_string(player.board.linked_map, colour="b", opp_colour="w")
+
+asdf = 123
 ##############################################
 
 
