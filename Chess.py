@@ -112,6 +112,8 @@ class ChessBoard(AlternatingBoard):
         squares_map = []
         rotated_squares_map = []
 
+        LINKED_MAP = {}
+
         SQUARES_MAP_COORDS = {}
 
         WIDTH = None
@@ -125,7 +127,7 @@ class ChessBoard(AlternatingBoard):
                 ChessBoard.HEIGHT = self._dimensions[1]
 
                 self.squares_map = self._get_chess_squares()
-                self.linked_map = self._link_squares_map()
+                ChessBoard.LINKED_MAP = self._link_squares_map()
 
                 ChessBoard.squares_map = self.squares_map
 
@@ -182,7 +184,7 @@ class ChessBoard(AlternatingBoard):
                 counter = 0
                 rank_index = 0
                 board_row = []
-                for key, value in self.linked_map.items():
+                for key, value in ChessBoard.LINKED_MAP.items():
 
                         piece = value[-1]
                         if key in TrackPieces.WHITE_POSITIONS:
@@ -245,7 +247,7 @@ class ChessBoard(AlternatingBoard):
                 rank_index = 0
                 board_row = []
                 top_edge_printed = False
-                for key, value in self.linked_map.items():
+                for key, value in ChessBoard.LINKED_MAP.items():
                         if counter < 7:
                                 counter +=1
 
@@ -318,8 +320,8 @@ class ChessBoard(AlternatingBoard):
 
 class RotateBoard180():
        
-        def __init__(self, linked_map):
-                self.linked_map = linked_map
+        def __init__(self):
+                pass #####
                
         def __call__(self):
                 self._rotate_board()
@@ -327,7 +329,7 @@ class RotateBoard180():
                
         def _rotate_board(self):
                 self._reverse_linked(
-                        self.linked_map
+                        ChessBoard.LINKED_MAP
                 )
                 #print("ROTATED: ", self.linked_map)
 
@@ -335,8 +337,8 @@ class RotateBoard180():
                 linked_map = dict(
                         reversed(list(linked_map.items()))
                 )
-                self.linked_map.clear()
-                self.linked_map.update(linked_map)
+                ChessBoard.LINKED_MAP.clear()
+                ChessBoard.LINKED_MAP.update(linked_map)
 
         @staticmethod
         def rotate_squares(map):
@@ -355,9 +357,7 @@ class RotateBoard180():
 
 class SetChessPieces():
        
-        def __init__(self, linked_map, position,
-                                       *positions):
-                self.linked_map = linked_map
+        def __init__(self, position, *positions):
                 self.position = position
                
                 self.position_list = self._store_position_list(
@@ -384,12 +384,12 @@ class SetChessPieces():
         def _set_position(self, position,
                                    piece):
                 if self._validate_position(position):
-                        self.linked_map[position].append(piece)
+                        ChessBoard.LINKED_MAP[position].append(piece)
                         self._position = position
                         return self._position
                
         def _validate_position(self, position):
-                if self.linked_map[position]:
+                if ChessBoard.LINKED_MAP[position]:
                         return True
                 raise ValueError("Invalid Position")
                 return False
@@ -397,10 +397,8 @@ class SetChessPieces():
                
 class SetKing(SetChessPieces):
        
-        def __init__(self, linked_map, position,
-                                      *positions):
-                super().__init__(linked_map, position,
-                                            *positions)
+        def __init__(self, position, *positions):
+                super().__init__(position, *positions)
                 if positions:
                         for position in positions:
                                 self.position = position
@@ -411,10 +409,8 @@ class SetKing(SetChessPieces):
 
 class SetQueen(SetChessPieces):
        
-        def __init__(self, linked_map, position,
-                                      *positions):
-                super().__init__(linked_map, position,
-                                            *positions)
+        def __init__(self, position, *positions):
+                super().__init__(position, *positions)
                 if positions:
                         for position in positions:
                                 self.position = position
@@ -425,10 +421,8 @@ class SetQueen(SetChessPieces):
 
 class SetBishop(SetChessPieces):
        
-        def __init__(self, linked_map, position,
-                                      *positions):
-                super().__init__(linked_map, position,
-                                            *positions)
+        def __init__(self, position, *positions):
+                super().__init__(position, *positions)
                 if positions:
                         for position in positions:
                                 self.position = position
@@ -439,10 +433,8 @@ class SetBishop(SetChessPieces):
 
 class SetKnight(SetChessPieces):
        
-        def __init__(self, linked_map, position,
-                                      *positions):
-                super().__init__(linked_map, position,
-                                            *positions)
+        def __init__(self, position, *positions):
+                super().__init__(position, *positions)
                 if positions:
                         for position in positions:
                                 self.position = position
@@ -453,10 +445,8 @@ class SetKnight(SetChessPieces):
 
 class SetRook(SetChessPieces):
        
-        def __init__(self, linked_map, position,
-                                      *positions):
-                super().__init__(linked_map, position,
-                                            *positions)
+        def __init__(self, position, *positions):
+                super().__init__(position, *positions)
                 if positions:
                         for position in positions:
                                 self.position = position
@@ -467,10 +457,8 @@ class SetRook(SetChessPieces):
 
 class SetPawn(SetChessPieces):
        
-        def __init__(self, linked_map, position,
-                                      *positions):
-                super().__init__(linked_map, position,
-                                            *positions)
+        def __init__(self, position, *positions):
+                super().__init__(position, *positions)
                 if positions:
                         for position in positions:
                                 self.position = position
@@ -483,9 +471,7 @@ class MovePiece(SetChessPieces):
        
         MOVE_NUMBER = 1
        
-        def __init__(self, linked_map, start_pos,
-                                         end_pos):
-                self.linked_map = linked_map
+        def __init__(self, start_pos, end_pos):
                 self.start_pos = start_pos
                 self.end_pos = end_pos
                 self._execute_move()
@@ -521,21 +507,19 @@ class MovePiece(SetChessPieces):
                     return self._end_pos
                        
         def _check_occupancy(self, position):
-                if len(self.linked_map[position]) == 2:
+                if len(ChessBoard.LINKED_MAP[position]) == 2:
                         return True
                 return False
                                
         def _execute_move(self, piece):
-                self.linked_map[self.start_pos].pop()
-                self.linked_map[self.end_pos].append(piece)
+                ChessBoard.LINKED_MAP[self.start_pos].pop()
+                ChessBoard.LINKED_MAP[self.end_pos].append(piece)
                        
                
 class MovePawn(MovePiece):
        
-        def __init__(self, linked_map, start_pos,
-                                         end_pos):
-                super().__init__(linked_map, start_pos,
-                                             end_pos)
+        def __init__(self, start_pos, end_pos):
+                super().__init__(start_pos, end_pos)
        
         def _execute_move(self, piece="p"):
                 if self._validate_move():
@@ -556,10 +540,8 @@ class MovePawn(MovePiece):
 
 class MoveRook(MovePawn):
 
-        def __init__(self, linked_map, start_pos,
-                                         end_pos):
-                super().__init__(linked_map, start_pos,
-                                            end_pos)
+        def __init__(self, start_pos, end_pos):
+                super().__init__(start_pos, end_pos)
 
         def _execute_move(self, piece="r"):
                 super()._execute_move(piece)
@@ -567,10 +549,8 @@ class MoveRook(MovePawn):
 
 class MoveKnight(MovePawn):
 
-        def __init__(self, linked_map, start_pos,
-                                         end_pos):
-                super().__init__(linked_map, start_pos,
-                                            end_pos)
+        def __init__(self, start_pos, end_pos):
+                super().__init__(start_pos, end_pos)
 
         def _execute_move(self, piece="k"):
                 super()._execute_move(piece)
@@ -578,10 +558,8 @@ class MoveKnight(MovePawn):
 
 class MoveBishop(MovePawn):
 
-        def __init__(self, linked_map, start_pos,
-                                         end_pos):
-                super().__init__(linked_map, start_pos,
-                                            end_pos)
+        def __init__(self, start_pos, end_pos):
+                super().__init__(start_pos, end_pos)
 
         def _execute_move(self, piece="b"):
                 super()._execute_move(piece)
@@ -589,10 +567,8 @@ class MoveBishop(MovePawn):
 
 class MoveQueen(MovePawn):
 
-        def __init__(self, linked_map, start_pos,
-                                         end_pos):
-                super().__init__(linked_map, start_pos,
-                                            end_pos)
+        def __init__(self, start_pos, end_pos):
+                super().__init__(start_pos, end_pos)
 
         def _execute_move(self, piece="Q"):
                 super()._execute_move(piece)
@@ -600,10 +576,8 @@ class MoveQueen(MovePawn):
 
 class MoveKing(MovePawn):
 
-        def __init__(self, linked_map, start_pos,
-                                         end_pos):
-                super().__init__(linked_map, start_pos,
-                                            end_pos)
+        def __init__(self, start_pos, end_pos):
+                super().__init__(start_pos, end_pos)
 
         def _execute_move(self, piece="K"):
                 super()._execute_move(piece)
@@ -611,9 +585,9 @@ class MoveKing(MovePawn):
 
 class Castle(MovePiece):
         
-        def __init__(self, linked_map, start_pos, end_pos):
+        def __init__(self, start_pos, end_pos):
 
-                super().__init__(linked_map, start_pos, end_pos)
+                super().__init__(start_pos, end_pos)
                 # self.linked_map = linked_map
                 # self.start_pos = start_pos
                 # self.end_pos = end_pos
@@ -628,11 +602,11 @@ class Castle(MovePiece):
         def _execute_castle(self):
                 old_rook_pos, new_rook_pos = self._get_castling_positions()
                 
-                self.linked_map[self.start_pos].pop()
-                self.linked_map[self.end_pos].append("K")
+                ChessBoard.LINKED_MAP[self.start_pos].pop()
+                ChessBoard.LINKED_MAP[self.end_pos].append("K")
                 
-                self.linked_map[old_rook_pos].pop()
-                self.linked_map[new_rook_pos].append("r")
+                ChessBoard.LINKED_MAP[old_rook_pos].pop()
+                ChessBoard.LINKED_MAP[new_rook_pos].append("r")
 
                 if TrackPieces.WHITE_MOVE:
                         TrackPieces.WHITE_POSITIONS.remove(old_rook_pos)
@@ -692,12 +666,12 @@ class Castle(MovePiece):
                 # making sure there are no pieces in between the king and rook.
                 if back_row_castle_side_left:                
                         for inbetween_square in back_row_castle_side_left:
-                                if len(self.linked_map[inbetween_square]) == 2:
+                                if len(ChessBoard.LINKED_MAP[inbetween_square]) == 2:
                                         raise ValueError("Cannot castle as pieces are in the way.")
 
                 if back_row_castle_side_right:                
                         for inbetween_square in back_row_castle_side_right:
-                                if len(self.linked_map[inbetween_square]) == 2:
+                                if len(ChessBoard.LINKED_MAP[inbetween_square]) == 2:
                                         raise ValueError("Cannot castle as pieces are in the way.")
 
                 if TrackPieces.WHITE_MOVE:
@@ -726,12 +700,12 @@ class Castle(MovePiece):
 class PawnTake(MovePawn):
     # if target square in take range...
     
-    def __init__(self, linked_map, start_pos, end_pos):
-        super().__init__(linked_map, start_pos, end_pos)
+    def __init__(self, start_pos, end_pos):
+        super().__init__(start_pos, end_pos)
 
     def _execute_move(self, piece="p"):
             if self._validate_move():
-                    self.linked_map[self.end_pos].pop()
+                    ChessBoard.LINKED_MAP[self.end_pos].pop()
                     super(MovePawn, self)._execute_move(piece) # Trimming the MRO so we use the code from MovePiece
 
     def _end_pos(self, end_pos):
@@ -742,8 +716,8 @@ class PawnTake(MovePawn):
                 return self._end_pos
 
     def _check_occupancy(self, position):
-        if len(self.linked_map[position]) == 2:
-                self.piece_taken = self.linked_map[position][-1]
+        if len(ChessBoard.LINKED_MAP[position]) == 2:
+                self.piece_taken = ChessBoard.LINKED_MAP[position][-1]
                 return True
         return False
 
@@ -754,13 +728,13 @@ class PawnTake(MovePawn):
 
 class EnPassant(PawnTake):
         
-        def __init__(self, linked_map, start_pos, end_pos):
-                super().__init__(linked_map, start_pos, end_pos)
+        def __init__(self, start_pos, end_pos):
+                super().__init__(start_pos, end_pos)
 
         ####### make it pop the end pos rather than the enpassant pos.
         def _execute_move(self, piece="p"):
             if self._validate_move():
-                    self.linked_map[TrackPieces.EN_PASSANT_PAWN].pop()
+                    ChessBoard.LINKED_MAP[TrackPieces.EN_PASSANT_PAWN].pop()
                     super(MovePawn, self)._execute_move(piece) # Trimming the MRO so we use the code from MovePiece
 
         def _check_en_passant(self, position):
@@ -778,8 +752,8 @@ class EnPassant(PawnTake):
 
 class RookTake(PawnTake):
         
-        def __init__(self, linked_map, start_pos, end_pos):
-                super().__init__(linked_map, start_pos, end_pos)
+        def __init__(self, start_pos, end_pos):
+                super().__init__(start_pos, end_pos)
 
         def _execute_move(self, piece="r"):
                 super()._execute_move(piece)
@@ -787,8 +761,8 @@ class RookTake(PawnTake):
 
 class KnightTake(PawnTake):
         
-        def __init__(self, linked_map, start_pos, end_pos):
-                super().__init__(linked_map, start_pos, end_pos)
+        def __init__(self, start_pos, end_pos):
+                super().__init__(start_pos, end_pos)
 
         def _execute_move(self, piece="k"):
                 super()._execute_move(piece)
@@ -796,8 +770,8 @@ class KnightTake(PawnTake):
 
 class BishopTake(PawnTake):
         
-        def __init__(self, linked_map, start_pos, end_pos):
-                super().__init__(linked_map, start_pos, end_pos)
+        def __init__(self, start_pos, end_pos):
+                super().__init__(start_pos, end_pos)
 
         def _execute_move(self, piece="b"):
                 super()._execute_move(piece)
@@ -805,8 +779,8 @@ class BishopTake(PawnTake):
 
 class QueenTake(PawnTake):
         
-        def __init__(self, linked_map, start_pos, end_pos):
-                super().__init__(linked_map, start_pos, end_pos)
+        def __init__(self, start_pos, end_pos):
+                super().__init__(start_pos, end_pos)
 
         def _execute_move(self, piece="Q"):
                 super()._execute_move(piece)
@@ -814,8 +788,8 @@ class QueenTake(PawnTake):
 
 class KingTake(PawnTake):
         
-        def __init__(self, linked_map, start_pos, end_pos):
-                super().__init__(linked_map, start_pos, end_pos)
+        def __init__(self, start_pos, end_pos):
+                super().__init__(start_pos, end_pos)
 
         def _execute_move(self, piece="K"):
                 super()._execute_move(piece)
@@ -823,8 +797,7 @@ class KingTake(PawnTake):
 
 class PromotePawn():
         
-        def __init__(self, linked_map, end_pos):
-                self.linked_map = linked_map
+        def __init__(self, end_pos):
                 self.end_pos = end_pos
                 self._promote_pawn()
 
@@ -836,8 +809,8 @@ class PromotePawn():
                                 raise ValueError("Can't promote to that piece.")
                         else:
                                 valid_promotion = True
-                self.linked_map[self.end_pos].pop()
-                self.linked_map[self.end_pos].append(promotion) 
+                ChessBoard.LINKED_MAP[self.end_pos].pop()
+                ChessBoard.LINKED_MAP[self.end_pos].append(promotion) 
 
 
 class TrackPieces:
@@ -875,10 +848,7 @@ class TrackPieces:
         WHITE_EN_PASSANT_ENABLED = False
         BLACK_EN_PASSANT_ENABLED = False
 
-        def __init__(self, linked_map, white_positions,
-                                       black_positions):
-                
-                self.linked_map = linked_map
+        def __init__(self, white_positions, black_positions):
 
                 self._initial_white_positions = white_positions
                 self._initial_black_positions = black_positions
@@ -922,7 +892,7 @@ class TrackPieces:
                 # by querying the end pos in the linked map.
 
                 # make sure the piece that moved is a pawn and that it moved two squares.
-                piece_moved = self.linked_map[end_pos][-1]
+                piece_moved = ChessBoard.LINKED_MAP[end_pos][-1]
                 
                 vertical_distance_moved = ( ChessBoard.SQUARES_MAP_COORDS[end_pos][0] -
                                             ChessBoard.SQUARES_MAP_COORDS[start_pos][0] )
@@ -982,9 +952,9 @@ class TrackPieces:
                                 # might not need to check if this pawn is an opposite colour as by default
                                 # en-passant can only be used if it is anyway (as we need a take dest on the
                                 # en-passant square).
-                                (left_square and self.linked_map[left_square][-1] == "p") 
+                                (left_square and ChessBoard.LINKED_MAP[left_square][-1] == "p") 
                                 or 
-                                (right_square and self.linked_map[right_square][-1] == "p")
+                                (right_square and ChessBoard.LINKED_MAP[right_square][-1] == "p")
                         )
                 ):
                         TrackPieces.EN_PASSANT_ENABLED = True
@@ -1095,7 +1065,7 @@ class TrackPieces:
                                 for position in positions:
 
                                         # finding non king pieces
-                                        if self.linked_map[position][-1] != "K":
+                                        if ChessBoard.LINKED_MAP[position][-1] != "K":
                                                 
                                                 # get squares between pieces blocking the king from check.
                                                 inbetween_squares = self._get_inbetween_squares(position)
@@ -1103,7 +1073,7 @@ class TrackPieces:
                                                 
                                                 # for pawns, need to consider both take dests and move dests as they are
                                                 # different.
-                                                if self.linked_map[position][-1] == "p" and position in positions:
+                                                if ChessBoard.LINKED_MAP[position][-1] == "p" and position in positions:
                                                 #      self.linked_map[position][-1] != "p" 
 
                                                         # need condition to test for an invalid take move????
@@ -1139,7 +1109,7 @@ class TrackPieces:
                 # get king position
                 white_king_pos = []
                 for square in TrackPieces.WHITE_POSITIONS:
-                        if self.linked_map[square][-1] == "K":
+                        if ChessBoard.LINKED_MAP[square][-1] == "K":
                                 white_king_pos.append(square)
 
                 
@@ -1197,7 +1167,7 @@ class TrackPieces:
 
                 # find king position and store
                 for position in TrackPieces.WHITE_POSITIONS:
-                        if self.linked_map[position][-1] == "K":
+                        if ChessBoard.LINKED_MAP[position][-1] == "K":
                                 # get the dest lists for that king
                                 for dest_list in PieceMoveRanges.TRUNCATED_BOARD_CHECK_TAKE_DESTS[position]:
                                         # getting each dest square for the king
@@ -1251,7 +1221,7 @@ class TrackPieces:
                 surrounding_check_flags = []
                 # find king position and store
                 for position in TrackPieces.BLACK_POSITIONS:
-                        if self.linked_map[position][-1] == "K":
+                        if ChessBoard.LINKED_MAP[position][-1] == "K":
                                 # find truncated dest lists (all the squares that king
                                 # can move to).
                                 for dest_list in PieceMoveRanges.TRUNCATED_BOARD_TAKE_DESTS[position]:
@@ -1294,7 +1264,7 @@ class TrackPieces:
 
                 TrackPieces.WHITE_IN_CHECK = False
                 for position in TrackPieces.WHITE_POSITIONS:
-                        if self.linked_map[position][-1] == "K":
+                        if ChessBoard.LINKED_MAP[position][-1] == "K":
                                 for square in TrackPieces.BLACK_POSITIONS:
                                         for dest_lists in PieceMoveRanges.TRUNCATED_BOARD_TAKE_DESTS[square]:
                                                 for dest_list in dest_lists:
@@ -1305,7 +1275,7 @@ class TrackPieces:
                 TrackPieces.BLACK_IN_CHECK = False
                 for position in TrackPieces.BLACK_POSITIONS:
                         # finding the king position(s!)
-                        if self.linked_map[position][-1] == "K":
+                        if ChessBoard.LINKED_MAP[position][-1] == "K":
                                 # getting the dest lists for each white position
                                 for square in TrackPieces.WHITE_POSITIONS:
                                         # looking at the take ranges for each of those squares.
@@ -1320,7 +1290,7 @@ class TrackPieces:
         def detect_rook_positions(self):
                 
                 # on initialisation store rook positions as 'not moved'.
-                for square, contents in self.linked_map.items():
+                for square, contents in ChessBoard.LINKED_MAP.items():
                         if contents[-1] == "r":
                                 if square in TrackPieces.WHITE_POSITIONS and square in TrackPieces.BACK_ROW_WHITE:
                                         TrackPieces.WHITE_ROOKS_HAVE_MOVED[square] = False
@@ -1442,8 +1412,7 @@ class PieceMoveRanges:
         TRUNCATED_BOARD_CHECK_DESTS = {}
         TRUNCATED_BOARD_CHECK_TAKE_DESTS = {}
         
-        def __init__(self, linked_map):
-                self.linked_map = linked_map
+        def __init__(self):
 
                 PieceMoveRanges.VALID_PAWN_DESTS_UP = self._get_valid_pawn_dests(
                         ChessBoard.squares_map
@@ -1523,7 +1492,7 @@ class PieceMoveRanges:
                 valid_board_take_dests = {}
 
                 for square in TrackPieces.WHITE_POSITIONS + TrackPieces.BLACK_POSITIONS:
-                        piece = self.linked_map[square][1]
+                        piece = ChessBoard.LINKED_MAP[square][1]
 
                         if piece == "p":
                                 # use up or down direction for pawns depending on the piece's colour.
@@ -1589,13 +1558,13 @@ class PieceMoveRanges:
                         
                         # only the pawn take destinations will differ between the truncated move dests
                         # and the truncated take dests.
-                        if self.linked_map[square][1] == "p":
+                        if ChessBoard.LINKED_MAP[square][1] == "p":
                                 dest_lists = valid_board_take_dests[square]
                                 truncated_board_check_take_dests[square] = dest_lists
                                 for dest_list in truncated_board_check_take_dests[square]:
                                         for dest_square in dest_list:
                                                 if dest_square in TrackPieces.WHITE_POSITIONS + TrackPieces.BLACK_POSITIONS:                         
-                                                        print(square, self.linked_map[square][1])
+                                                        print(square, ChessBoard.LINKED_MAP[square][1])
                                                         print(dest_list, "Blocked By Opponent At:", dest_square)
                                                         del dest_list[dest_list.index(dest_square)+1:]
                                                         print("Truncating to: ", dest_list)
@@ -1619,13 +1588,13 @@ class PieceMoveRanges:
                         for dest_list in truncated_board_check_dests[square]:
                                 for dest_square in dest_list:
                                         if dest_square in TrackPieces.WHITE_POSITIONS + TrackPieces.BLACK_POSITIONS:                         
-                                                print(square, self.linked_map[square][1])
+                                                print(square, ChessBoard.LINKED_MAP[square][1])
                                                 print(dest_list, "Blocked By Opponent At:", dest_square)
                                                 
-                                                if self.linked_map[square][1] == "p":                  # if the current piece is a pawn then 
+                                                if ChessBoard.LINKED_MAP[square][1] == "p":                  # if the current piece is a pawn then 
                                                         del dest_list[dest_list.index(dest_square):]   # an opponent piece will block it too
                                                                                                         # as it can't take forward.
-                                                elif self.linked_map[square][1] == "K" and self.linked_map[dest_square][1] == "K":
+                                                elif ChessBoard.LINKED_MAP[square][1] == "K" and ChessBoard.LINKED_MAP[dest_square][1] == "K":
                                                         del dest_list[dest_list.index(dest_square):] # making it so you cant take a king with a king
                                                 else:                                                
                                                         del dest_list[dest_list.index(dest_square)+1:]       
@@ -1645,7 +1614,7 @@ class PieceMoveRanges:
                         
                         # only the pawn take destinations will differ between the truncated move dests
                         # and the truncated take dests.
-                        if self.linked_map[square][1] == "p":
+                        if ChessBoard.LINKED_MAP[square][1] == "p":
                                 dest_lists = valid_board_take_dests[square]
                                 truncated_board_take_dests[square] = dest_lists
                                 for dest_list in truncated_board_take_dests[square]:
@@ -1653,23 +1622,23 @@ class PieceMoveRanges:
                                                 if dest_square in TrackPieces.WHITE_POSITIONS + TrackPieces.BLACK_POSITIONS:
                                                         if square in TrackPieces.WHITE_POSITIONS:                            
                                                                 if dest_square in TrackPieces.WHITE_POSITIONS:               
-                                                                        print(square, self.linked_map[square][1])            
+                                                                        print(square, ChessBoard.LINKED_MAP[square][1])            
                                                                         print(dest_list, "Blocked At:", dest_square)
                                                                         del dest_list[dest_list.index(dest_square):]
                                                                         print("Truncating to: ", dest_list)
                                                                 if dest_square in TrackPieces.BLACK_POSITIONS:
-                                                                        print(square, self.linked_map[square][1])
+                                                                        print(square, ChessBoard.LINKED_MAP[square][1])
                                                                         print(dest_list, "Blocked By Opponent At:", dest_square)
                                                                         del dest_list[dest_list.index(dest_square)+1:]
                                                                         print("Truncating to: ", dest_list)
                                                         if square in TrackPieces.BLACK_POSITIONS:
                                                                 if dest_square in TrackPieces.BLACK_POSITIONS:
-                                                                        print(square, self.linked_map[square][1])
+                                                                        print(square, ChessBoard.LINKED_MAP[square][1])
                                                                         print(dest_list, "Blocked At:", dest_square)
                                                                         del dest_list[dest_list.index(dest_square):]
                                                                         print("Truncating to: ", dest_list)
                                                                 if dest_square in TrackPieces.WHITE_POSITIONS:
-                                                                        print(square, self.linked_map[square][1])
+                                                                        print(square, ChessBoard.LINKED_MAP[square][1])
                                                                         print(dest_list, "Blocked By Opponent At:", dest_square)
                                                                         del dest_list[dest_list.index(dest_square)+1:]
                                                                         print("Truncating to: ", dest_list)
@@ -1698,19 +1667,19 @@ class PieceMoveRanges:
                                                 if square in TrackPieces.WHITE_POSITIONS:                            # even though each turn
                                                         # if same colour truncate from incl that square.             # one side's pieces haven't moved their
                                                         if dest_square in TrackPieces.WHITE_POSITIONS:               # range/dests may be changed by
-                                                                print(square, self.linked_map[square][1])            # movement of the opponent's piece.
+                                                                print(square, ChessBoard.LINKED_MAP[square][1])            # movement of the opponent's piece.
                                                                 print(dest_list, "Blocked At:", dest_square)
                                                                 del dest_list[dest_list.index(dest_square):]
                                                                 print("Truncating to: ", dest_list)
                                                         # if opposite colour truncate after that square.
                                                         if dest_square in TrackPieces.BLACK_POSITIONS:
-                                                                print(square, self.linked_map[square][1])
+                                                                print(square, ChessBoard.LINKED_MAP[square][1])
                                                                 print(dest_list, "Blocked By Opponent At:", dest_square)
                                                                 
-                                                                if self.linked_map[square][1] == "p":                  # if the current piece is a pawn then 
+                                                                if ChessBoard.LINKED_MAP[square][1] == "p":                  # if the current piece is a pawn then 
                                                                         del dest_list[dest_list.index(dest_square):]   # an opponent piece will block it too
                                                                                                                        # as it can't take forward.
-                                                                elif self.linked_map[square][1] == "K" and self.linked_map[dest_square][1] == "K":
+                                                                elif ChessBoard.LINKED_MAP[square][1] == "K" and ChessBoard.LINKED_MAP[dest_square][1] == "K":
                                                                         del dest_list[dest_list.index(dest_square):] # making it so you cant take a king with a king
                                                                 else:                                                
                                                                         del dest_list[dest_list.index(dest_square)+1:]       
@@ -1718,18 +1687,18 @@ class PieceMoveRanges:
                                                                 print("Truncating to: ", dest_list)
                                                 if square in TrackPieces.BLACK_POSITIONS:
                                                         if dest_square in TrackPieces.BLACK_POSITIONS:
-                                                                print(square, self.linked_map[square][1])
+                                                                print(square, ChessBoard.LINKED_MAP[square][1])
                                                                 print(dest_list, "Blocked At:", dest_square)
                                                                 del dest_list[dest_list.index(dest_square):]
                                                                 print("Truncating to: ", dest_list)
                                                         if dest_square in TrackPieces.WHITE_POSITIONS:
-                                                                print(square, self.linked_map[square][1])
+                                                                print(square, ChessBoard.LINKED_MAP[square][1])
                                                                 print(dest_list, "Blocked By Opponent At:", dest_square)
 
-                                                                if self.linked_map[square][1] == "p":                  # if the current piece is a pawn then 
+                                                                if ChessBoard.LINKED_MAP[square][1] == "p":                  # if the current piece is a pawn then 
                                                                         del dest_list[dest_list.index(dest_square):]   # an opponent piece will block it too
                                                                                                                        # as it can't take forward.
-                                                                elif self.linked_map[square][1] == "K" and self.linked_map[dest_square][1] == "K":
+                                                                elif ChessBoard.LINKED_MAP[square][1] == "K" and ChessBoard.LINKED_MAP[dest_square][1] == "K":
                                                                         del dest_list[dest_list.index(dest_square):] # making it so you cant take a king with a king
                                                                 else:                                                                                              
                                                                         del dest_list[dest_list.index(dest_square)+1:]
@@ -2114,24 +2083,27 @@ class PieceMoveRanges:
 
 class Controller:
        
+        LOAD_FROM_JSON = False
+
         # testing for previous repetitions
         GAME_POSITION_STRINGS = {}
 
+        # *** make another argument 
         def __init__(self):
-                self.board = ChessBoard()
-                self.callibrate = PieceMoveRanges(
-                        self.board.linked_map
-                )
-                self.rotate = RotateBoard180(
-                        self.board.linked_map
-                )
-                self._setup_board()
+                
+                # if we are loading from JSON, we can
+                # set the class variable to true so that the
+                # data structures will not be regenerated.
+                if not Controller.LOAD_FROM_JSON:
+                        self.board = ChessBoard()
+                        self.callibrate = PieceMoveRanges()
+                        self.rotate = RotateBoard180()
+                        self._setup_board()
 
-                self.track = TrackPieces(
-                        self.board.linked_map,
-                        self._initial_white_positions,
-                        self._initial_black_positions
-                )
+                        self.track = TrackPieces(
+                                self._initial_white_positions,
+                                self._initial_black_positions
+                        )
                 self._display_board()
        
         def _setup_board(self):
@@ -2187,7 +2159,7 @@ class Controller:
                 # *** could introduce something to make this only do this when in check ?????? 
                 # *** ......if that would be correct ????
                 temp_linked_map, temp_white_pos, temp_black_pos = self.track.get_temp_data(
-                        self.board.linked_map, 
+                        ChessBoard.LINKED_MAP, 
                         TrackPieces.WHITE_POSITIONS,
                         TrackPieces.BLACK_POSITIONS        
                 )
@@ -2195,21 +2167,19 @@ class Controller:
                 if not self.track.validate_colour_move(start_pos):
                     raise ValueError("Not Your Turn/Invalid Move")
                 
-                piece = self.board.linked_map[start_pos][-1]
+                piece = ChessBoard.LINKED_MAP[start_pos][-1]
                 if piece == "p":
                         query_take = self.track.query_take(end_pos, piece="p")
                         if not query_take: 
                             move = MovePawn(
-                                    self.board.linked_map,
                                     start_pos,
                                     end_pos
                             )
                             if end_pos in ChessBoard.squares_map[0] or end_pos in ChessBoard.squares_map[ChessBoard.HEIGHT-1]:
-                                    promotion = PromotePawn(self.board.linked_map, end_pos)
+                                    promotion = PromotePawn(ChessBoard.LINKED_MAP, end_pos)
                         
                         elif query_take == "EP":
                             take = EnPassant(
-                                self.board.linked_map,
                                 start_pos,
                                 end_pos
                             )
@@ -2218,7 +2188,6 @@ class Controller:
                         else: # use take if end pos is in the list of positions
                               # for the opposite colour.
                             take = PawnTake(
-                                self.board.linked_map,
                                 start_pos,
                                 end_pos
                             )
@@ -2241,10 +2210,7 @@ class Controller:
                              or
                              TrackPieces.BLACK_MOVE and TrackPieces.BLACK_IN_CHECK 
                         ):
-                                self.board.linked_map = temp_linked_map
-                                self.track.linked_map = temp_linked_map
-                                self.callibrate.linked_map = temp_linked_map
-                                self.rotate.linked_map = temp_linked_map
+                                ChessBoard.LINKED_MAP = temp_linked_map
                                 TrackPieces.WHITE_POSITIONS = temp_white_pos
                                 TrackPieces.BLACK_POSITIONS = temp_black_pos
                                 MovePiece.MOVE_NUMBER -= 1
@@ -2256,14 +2222,12 @@ class Controller:
 
                         if not self.track.query_take(end_pos):
                                 move = MoveRook(
-                                        self.board.linked_map,
                                         start_pos,
                                         end_pos
                                 )
                         else: # use take if end pos is in the list of positions
                               # for the opposite colour.
                                 take = RookTake(
-                                        self.board.linked_map,
                                         start_pos,
                                         end_pos
                                 )
@@ -2279,10 +2243,7 @@ class Controller:
                              or
                              TrackPieces.BLACK_MOVE and TrackPieces.BLACK_IN_CHECK 
                         ):
-                                self.board.linked_map = temp_linked_map
-                                self.track.linked_map = temp_linked_map
-                                self.callibrate.linked_map = temp_linked_map
-                                self.rotate.linked_map = temp_linked_map
+                                ChessBoard.LINKED_MAP = temp_linked_map
                                 TrackPieces.WHITE_POSITIONS = temp_white_pos
                                 TrackPieces.BLACK_POSITIONS = temp_black_pos
                                 MovePiece.MOVE_NUMBER -= 1
@@ -2301,14 +2262,12 @@ class Controller:
                 if piece == "k":
                         if not self.track.query_take(end_pos):
                                 move = MoveKnight(
-                                        self.board.linked_map,
                                         start_pos,
                                         end_pos
                                 )
                         else:# use take if end pos is in the list of positions
                               # for the opposite colour.
                                 take = KnightTake(
-                                        self.board.linked_map,
                                         start_pos,
                                         end_pos
                                 )
@@ -2324,10 +2283,7 @@ class Controller:
                              or
                              TrackPieces.BLACK_MOVE and TrackPieces.BLACK_IN_CHECK 
                         ):
-                                self.board.linked_map = temp_linked_map
-                                self.track.linked_map = temp_linked_map
-                                self.callibrate.linked_map = temp_linked_map
-                                self.rotate.linked_map = temp_linked_map
+                                ChessBoard.LINKED_MAP = temp_linked_map
                                 TrackPieces.WHITE_POSITIONS = temp_white_pos
                                 TrackPieces.BLACK_POSITIONS = temp_black_pos
                                 MovePiece.MOVE_NUMBER -= 1
@@ -2338,14 +2294,12 @@ class Controller:
                 if piece == "b":
                         if not self.track.query_take(end_pos):
                                 move = MoveBishop(
-                                        self.board.linked_map,
                                         start_pos,
                                         end_pos
                                 )
                         else:# use take if end pos is in the list of positions
                               # for the opposite colour.
                                 take = BishopTake(
-                                        self.board.linked_map,
                                         start_pos,
                                         end_pos
                                 )
@@ -2361,10 +2315,7 @@ class Controller:
                              or
                              TrackPieces.BLACK_MOVE and TrackPieces.BLACK_IN_CHECK 
                         ):
-                                self.board.linked_map = temp_linked_map
-                                self.track.linked_map = temp_linked_map
-                                self.callibrate.linked_map = temp_linked_map
-                                self.rotate.linked_map = temp_linked_map
+                                ChessBoard.LINKED_MAP = temp_linked_map
                                 TrackPieces.WHITE_POSITIONS = temp_white_pos
                                 TrackPieces.BLACK_POSITIONS = temp_black_pos
                                 MovePiece.MOVE_NUMBER -= 1
@@ -2375,14 +2326,12 @@ class Controller:
                 if piece == "Q":
                         if not self.track.query_take(end_pos):
                                 move = MoveQueen(
-                                        self.board.linked_map,
                                         start_pos,
                                         end_pos
                                 )
                         else:# use take if end pos is in the list of positions
                               # for the opposite colour.
                                 take = QueenTake(
-                                        self.board.linked_map,
                                         start_pos,
                                         end_pos
                                 )
@@ -2398,10 +2347,7 @@ class Controller:
                              or
                              TrackPieces.BLACK_MOVE and TrackPieces.BLACK_IN_CHECK 
                         ):
-                                self.board.linked_map = temp_linked_map
-                                self.track.linked_map = temp_linked_map
-                                self.callibrate.linked_map = temp_linked_map
-                                self.rotate.linked_map = temp_linked_map
+                                ChessBoard.LINKED_MAP = temp_linked_map
                                 TrackPieces.WHITE_POSITIONS = temp_white_pos
                                 TrackPieces.BLACK_POSITIONS = temp_black_pos
                                 MovePiece.MOVE_NUMBER -= 1
@@ -2421,7 +2367,6 @@ class Controller:
 
                                 if TrackPieces.WHITE_MOVE:
                                                 white_castle = Castle(
-                                                        self.board.linked_map,
                                                         start_pos,
                                                         end_pos
                                                 )
@@ -2436,21 +2381,18 @@ class Controller:
                                 
                                 if TrackPieces.BLACK_MOVE:
                                                 black_castle = Castle(
-                                                        self.board.linked_map,
                                                         start_pos,
                                                         end_pos
                                                 )
                         
                         elif not self.track.query_take(end_pos):
                                 move = MoveKing(
-                                        self.board.linked_map,
                                         start_pos,
                                         end_pos
                                 )
                         else: # use take if end pos is in the list of positions
                               # for the opposite colour.
                                 take = KingTake(
-                                        self.board.linked_map,
                                         start_pos,
                                         end_pos
                                 )
@@ -2469,10 +2411,7 @@ class Controller:
                                 # to-do: change the linked map variable to a class variable
                                 # so that we don't have to keep track of several instances which
                                 # should all be the same anyway.
-                                self.board.linked_map = temp_linked_map
-                                self.track.linked_map = temp_linked_map
-                                self.callibrate.linked_map = temp_linked_map
-                                self.rotate.linked_map = temp_linked_map
+                                ChessBoard.LINKED_MAP = temp_linked_map
                                 TrackPieces.WHITE_POSITIONS = temp_white_pos
                                 TrackPieces.BLACK_POSITIONS = temp_black_pos
                                 MovePiece.MOVE_NUMBER -= 1
@@ -2500,12 +2439,12 @@ class Controller:
                 
                 if TrackPieces.WHITE_MOVE:
                         current_position_string =  self._get_current_position_string( 
-                                self.board.linked_map,
+                                ChessBoard.LINKED_MAP,
                                 colour="w", opp_colour="b" 
                         )        
                 if TrackPieces.BLACK_MOVE:
                         current_position_string = self._get_current_position_string( 
-                                self.board.linked_map,
+                                ChessBoard.LINKED_MAP,
                                 colour="b", opp_colour="w" 
                         )
 
@@ -2710,7 +2649,7 @@ class Controller:
                 # 'in check' move is made. Next step is to take that functionality out into
                 # this test function.
                 temp_linked_map, temp_white_pos, temp_black_pos = self.track.get_temp_data(
-                        self.board.linked_map, 
+                        ChessBoard.LINKED_MAP, 
                         TrackPieces.WHITE_POSITIONS,
                         TrackPieces.BLACK_POSITIONS        
                 )
@@ -2733,10 +2672,7 @@ class Controller:
                 # If the move was successful we revert back to the temp values
                 # and change the turn back to that of the colour it was just
                 # before test_move was called.
-                self.board.linked_map = temp_linked_map
-                self.track.linked_map = temp_linked_map
-                self.callibrate.linked_map = temp_linked_map
-                self.rotate.linked_map = temp_linked_map
+                ChessBoard.LINKED_MAP = temp_linked_map
                 TrackPieces.WHITE_POSITIONS = temp_white_pos
                 TrackPieces.BLACK_POSITIONS = temp_black_pos
                 MovePiece.MOVE_NUMBER -= 1
@@ -2760,7 +2696,7 @@ class Controller:
                         for extra_position in list(positions):
                                 position_list.append(extra_position)
                 for square in position_list:
-                        if len(self.board.linked_map[square]) == 2:
+                        if len(ChessBoard.LINKED_MAP[square]) == 2:
                                 raise ValueError("Can't add piece here")
 
                 colour = colour_piece[0]
@@ -2772,35 +2708,23 @@ class Controller:
                         raise ValueError("Invalid Colour")
 
                 if piece == "p":
-                        new_piece = SetPawn( self.board.linked_map,
-                                                          position,
-                                                         *positions )                                             
+                        new_piece = SetPawn( position, *positions )                                             
                 if piece == "r":
-                        new_piece = SetRook( self.board.linked_map,
-                                                          position,
-                                                         *positions )
+                        new_piece = SetRook( position, *positions )
                         # Update rook positions to keep track of whether they
                         # have been moved.
                         self.track.detect_rook_positions()
                 if piece == "k":
-                        new_piece = SetKnight( self.board.linked_map,
-                                                            position,
-                                                           *positions ) 
+                        new_piece = SetKnight( position, *positions ) 
 
                 if piece == "b":
-                        new_piece = SetBishop( self.board.linked_map,
-                                                            position,
-                                                           *positions )
+                        new_piece = SetBishop( position, *positions )
 
                 if piece == "Q":
-                        new_piece = SetQueen( self.board.linked_map,
-                                                            position,
-                                                           *positions )
+                        new_piece = SetQueen( position, *positions )
 
                 if piece == "K":
-                        new_piece = SetKing( self.board.linked_map,
-                                                          position,
-                                                         *positions )
+                        new_piece = SetKing( position, *positions )
 
                 self.callibrate()
                 self.track.detect_check()
@@ -2830,7 +2754,6 @@ class Controller:
                 self.board()
 
 
-             
 
 
 
@@ -2838,115 +2761,4 @@ class Controller:
 
 
 
-import time
-
-start = time.time()
-
-player = Controller()
-
-
-# # Below is the chess setup for white and black.
-player.add("wp", "a2", "b2", "c2",
-                 "d2", "e2", "f2",
-                 "g2", "h2")
-player.add("bp", "a7", "b7", "c7",
-                 "d7", "e7", "f7",
-                 "g7", "h7")
-
-player.add("wr", "a1", "h1")                
-player.add("wk", "b1", "g1")
-player.add("wb", "c1", "f1")
-player.add("wQ", "d1")
-player.add("wK", "e1")
-
-player.add("br", "a8", "h8")                
-player.add("bk", "b8", "g8")
-player.add("bb", "c8", "f8")
-player.add("bQ", "d8")
-player.add("bK", "e8")
-
-####################################################################################
-
-player.move("d2", "d4")
-player.move("g8", "f6")
-player.move("c2", "c4")
-player.move("g7", "g6")
-player.move("f2", "f3")
-player.move("d7", "d6")
-player.move("e2", "e4")
-player.move("e7", "e5")
-player.move("d4", "d5")
-player.move("f6", "h5")
-player.move("c1", "e3")
-player.move("f8", "g7")
-player.move("b1", "c3")
-player.move("e8", "g8")
-player.move("d1", "d2")
-player.move("f7", "f5")
-player.move("e1", "c1")
-player.move("f5", "f4")
-player.move("e3", "f2")
-player.move("g7", "f6")
-player.move("d2", "e1")
-player.move("b8", "d7")
-player.move("c1", "b1")
-player.move("f6", "e7")
-player.move("g2", "g3")
-player.move("c7", "c5")
-player.move("d5", "c6") # en-passant
-player.move("b7", "c6")
-player.move("c4", "c5")
-player.move("d6", "c5")
-player.move("c3", "a4")
-player.move("d8", "c7")
-player.move("e1", "c3")
-player.move("a8", "b8")
-player.move("f1", "h3")
-player.move("d7", "b6")
-player.move("a4", "c5")
-player.move("f8", "f7")
-player.move("b2", "b3")
-player.move("f4", "g3")
-player.move("h2", "g3")
-player.move("e7", "c5")
-player.move("c3", "c5")
-player.move("h5", "g7")
-player.move("d1", "c1")
-player.move("c8", "e6")
-player.move("c5", "c6")
-player.move("c7", "e7")
-player.move("c6", "c5")
-player.move("e7", "f6")
-player.move("h3", "g2")
-player.move("f7", "b7")
-player.move("b1", "a1")
-player.move("b6", "d7")
-player.move("c5", "d6")
-player.move("g7", "e8")
-player.move("d6", "a6")
-player.move("e6", "b3")
-player.move("a6", "f6")
-player.move("e8", "f6")
-player.move("a2", "b3")
-player.move("b7", "b3")
-player.move("c1", "c2")
-player.move("b3", "b1")
-player.move("a1", "a2")
-player.move("b1", "b4")
-player.move("a2", "a1")
-player.move("b4", "b1")
-player.move("a1", "a2")
-player.move("b1", "b4")
-player.move("a2", "a1")
-player.move("b4", "b1")
-
-# player._refresh_board()
-
-# print(Controller.GAME_POSITION_STRINGS)
-# for key in Controller.GAME_POSITION_STRINGS.keys():
-#         print(key.split("/")[-1])
-
-end = time.time()
-
-print("Time Taken: ", end-start)
 
