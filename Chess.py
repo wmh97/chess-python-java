@@ -143,8 +143,8 @@ class ChessBoard(AlternatingBoard):
 
         def __call__(self):
                 #self._print_chess_squares()
-                self._render_board()
                 self._render_board_with_colour()
+                self._render_board()
        
         def _link_squares_map(self):
                
@@ -182,13 +182,41 @@ class ChessBoard(AlternatingBoard):
                 counter = 0
                 rank_index = 0
                 board_row = []
-                for value in self.linked_map.values():
+                for key, value in self.linked_map.items():
+
+                        piece = value[-1]
+                        if key in TrackPieces.WHITE_POSITIONS:
+                                if piece == "p":
+                                        piece = u'\u2659'
+                                elif piece == "r":
+                                        piece = u'\u2656'
+                                elif piece == "k":
+                                        piece = u'\u2658'
+                                elif piece == "b":
+                                        piece = u'\u2657'
+                                elif piece == "Q":
+                                        piece = u'\u2655'
+                                elif piece == "K":
+                                        piece = u'\u2654'
+                        elif key in TrackPieces.BLACK_POSITIONS:
+                                if piece == "p":
+                                        piece = u'\u265F'
+                                elif piece == "r":
+                                        piece = u'\u265C'
+                                elif piece == "k":
+                                        piece = u'\u265E'
+                                elif piece == "b":
+                                        piece = u'\u265D'
+                                elif piece == "Q":
+                                        piece = u'\u265B'
+                                elif piece == "K":
+                                        piece = u'\u265A'
 
                         if counter < 7:
                                 counter +=1
-                                board_row.append(value[-1])
+                                board_row.append(piece)
                         else:
-                                board_row.append(value[-1])
+                                board_row.append(piece)
                                 print(rank_numbers[rank_index]+"|", " ".join(board_row), "|"+rank_numbers[rank_index])
                                 board_row.clear()
                                 counter = 0
@@ -2459,7 +2487,9 @@ class Controller:
                 elif piece not in list("rbkQKp"):
                         raise ValueError("No Piece Here")
 
-                # testing three fold repetition ***** test if this should go here *********
+                # At this point the move has been executed and the turn has switched to the
+                # other players go. So, if black moves to make three-fold-repetition,
+                # we are analysing the position from the point of view of white.
                 self._detect_three_fold_repetition()
 
         def _detect_three_fold_repetition(self):
@@ -2468,22 +2498,18 @@ class Controller:
                 # in this case the game position strings most recent entry will need to
                 # be popped.
                 
-                # we have the colour and opp colour the opposite to the colour who's move
-                # it is because we are calculating this at the end of the turn. So white has
-                # made it's move and it evaluates the position from the point of view of
-                # black.
                 if TrackPieces.WHITE_MOVE:
                         current_position_string =  self._get_current_position_string( 
                                 self.board.linked_map,
-                                colour="b", opp_colour="w" 
+                                colour="w", opp_colour="b" 
                         )        
                 if TrackPieces.BLACK_MOVE:
                         current_position_string = self._get_current_position_string( 
                                 self.board.linked_map,
-                                colour="w", opp_colour="b" 
+                                colour="b", opp_colour="w" 
                         )
 
-                print(current_position_string)
+                #print(current_position_string)
 
                 # if string not already occured set it to 1 otherwise + 1 to it to show
                 # another occurance.
@@ -2498,6 +2524,9 @@ class Controller:
                 #         Controller.GAME_POSITION_STRINGS[current_position_string] += 1
                 
                 if Controller.GAME_POSITION_STRINGS[current_position_string] == 3:
+                        
+                        print(Controller.GAME_POSITION_STRINGS)
+                        
                         print("*********************************")
                         print("***THREE-FOLD-REPETITION DRAW!***")
                         print("*********************************")
@@ -2817,109 +2846,105 @@ player = Controller()
 
 
 # # Below is the chess setup for white and black.
-# player.add("wp", "a2", "b2", "c2",
-#                  "d2", "e2", "f2",
-#                  "g2", "h2")
-# player.add("bp", "a7", "b7", "c7",
-#                  "d7", "e7", "f7",
-#                  "g7", "h7")
+player.add("wp", "a2", "b2", "c2",
+                 "d2", "e2", "f2",
+                 "g2", "h2")
+player.add("bp", "a7", "b7", "c7",
+                 "d7", "e7", "f7",
+                 "g7", "h7")
 
-# player.add("wr", "a1", "h1")                
-# player.add("wk", "b1", "g1")
-# player.add("wb", "c1", "f1")
-# player.add("wQ", "d1")
-# player.add("wK", "e1")
-
-# player.add("br", "a8", "h8")                
-# player.add("bk", "b8", "g8")
-# player.add("bb", "c8", "f8")
-# player.add("bQ", "d8")
-# player.add("bK", "e8")
-
-
-player.add("wp", "h2", "g3", "f2", "e3", "d4", "c5", "b3", "a2")
-player.add("wk", "f3")
-player.add("wb", "g2", "a3")
-player.add("wr", "h1", "a1")
-#player.add("wQ", "d1")
+player.add("wr", "a1", "h1")                
+player.add("wk", "b1", "g1")
+player.add("wb", "c1", "f1")
+player.add("wQ", "d1")
 player.add("wK", "e1")
 
-player.add("bp", "h5", "g7", "f7", "e7", "d5", "b7", "a7")
-player.add("bk", "b8")
-player.add("bb", "g4", "f8")
-player.add("br", "h8", "a8")
-player.add("bQ", "f6")
+player.add("br", "a8", "h8")                
+player.add("bk", "b8", "g8")
+player.add("bb", "c8", "f8")
+player.add("bQ", "d8")
 player.add("bK", "e8")
 
+####################################################################################
 
-MovePiece.MOVE_NUMBER += 1
-player.black()
-player._refresh_board()
+player.move("d2", "d4")
+player.move("g8", "f6")
+player.move("c2", "c4")
+player.move("g7", "g6")
+player.move("f2", "f3")
+player.move("d7", "d6")
+player.move("e2", "e4")
+player.move("e7", "e5")
+player.move("d4", "d5")
+player.move("f6", "h5")
+player.move("c1", "e3")
+player.move("f8", "g7")
+player.move("b1", "c3")
+player.move("e8", "g8")
+player.move("d1", "d2")
+player.move("f7", "f5")
+player.move("e1", "c1")
+player.move("f5", "f4")
+player.move("e3", "f2")
+player.move("g7", "f6")
+player.move("d2", "e1")
+player.move("b8", "d7")
+player.move("c1", "b1")
+player.move("f6", "e7")
+player.move("g2", "g3")
+player.move("c7", "c5")
+player.move("d5", "c6") # en-passant
+player.move("b7", "c6")
+player.move("c4", "c5")
+player.move("d6", "c5")
+player.move("c3", "a4")
+player.move("d8", "c7")
+player.move("e1", "c3")
+player.move("a8", "b8")
+player.move("f1", "h3")
+player.move("d7", "b6")
+player.move("a4", "c5")
+player.move("f8", "f7")
+player.move("b2", "b3")
+player.move("f4", "g3")
+player.move("h2", "g3")
+player.move("e7", "c5")
+player.move("c3", "c5")
+player.move("h5", "g7")
+player.move("d1", "c1")
+player.move("c8", "e6")
+player.move("c5", "c6")
+player.move("c7", "e7")
+player.move("c6", "c5")
+player.move("e7", "f6")
+player.move("h3", "g2")
+player.move("f7", "b7")
+player.move("b1", "a1")
+player.move("b6", "d7")
+player.move("c5", "d6")
+player.move("g7", "e8")
+player.move("d6", "a6")
+player.move("e6", "b3")
+player.move("a6", "f6")
+player.move("e8", "f6")
+player.move("a2", "b3")
+player.move("b7", "b3")
+player.move("c1", "c2")
+player.move("b3", "b1")
+player.move("a1", "a2")
+player.move("b1", "b4")
+player.move("a2", "a1")
+player.move("b4", "b1")
+player.move("a1", "a2")
+player.move("b1", "b4")
+player.move("a2", "a1")
+player.move("b4", "b1")
 
-player.add("wr", "b2")
+# player._refresh_board()
 
-player.move("a7", "a5")
-
-player.move("b2", "d2")
-player.move("a8", "a7")
-
-# player._get_current_position_string(player.board.linked_map, colour="w", opp_colour="b")
-# test = player._get_current_position_string(player.board.linked_map, colour="b", opp_colour="w")
-
-print(Controller.GAME_POSITION_STRINGS)
-
-# print(test in Controller.GAME_POSITION_STRINGS)
-
-for key in Controller.GAME_POSITION_STRINGS.keys():
-        print(key.split("/")[-1])
-
-asdf = 123
-##############################################
-
-
-# player.add( "wp", "a2" )
-
-# player.add("br", "h3", "f2", "f3")
-# player.move("e1", "g1")
-
-# player.add( "wp", "b1", "e1" )
-
-# # player.move("e1", "g1")
-
-# #player.move("e1", "e2")
-# #player.move("e8", "c8")
-# #player.move("e2", "e1")
-
-############TESTING STALEMATE##########
-
-# player.add("bK", "a3")
-# player.add("wK", "a1")
-# player.add("wk", "c3", "c1")
-# player.add("wp", "c2", "d3")
-# player.add("bp", "a2")
-# player.add("bb", "d4")
-# player.add("br", "g1")
-
-#######################################
-
-# player.add("wK", "a1")
-# player.add("wp", "a2")
-# player.add("br", "a3", "b8")
-
-#######################################
-
-# ChessBoard._get_chess_squares_coords(ChessBoard.squares_map)
-# print("@@@@@@@@@@@@@@@@@@@@@@@")
-# print(ChessBoard.SQUARES_MAP_COORDS)
-# player.add("wp", "a2", "h2")
-# player.add("bp", "b4", "f6")
-# player.move("a2", "a4")
-# player.move("f6", "f5")
-# player.move("h2", "h3")
-# player.move("b4", "a3")
-
-# player.test_move("c1", "e2")
-# player.move("c1", "e2")
+# print(Controller.GAME_POSITION_STRINGS)
+# for key in Controller.GAME_POSITION_STRINGS.keys():
+#         print(key.split("/")[-1])
 
 end = time.time()
 
