@@ -40,6 +40,7 @@ class ChessConnector:
         # (2) colour turn - for white, black
         # (3) colour positions - for white, black
         # (4) taken by colour - for white, black
+        # (5) colour castling data - rooks/kings have moved
         # (5) current position string
         # (6) game position strings
         # 
@@ -83,6 +84,10 @@ class ChessConnector:
         # game_json[""] = taken by white
         # game_json[""] = taken by black
         # game_json[""] = current_position_string
+        game_json["TrackPieces.WHITE_ROOKS_HAVE_MOVED"] = TrackPieces.WHITE_ROOKS_HAVE_MOVED
+        game_json["TrackPieces.BLACK_ROOKS_HAVE_MOVED"] = TrackPieces.BLACK_ROOKS_HAVE_MOVED
+        game_json["TrackPieces.WHITE_KING_HAS_MOVED"] = TrackPieces.WHITE_KING_HAS_MOVED
+        game_json["TrackPieces.BLACK_KING_HAS_MOVED"] = TrackPieces.BLACK_KING_HAS_MOVED
         game_json["Controller.GAME_POSITION_STRINGS"] = Controller.GAME_POSITION_STRINGS
 
         # ---(B)---
@@ -135,6 +140,10 @@ class ChessConnector:
         # game_json[""] = taken by white
         # game_json[""] = taken by black
         # game_json[""] = current_position_string
+        TrackPieces.WHITE_ROOKS_HAVE_MOVED = game_json["TrackPieces.WHITE_ROOKS_HAVE_MOVED"] 
+        TrackPieces.BLACK_ROOKS_HAVE_MOVED = game_json["TrackPieces.BLACK_ROOKS_HAVE_MOVED"] 
+        TrackPieces.WHITE_KING_HAS_MOVED = game_json["TrackPieces.WHITE_KING_HAS_MOVED"] 
+        TrackPieces.BLACK_KING_HAS_MOVED = game_json["TrackPieces.BLACK_KING_HAS_MOVED"] 
         Controller.GAME_POSITION_STRINGS = game_json["Controller.GAME_POSITION_STRINGS"] 
 
         # ---(B)---
