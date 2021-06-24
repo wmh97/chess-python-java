@@ -1,14 +1,19 @@
-public class LinkedMap {
+public class GameData {
 
     private char[] squareSymbols;
+    private char[] pieceSymbols;
 
-    LinkedMap(){
+    GameData(){
+
+        // temp way of generating the data structures that we need to set up the board.
 
         char[] squareSymbols = new char[64];
         char tempSymbol;
         char symbol1 = '-';
         char symbol2 = '+';
         int fileNumber = 1;
+
+        char[] pieceSymbols = new char[64];
 
         for (int i=1; i<=64; i++){
 
@@ -29,9 +34,16 @@ public class LinkedMap {
                 fileNumber = 1;
             }
 
+            if (i <= 16 || i > 48){
+                pieceSymbols[i-1] = 'p';
+            } else{
+                pieceSymbols[i-1] = ' ';
+            }
+
         }
 
-        this.setSquareSymbols(squareSymbols);
+        setSquareSymbols(squareSymbols);
+        setPieceSymbols(pieceSymbols);
 
     }
 
@@ -41,6 +53,14 @@ public class LinkedMap {
 
     public void setSquareSymbols(char [] squareSymbols){
         this.squareSymbols = squareSymbols;
+    }
+
+    public char[] getPieceSymbols(){
+        return this.pieceSymbols;
+    }
+
+    public void setPieceSymbols(char [] pieceSymbols){
+        this.pieceSymbols = pieceSymbols;
     }
 
 }

@@ -3,10 +3,11 @@ import java.awt.*;
 
 public class BoardSquare extends JPanel{
 
-    JLabel testPiece;
-    ImageIcon testPieceIcon;
+    ChessPiece testPiece;
+    private int squareXPos;
+    private int squareYPos;
 
-    BoardSquare(char squareSymbol){
+    BoardSquare(char squareSymbol, int squareNumber, int boardWidth, int boardHeight){
 
         // setting the square colour to white or black depending on the
         // square symbol.
@@ -16,25 +17,35 @@ public class BoardSquare extends JPanel{
             this.setBackground(Color.black);
         }
 
-        // adding a piece to the square.
-        // piece is a label with a png icon on it.
-        testPiece = new JLabel();
-        testPieceIcon = resizeIcon(new ImageIcon("src\\piece.png"), 50, 75);
+        this.setSquareXPos(squareNumber, boardWidth);
+        this.setSquareYPos(squareNumber, boardHeight);
 
-        testPiece.setIcon(testPieceIcon);
-        testPiece.setVerticalAlignment(JLabel.CENTER);
-        testPiece.setHorizontalAlignment(JLabel.CENTER);
-
-        this.add(testPiece);
+        this.setBounds(getSquareXPos(), getSquareYPos(), boardWidth/8, boardHeight/8);
 
     }
 
-    private ImageIcon resizeIcon(ImageIcon icon, int width, int height){
+    public int getSquareXPos(){
+        return this.squareXPos;
+    }
 
-        Image image = icon.getImage(); // transform it
-        Image newImage = image.getScaledInstance(width, height,  java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
+    public void setSquareXPos(int squareNumber, int boardWidth){
+        this.squareXPos = BoardSquare.calcBoardXPos(squareNumber, boardWidth);
+    }
 
-        return (new ImageIcon(newImage)); // transform it back
+    public int getSquareYPos(){
+        return this.squareYPos;
+    }
+
+    public void setSquareYPos(int squareNumber, int boardHeight){
+        this.squareYPos = BoardSquare.calcBoardYPos(squareNumber, boardHeight);
+    }
+
+    static int calcBoardXPos(int squareNumber, int boardWidth){
+        return (squareNumber % 8) * (boardWidth / 8);
+    }
+
+    static int calcBoardYPos(int squareNumber, int boardHeight){
+        return (squareNumber / 8) * (boardHeight / 8);
     }
 
 }
