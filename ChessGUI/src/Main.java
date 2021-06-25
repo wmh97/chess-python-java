@@ -5,19 +5,7 @@ public class Main {
 
     public static void main(String[] args){
 
-        JFrame userInterface;
-        ChessBoard chessBoard;
+        UserInterface userInterface = new UserInterface(720, 720);
 
-        userInterface = new JFrame("Chess");
-
-        userInterface.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        userInterface.setSize(750, 750);
-        userInterface.setResizable(true);
-        userInterface.setLayout(null);
-
-        chessBoard = new ChessBoard(720, 720);
-
-        userInterface.add(chessBoard);
-        userInterface.setVisible(true);
     }
 }

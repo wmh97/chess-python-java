@@ -1,16 +1,16 @@
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
-import java.util.HashMap;
 
 public class BoardSquare extends JPanel{
 
     private int squareXPos;
     private int squareYPos;
 
+    private JLabel squarePosMarker;
+
     private static int boardWidth;
     private static int boardHeight;
-
-    //public static final HashMap<Integer, String> = new HashMap<Integer, String>();
 
     BoardSquare(char squareSymbol, int squareNumber, int boardWidth, int boardHeight){
 
@@ -27,9 +27,9 @@ public class BoardSquare extends JPanel{
 
         this.setSquareXPos(squareNumber, boardWidth);
         this.setSquareYPos(squareNumber, boardHeight);
-
         this.setBounds(getSquareXPos(), getSquareYPos(), boardWidth/8, boardHeight/8);
 
+        this.setSquarePosMarker(); // initiating the square pos marker but not adding yet.
     }
 
     public int getSquareXPos(){
@@ -46,6 +46,30 @@ public class BoardSquare extends JPanel{
 
     public void setSquareYPos(int squareNumber, int boardHeight){
         this.squareYPos = BoardSquare.calcBoardYPos(squareNumber, boardHeight);
+    }
+
+    public JLabel getSquarePosMarker(){
+        return this.squarePosMarker;
+    }
+
+    public void setSquarePosMarker(){
+
+        JLabel marker = new JLabel();
+        Border border = BorderFactory.createLineBorder(Color.red,3);
+        marker.setText("     "); // ******** Need to work out how to apply to label w/o text.
+        marker.setBorder(border);
+        marker.setVerticalAlignment(JLabel.CENTER);
+        marker.setHorizontalAlignment(JLabel.CENTER);
+        marker.setFont(new Font("Ariel", Font.BOLD, 50));
+        marker.setForeground(new Color(0xFFFF00)); // yellow
+        marker.setBounds(0, 0, boardWidth / 8, boardHeight / 8);
+        this.squarePosMarker = marker;
+    }
+
+    public void removeSquarePosMarker(){
+        this.remove(getSquarePosMarker());
+        this.revalidate();
+        this.repaint();
     }
 
     static int calcBoardXPos(int squareNumber, int boardWidth){
