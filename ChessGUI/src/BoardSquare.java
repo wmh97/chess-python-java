@@ -1,13 +1,21 @@
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashMap;
 
 public class BoardSquare extends JPanel{
 
-    ChessPiece testPiece;
     private int squareXPos;
     private int squareYPos;
 
+    private static int boardWidth;
+    private static int boardHeight;
+
+    //public static final HashMap<Integer, String> = new HashMap<Integer, String>();
+
     BoardSquare(char squareSymbol, int squareNumber, int boardWidth, int boardHeight){
+
+        this.boardWidth = boardWidth;
+        this.boardHeight = boardHeight;
 
         // setting the square colour to white or black depending on the
         // square symbol.
@@ -43,9 +51,20 @@ public class BoardSquare extends JPanel{
     static int calcBoardXPos(int squareNumber, int boardWidth){
         return (squareNumber % 8) * (boardWidth / 8);
     }
-
     static int calcBoardYPos(int squareNumber, int boardHeight){
         return (squareNumber / 8) * (boardHeight / 8);
+    }
+
+    static int calcSquareNumber(int xPos, int yPos){
+
+        double squarelength = (boardWidth/8);
+
+        double squaresAcross = Math.round(xPos/squarelength);
+        double squaresDown = Math.round(yPos/squarelength);
+
+        int squareNumber = (((int)squaresDown) * 8) + (int)squaresAcross;
+
+        return squareNumber;
     }
 
 }

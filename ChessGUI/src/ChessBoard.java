@@ -4,15 +4,14 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionAdapter;
+import java.util.HashMap;
 
 public class ChessBoard extends JLayeredPane{
 
     private int boardWidth;
     private int boardHeight;
 
-    JLabel selectedPiece;
-    Point pieceCorner;
-    Point prevMousePos;
+    JLabel piece;
 
     ChessBoard(int width, int height){
 
@@ -27,44 +26,7 @@ public class ChessBoard extends JLayeredPane{
 
         this.addSquares(gameData.getSquareSymbols());
         this.addPieces(gameData.getPieceSymbols());
-
-        for (Component component : this.getComponents()){
-            if (component instanceof JLabel){
-
-                selectedPiece = (JLabel) component;
-                ChessPiece piece = (ChessPiece) component;
-
-                selectedPiece.addMouseMotionListener(
-                        new MouseMotionAdapter() {
-
-                                // whenever the mouse is moved...
-                                @Override
-                                public void mouseDragged(MouseEvent e) {
-
-                                    // the listener is on the label itself so the coordinate is relative
-                                    // to the label.
-                                    //
-                                    // Therefore we can transform the whole label by the new position after
-                                    // dragging as this will always be within the area of the label, so it wont
-                                    // jump around.
-                                    Point newPos = e.getPoint();
-                                    System.out.println(newPos);
-
-                                    Point piecePos = new Point(
-                                            (int)piece.getPosition().getX() - (int)getBoardWidth()/16,
-                                            (int)piece.getPosition().getY() - (int)getBoardHeight()/16
-                                    );
-
-                                    piecePos.translate((int)newPos.getX(), (int)newPos.getY());
-
-                                    piece.setPosition(piecePos);
-                                    piece.addLabel();
-                            }
-                        }
-                );
-
-            }
-        }
+        this.addPieceListeners();
     }
 
     public int getBoardWidth(){
@@ -106,4 +68,86 @@ public class ChessBoard extends JLayeredPane{
             }
         }
     }
+
+    private void setPaneLayer(Component component, int layer){
+        this.setLayer(component, Integer.valueOf(Integer.toString(layer)));
+    }
+
+    private void addPieceListeners(){
+
+        for (Component component : this.getComponents()){
+            if (component instanceof JLabel){
+
+                piece = (JLabel) component;
+                ChessPiece selectedPiece = (ChessPiece) component;
+
+                selectedPiece.addMouseListener(
+                        new MouseListener() {
+                            @Override
+                            public void mouseClicked(MouseEvent e) {}
+                            @Override
+                            public void mousePressed(MouseEvent e) {}
+
+                            @Override
+                            public void mouseReleased(MouseEvent e) {
+                                movePiece(selectedPiece, e, true);
+                            }
+
+                            @Override
+                            public void mouseEntered(MouseEvent e) {}
+                            @Override
+                            public void mouseExited(MouseEvent e) {}
+                        }
+                );
+
+                selectedPiece.addMouseMotionListener(
+                        new MouseMotionAdapter() {
+                            // whenever the mouse is moved...
+                            @Override
+                            public void mouseDragged(MouseEvent e) {
+                                movePiece(selectedPiece, e, false);
+                            }
+                        }
+                );
+
+            } else if (component instanceof JPanel){
+                return;
+            }
+
+        }
+    }
+
+    private void movePiece(ChessPiece piece, MouseEvent e, boolean dropped){
+
+        // the listener is on the label itself so the coordinate is relative
+        // to the corner of the label (0,0). Therefore any movement will simply
+        // cause an offset from zero on this coordinate.
+        Point newPos = e.getPoint();
+        System.out.println(newPos);
+
+        // making a point at the centre of the piece label.
+        // This coordinate is relative to the whole board.
+        Point piecePos = new Point(
+                (int)piece.getPosition().getX() - (int)getBoardWidth()/16,
+                (int)piece.getPosition().getY() - (int)getBoardHeight()/16
+        );
+
+        // moving the piece label by the amount the mouse has moved.
+        // i.e. the offset from zero.
+        piecePos.translate((int)newPos.getX(), (int)newPos.getY());
+
+        piece.setPosition(piecePos);
+
+        if (!dropped){
+            setPaneLayer(piece, 2);
+            piece.setPosition(piecePos);
+        } else {
+            setPaneLayer(piece, 1);
+            Point dropSquare = piece.getDropSquare(piecePos);
+            piece.setPosition(dropSquare);
+        }
+
+        piece.refreshPiece();
+    }
+
 }

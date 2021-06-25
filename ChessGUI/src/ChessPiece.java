@@ -74,4 +74,39 @@ public class ChessPiece extends JLabel{
         return this;
     }
 
+    public void refreshPiece(){
+
+        this.setBounds(
+                (int)this.getPosition().getX(),
+                (int)this.getPosition().getY(),
+                this.boardWidth/8,
+                this.boardHeight/8
+        );
+
+    }
+
+    public Point getDropSquare(Point droppedPos){
+
+        // get the position, work out which square it is in,
+        // then drop it to the centre of that square.
+        double xPos = droppedPos.getX();
+        double yPos = droppedPos.getY();
+
+        System.out.println("drop square number");
+        System.out.println(
+                BoardSquare.calcSquareNumber((int)xPos, (int)yPos)
+        );
+
+        int squareNumber = BoardSquare.calcSquareNumber((int)xPos, (int)yPos);
+        int squareCentredXPos = BoardSquare.calcBoardXPos(squareNumber, boardWidth);
+        int squareCentredYPos = BoardSquare.calcBoardYPos(squareNumber, boardHeight);
+
+        // These coords are actually the corner of the square, but the
+        // label position is set by the corner of the label, so setting the corner
+        // of the label to the corner of the square means the piece is centred.
+        Point centredPos = new Point(squareCentredXPos, squareCentredYPos);
+        return centredPos;
+
+    }
+
 }
