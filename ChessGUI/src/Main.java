@@ -7,5 +7,7 @@ public class Main {
 
         UserInterface userInterface = new UserInterface(720, 720);
 
+        System.out.println(BoardSquare.squareNumberMap);
+
     }
 }

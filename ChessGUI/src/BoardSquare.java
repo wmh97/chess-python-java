@@ -1,8 +1,12 @@
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.util.HashMap;
 
 public class BoardSquare extends JPanel{
+
+    static HashMap<Integer, BoardSquare> squareNumberMap = new HashMap<Integer, BoardSquare>();
+    private static int squareNumber = 0;
 
     private int squareXPos;
     private int squareYPos;
@@ -13,6 +17,7 @@ public class BoardSquare extends JPanel{
     private static int boardHeight;
 
     BoardSquare(char squareSymbol, int squareNumber, int boardWidth, int boardHeight){
+
 
         this.boardWidth = boardWidth;
         this.boardHeight = boardHeight;
@@ -30,6 +35,10 @@ public class BoardSquare extends JPanel{
         this.setBounds(getSquareXPos(), getSquareYPos(), boardWidth/8, boardHeight/8);
 
         this.setSquarePosMarker(); // initiating the square pos marker but not adding yet.
+
+        // adding the current square to a hashmap with its corresponding square number.
+        squareNumberMap.put(squareNumber, this);
+        squareNumber++; // squareNumber goes from 0 --> 63.
     }
 
     public int getSquareXPos(){
@@ -53,17 +62,23 @@ public class BoardSquare extends JPanel{
     }
 
     public void setSquarePosMarker(){
+        squarePosMarker = new JLabel();
+        squarePosMarker.setText("     "); // ******** Need to work out how to apply to label w/o text.
+        squarePosMarker.setVerticalAlignment(JLabel.CENTER);
+        squarePosMarker.setHorizontalAlignment(JLabel.CENTER);
+        squarePosMarker.setFont(new Font("Ariel", Font.BOLD, 50));
+        squarePosMarker.setForeground(new Color(0xFFFF00)); // yellow
+        squarePosMarker.setBounds(0, 0, boardWidth / 8, boardHeight / 8);
+        this.add(squarePosMarker);
+    }
 
-        JLabel marker = new JLabel();
+    public void displaySquarePosMarker(){
+        // re-adding the label to the panel after creating a border on it
+        // to represent the highlighting.
+        this.remove(getSquarePosMarker()); // is there a need to remove first?
         Border border = BorderFactory.createLineBorder(Color.red,3);
-        marker.setText("     "); // ******** Need to work out how to apply to label w/o text.
-        marker.setBorder(border);
-        marker.setVerticalAlignment(JLabel.CENTER);
-        marker.setHorizontalAlignment(JLabel.CENTER);
-        marker.setFont(new Font("Ariel", Font.BOLD, 50));
-        marker.setForeground(new Color(0xFFFF00)); // yellow
-        marker.setBounds(0, 0, boardWidth / 8, boardHeight / 8);
-        this.squarePosMarker = marker;
+        getSquarePosMarker().setBorder(border);
+        this.add(getSquarePosMarker());
     }
 
     public void removeSquarePosMarker(){

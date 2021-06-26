@@ -1,8 +1,12 @@
 import java.awt.*;
 import java.awt.event.*;
+import java.util.HashMap;
 import javax.swing.*;
 
 public class ChessPiece extends JLabel{
+
+    static HashMap<Integer, ChessPiece> squareNumberPieceMap = new HashMap<Integer, ChessPiece>();
+    private static int squareNumber = 0;
 
     private Point position;
     private ImageIcon pieceIcon;
@@ -25,6 +29,9 @@ public class ChessPiece extends JLabel{
             default: return;
         }
         setPosition(squareNumber, boardWidth);
+
+        ChessPiece.squareNumberPieceMap.put(squareNumber, this);
+        squareNumber++;
 
     }
 
@@ -50,8 +57,19 @@ public class ChessPiece extends JLabel{
     }
 
     public void setPosition(int squareNumber, int boardLength){
-        this.position = new Point( BoardSquare.calcBoardXPos(squareNumber, boardLength),
-                                   BoardSquare.calcBoardYPos(squareNumber, boardLength) );
+
+        // remove the old position from the hash map and add the new one,
+        // only if we have a position stored already.
+        if (this.position != null){
+            ChessPiece.squareNumberPieceMap.remove(
+                    BoardSquare.calcSquareNumber((int)this.position.getX(), (int)this.position.getY())
+            );
+            ChessPiece.squareNumberPieceMap.put(squareNumber, this);
+        }
+
+        int newXPos = BoardSquare.calcBoardXPos(squareNumber, boardLength);
+        int newYPos = BoardSquare.calcBoardYPos(squareNumber, boardLength);
+        this.position = new Point(newXPos, newYPos);
     }
 
     public void setPosition(Point pos){
@@ -85,6 +103,43 @@ public class ChessPiece extends JLabel{
 
     }
 
+    public void movePiece(MouseEvent e, boolean dropped){
+
+        // the listener is on the label itself so the coordinate is relative
+        // to the corner of the label (0,0). Therefore any movement will simply
+        // cause an offset from zero on this coordinate.
+        Point newPos = e.getPoint();
+
+        System.out.println(newPos);
+
+        // making a point at the centre of the piece label.
+        // This coordinate is relative to the whole board.
+        Point piecePos = new Point(
+                (int)this.getPosition().getX() - (int)boardWidth/16,
+                (int)this.getPosition().getY() - (int)boardHeight/16
+        );
+
+        // moving the piece label by the amount the mouse has moved.
+        // i.e. the offset from zero.
+        piecePos.translate((int)newPos.getX(), (int)newPos.getY());
+
+        this.setPosition(piecePos);
+
+        // leaves behind label on square after move - this might be a good thing though.
+        // *************************************************************************************************************
+         // **** NOTE: this is making the first move slow for some reason ************
+        // ***** must be because none of the squares are highlighted with label????? ***********************************
+        ChessBoard.highlightPositionSquare(piecePos);
+
+        if (!dropped){
+            this.setPosition(piecePos);
+        } else {
+            Point dropSquare = this.getDropSquare(piecePos);
+            this.setPosition(dropSquare);
+        }
+        this.refreshPiece();
+    }
+
     public Point getDropSquare(Point droppedPos){
 
         // get the position, work out which square it is in,
@@ -92,10 +147,7 @@ public class ChessPiece extends JLabel{
         double xPos = droppedPos.getX();
         double yPos = droppedPos.getY();
 
-        System.out.println("drop square number");
-        System.out.println(
-                BoardSquare.calcSquareNumber((int)xPos, (int)yPos)
-        );
+        System.out.println(String.format("Drop Square No. %d", BoardSquare.calcSquareNumber((int)xPos, (int)yPos)));
 
         int squareNumber = BoardSquare.calcSquareNumber((int)xPos, (int)yPos);
         int squareCentredXPos = BoardSquare.calcBoardXPos(squareNumber, boardWidth);
