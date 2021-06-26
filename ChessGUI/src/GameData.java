@@ -48,10 +48,6 @@ public class GameData {
             }
         }
 
-        for (String s: colourPieces){
-            System.out.println(s);
-        }
-
         int whiteBackRowIndex = 9;
         for (int i=0; i<64; i++){
 
@@ -68,13 +64,7 @@ public class GameData {
             } else{
                 pieceSymbols[i] = "";
             }
-
         }
-
-        for (String s: pieceSymbols){
-            System.out.println(s);
-        }
-
 
         setSquareSymbols(squareSymbols);
         setPieceSymbols(pieceSymbols);

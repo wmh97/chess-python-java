@@ -22,7 +22,7 @@ public class PieceImageParser {
             for (int imgXPos=0; imgXPos<=pieceImages.getWidth()-pieceWidth; imgXPos+=pieceWidth){
                 for (int imgYPos=0; imgYPos<=pieceImages.getHeight()-pieceHeight; imgYPos+=pieceHeight){
 
-                    System.out.println(String.format("imgXPos=%d, imgYPos=%d, imgIndex=%d", imgXPos, imgYPos, imgIndex));
+                    //System.out.println(String.format("imgXPos=%d, imgYPos=%d, imgIndex=%d", imgXPos, imgYPos, imgIndex));
 
 //                    ImageIO.write(
 //                            pieceImages.getSubimage(imgXPos, imgYPos, pieceWidth, pieceHeight),
@@ -31,7 +31,6 @@ public class PieceImageParser {
 //                    );
 
                     pieceSubImages[imgIndex] = pieceImages.getSubimage(imgXPos, imgYPos, pieceWidth, pieceHeight);
-
                     imgIndex++;
 
                 }

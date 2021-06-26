@@ -150,6 +150,13 @@ public class ChessPiece extends JLabel{
         // cause an offset from zero on this coordinate.
         Point newPos = e.getPoint();
 
+        // for the first move - speed is sometimes slow and you can see the
+        // y pos go negative. testing flipping positive again *** this might not work ***
+//        if (newPos.getY() < 0){
+//            System.out.println("Flipping y pos");
+//            newPos = new Point((int)newPos.getX(), (int)newPos.getY()*-1);
+//        }
+
         System.out.println(newPos);
 
         // making a point at the centre of the piece label.
@@ -206,9 +213,6 @@ public class ChessPiece extends JLabel{
         PieceImageParser parsePieceImages = new PieceImageParser(allPiecesImage);
 
         whiteKing = new ImageIcon(parsePieceImages.getWhiteKing());
-
-        System.out.println(whiteKing);
-
         whiteQueen = new ImageIcon(parsePieceImages.getWhiteQueen());
         whiteBishop = new ImageIcon(parsePieceImages.getWhiteBishop());
         whiteKnight = new ImageIcon(parsePieceImages.getWhiteKnight());

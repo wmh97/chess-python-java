@@ -57,7 +57,7 @@ public class ChessBoard extends JLayeredPane{
         for (int i=1; i<=pieceSymbols.length; i++){
             if (pieceSymbols[i-1] != ""){
 
-                System.out.println(pieceSymbols[i-1]);
+                //System.out.println(pieceSymbols[i-1]);
 
                 int squareIndex = i-1;
 
@@ -86,7 +86,10 @@ public class ChessBoard extends JLayeredPane{
                             public void mouseClicked(MouseEvent e) {}
 
                             @Override
-                            public void mousePressed(MouseEvent e) {}
+                            public void mousePressed(MouseEvent e) {
+                                selectedPiece.movePiece(e, false);
+                                setPaneLayer(selectedPiece, "2");
+                            }
 
                             @Override
                             public void mouseReleased(MouseEvent e) {
@@ -123,20 +126,24 @@ public class ChessBoard extends JLayeredPane{
         // getting the pos marker associated with a square and
         // adding it to the square.
         square.displaySquarePosMarker();
-        square.revalidate();
-        square.repaint();
 
         // Have managed to sort out the looping above, however, need to sort this part out.
         for (int i=0; i<64; i++){
             if (i != positionSquareNumber){
 
                 BoardSquare otherSquare = BoardSquare.squareNumberMap.get(i);
-                otherSquare.removeSquarePosMarker();
-                otherSquare.revalidate();
+
+                otherSquare.setBackground(otherSquare.getSquareColour());
+
+                //otherSquare.removeSquarePosMarker();
+
+                //otherSquare.revalidate();
                 otherSquare.repaint();
 
             }
         }
+
+
     }
 
     // TODO Need to store the last square the mouse was in, so we can

@@ -8,6 +8,12 @@ public class BoardSquare extends JPanel{
     static HashMap<Integer, BoardSquare> squareNumberMap = new HashMap<Integer, BoardSquare>();
     private static int squareNumber = 0;
 
+    static Color whiteSquareColour = new Color(238,238,210);
+    static Color blackSquareColour = new Color(118,150,86);
+    static Color highlightColour = new Color(186,202,68);
+
+    private Color squareColour; // store the underlying square colour
+
     private int squareXPos;
     private int squareYPos;
 
@@ -25,20 +31,32 @@ public class BoardSquare extends JPanel{
         // setting the square colour to white or black depending on the
         // square symbol.
         if (squareSymbol == '+'){
-            this.setBackground(new Color(238,238,210));
+            Color squareColour = whiteSquareColour;
+            this.setBackground(squareColour);
+            this.setSquareColour(squareColour);
         } else if (squareSymbol == '-'){
-            this.setBackground(new Color(118,150,86));
+            Color squareColour = blackSquareColour;
+            this.setBackground(squareColour);
+            this.setSquareColour(squareColour);
         }
 
         this.setSquareXPos(squareNumber, boardWidth);
         this.setSquareYPos(squareNumber, boardHeight);
         this.setBounds(getSquareXPos(), getSquareYPos(), boardWidth/8, boardHeight/8);
 
-        this.setSquarePosMarker(); // initiating the square pos marker but not adding yet.
+        //this.setSquarePosMarker(); // initiating the square pos marker -
 
         // adding the current square to a hashmap with its corresponding square number.
         squareNumberMap.put(squareNumber, this);
         squareNumber++; // squareNumber goes from 0 --> 63.
+    }
+
+    public Color getSquareColour(){
+        return this.squareColour;
+    }
+
+    public void setSquareColour(Color colour){
+        this.squareColour = colour;
     }
 
     public int getSquareXPos(){
@@ -62,6 +80,7 @@ public class BoardSquare extends JPanel{
     }
 
     public void setSquarePosMarker(){
+
         squarePosMarker = new JLabel();
         squarePosMarker.setText("     "); // ******** Need to work out how to apply to label w/o text.
         squarePosMarker.setVerticalAlignment(JLabel.CENTER);
@@ -70,15 +89,25 @@ public class BoardSquare extends JPanel{
         squarePosMarker.setForeground(new Color(0xFFFF00)); // yellow
         squarePosMarker.setBounds(0, 0, boardWidth / 8, boardHeight / 8);
         this.add(squarePosMarker);
+
     }
 
     public void displaySquarePosMarker(){
+
         // re-adding the label to the panel after creating a border on it
         // to represent the highlighting.
         //this.remove(getSquarePosMarker()); // is there a need to remove first?
-        Border border = BorderFactory.createLineBorder(Color.red,3);
-        getSquarePosMarker().setBorder(border);
-        this.add(getSquarePosMarker());
+//        Border border = BorderFactory.createLineBorder(Color.red,3);
+//        getSquarePosMarker().setBorder(border);
+//
+//
+//        this.add(getSquarePosMarker());
+
+        // try simply changing the sq colour.
+        this.setBackground(highlightColour);
+        //this.revalidate();
+        this.repaint();
+
     }
 
     public void removeSquarePosMarker(){
@@ -96,10 +125,10 @@ public class BoardSquare extends JPanel{
 
     static int calcSquareNumber(int xPos, int yPos){
 
-        double squarelength = (boardWidth/8);
+        double squareLength = (boardWidth/8);
 
-        double squaresAcross = Math.round(xPos/squarelength);
-        double squaresDown = Math.round(yPos/squarelength);
+        double squaresAcross = Math.round(xPos/squareLength);
+        double squaresDown = Math.round(yPos/squareLength);
 
         int squareNumber = (((int)squaresDown) * 8) + (int)squaresAcross;
 
