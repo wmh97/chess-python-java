@@ -25,9 +25,9 @@ public class BoardSquare extends JPanel{
         // setting the square colour to white or black depending on the
         // square symbol.
         if (squareSymbol == '+'){
-            this.setBackground(Color.white);
+            this.setBackground(new Color(238,238,210));
         } else if (squareSymbol == '-'){
-            this.setBackground(Color.black);
+            this.setBackground(new Color(118,150,86));
         }
 
         this.setSquareXPos(squareNumber, boardWidth);
@@ -75,7 +75,7 @@ public class BoardSquare extends JPanel{
     public void displaySquarePosMarker(){
         // re-adding the label to the panel after creating a border on it
         // to represent the highlighting.
-        this.remove(getSquarePosMarker()); // is there a need to remove first?
+        //this.remove(getSquarePosMarker()); // is there a need to remove first?
         Border border = BorderFactory.createLineBorder(Color.red,3);
         getSquarePosMarker().setBorder(border);
         this.add(getSquarePosMarker());

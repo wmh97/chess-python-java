@@ -19,10 +19,12 @@ public class ChessBoard extends JLayeredPane{
         // getting the square colour data as an array of chars.
         GameData gameData = new GameData();
 
+        // parse the piece images and store them in static variables.
+        ChessPiece.parsePieceImages("src//allPieces.png");
+
         this.addSquares(gameData.getSquareSymbols());
         this.addPieces(gameData.getPieceSymbols());
         this.addPieceListeners();
-        //this.addSquareListeners();
 
     }
 
@@ -51,9 +53,11 @@ public class ChessBoard extends JLayeredPane{
         }
     }
 
-    private void addPieces(char[] pieceSymbols){
+    private void addPieces(String[] pieceSymbols){
         for (int i=1; i<=pieceSymbols.length; i++){
-            if (pieceSymbols[i-1] != ' '){
+            if (pieceSymbols[i-1] != ""){
+
+                System.out.println(pieceSymbols[i-1]);
 
                 int squareIndex = i-1;
 

@@ -16,7 +16,21 @@ public class ChessPiece extends JLabel{
     private int boardWidth;
     private int boardHeight;
 
-    ChessPiece(char pieceSymbol, int squareNumber, int boardWidth, int boardHeight){
+    static PieceImageParser pieceImageParser;
+    static ImageIcon whiteKing;
+    static ImageIcon whiteQueen;
+    static ImageIcon whiteBishop;
+    static ImageIcon whiteKnight;
+    static ImageIcon whiteRook;
+    static ImageIcon whitePawn;
+    static ImageIcon blackKing;
+    static ImageIcon blackQueen;
+    static ImageIcon blackBishop;
+    static ImageIcon blackKnight;
+    static ImageIcon blackRook;
+    static ImageIcon blackPawn;
+
+    ChessPiece(String pieceSymbol, int squareNumber, int boardWidth, int boardHeight){
 
         this.boardWidth = boardWidth;
         this.boardHeight = boardHeight;
@@ -24,9 +38,31 @@ public class ChessPiece extends JLabel{
         // piece is a label with a png icon on it.
         // setting the image based on the piece symbol.
         switch(pieceSymbol){
-            case 'p': setIcon("src\\piece.png", boardWidth/16, boardHeight/10);
+            case "br":  setPieceIcon(blackRook, boardWidth/8, boardHeight/8);
             break;
-            default: return;
+            case "bk": setPieceIcon(blackKnight, boardWidth/8, boardHeight/8);
+            break;
+            case "bb": setPieceIcon(blackBishop, boardWidth/8, boardHeight/8);
+            break;
+            case "bQ": setPieceIcon(blackQueen, boardWidth/8, boardHeight/8);
+            break;
+            case "bK": setPieceIcon(blackKing, boardWidth/8, boardHeight/8);
+            break;
+            case "bp": setPieceIcon(blackPawn, boardWidth/8, boardHeight/8);
+            break;
+            case "wr": setPieceIcon(whiteRook, boardWidth/8, boardHeight/8);
+            break;
+            case "wk": setPieceIcon(whiteKnight, boardWidth/8, boardHeight/8);
+            break;
+            case "wb": setPieceIcon(whiteBishop, boardWidth/8, boardHeight/8);
+            break;
+            case "wQ": setPieceIcon(whiteQueen, boardWidth/8, boardHeight/8);
+            break;
+            case "wK": setPieceIcon(whiteKing, boardWidth/8, boardHeight/8);
+            break;
+            case "wp": setPieceIcon(whitePawn, boardWidth/8, boardHeight/8);
+            break;
+            default: return; // throw error
         }
         setPosition(squareNumber, boardWidth);
 
@@ -35,12 +71,16 @@ public class ChessPiece extends JLabel{
 
     }
 
-    public ImageIcon getIcon(){
+    public ImageIcon getPieceIcon(){
         return this.pieceIcon;
     }
 
-    public void setIcon(String iconPath, int width, int height){
+    public void setPieceIcon(String iconPath, int width, int height){
         ImageIcon icon = new ImageIcon(iconPath);
+        this.pieceIcon = resizeIcon(icon, width, height);
+    }
+
+    public void setPieceIcon(ImageIcon icon, int width, int height){
         this.pieceIcon = resizeIcon(icon, width, height);
     }
 
@@ -78,7 +118,7 @@ public class ChessPiece extends JLabel{
 
     public JLabel addLabel(){
 
-        this.setIcon(this.getIcon());
+        this.setIcon(this.getPieceIcon());
         this.setVerticalAlignment(JLabel.CENTER);
         this.setHorizontalAlignment(JLabel.CENTER);
         this.setBounds(
@@ -158,6 +198,29 @@ public class ChessPiece extends JLabel{
         // of the label to the corner of the square means the piece is centred.
         Point centredPos = new Point(squareCentredXPos, squareCentredYPos);
         return centredPos;
+
+    }
+
+    static void parsePieceImages(String allPiecesImage){
+
+        PieceImageParser parsePieceImages = new PieceImageParser(allPiecesImage);
+
+        whiteKing = new ImageIcon(parsePieceImages.getWhiteKing());
+
+        System.out.println(whiteKing);
+
+        whiteQueen = new ImageIcon(parsePieceImages.getWhiteQueen());
+        whiteBishop = new ImageIcon(parsePieceImages.getWhiteBishop());
+        whiteKnight = new ImageIcon(parsePieceImages.getWhiteKnight());
+        whiteRook = new ImageIcon(parsePieceImages.getWhiteRook());
+        whitePawn = new ImageIcon(parsePieceImages.getWhitePawn());
+
+        blackKing = new ImageIcon(parsePieceImages.getBlackKing());
+        blackQueen = new ImageIcon(parsePieceImages.getBlackQueen());
+        blackBishop = new ImageIcon(parsePieceImages.getBlackBishop());
+        blackKnight = new ImageIcon(parsePieceImages.getBlackKnight());
+        blackRook = new ImageIcon(parsePieceImages.getBlackRook());
+        blackPawn = new ImageIcon(parsePieceImages.getBlackPawn());
 
     }
 
