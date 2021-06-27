@@ -1,10 +1,21 @@
+package com.ChessGUI;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.File;
+import java.io.IOException;
+
 public class GameData {
 
     private char[] squareSymbols;
     private String[] pieceSymbols;
     private String boardStateString;
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     GameData(){
+
 
         // temp way of generating the data structures that we need to set up the board.
 
@@ -70,8 +81,25 @@ public class GameData {
         setSquareSymbols(squareSymbols);
         setPieceSymbols(pieceSymbols);
 
-        String boardStateString = "b7-wr/e3-wK/e7-wp/g2-wp/a2-bK/b2-bp/w-w.c.0-b.c.0-w.ep.0";
-        setBoardStateString(boardStateString);
+
+
+        /////////////////////////////////
+
+        try {
+
+            String projectDir = System.getProperty("user.dir").replace("\\ChessGUI", "");
+            JsonNode gameJson = objectMapper.readTree(
+                    new File(String.format("%s\\game_json.json", projectDir))
+            );
+
+            String boardStateString = gameJson.path("Controller.CURRENT_POSITION_STRING").asText();
+            setBoardStateString(boardStateString);
+
+            System.out.println(getBoardStateString());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
 
     }

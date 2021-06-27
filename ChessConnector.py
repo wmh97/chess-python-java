@@ -83,7 +83,10 @@ class ChessConnector:
         game_json["TrackPieces.BLACK_POSITIONS"] = TrackPieces.BLACK_POSITIONS
         # game_json[""] = taken by white
         # game_json[""] = taken by black
+
         # game_json[""] = current_position_string
+        game_json["Controller.CURRENT_POSITION_STRING"] = Controller.CURRENT_POSITION_STRING
+
         game_json["TrackPieces.WHITE_ROOKS_HAVE_MOVED"] = TrackPieces.WHITE_ROOKS_HAVE_MOVED
         game_json["TrackPieces.BLACK_ROOKS_HAVE_MOVED"] = TrackPieces.BLACK_ROOKS_HAVE_MOVED
         game_json["TrackPieces.WHITE_KING_HAS_MOVED"] = TrackPieces.WHITE_KING_HAS_MOVED
@@ -139,7 +142,10 @@ class ChessConnector:
         TrackPieces.BLACK_POSITIONS = game_json["TrackPieces.BLACK_POSITIONS"] 
         # game_json[""] = taken by white
         # game_json[""] = taken by black
+
         # game_json[""] = current_position_string
+        Controller.CURRENT_POSITION_STRING = game_json["Controller.CURRENT_POSITION_STRING"]
+
         TrackPieces.WHITE_ROOKS_HAVE_MOVED = game_json["TrackPieces.WHITE_ROOKS_HAVE_MOVED"] 
         TrackPieces.BLACK_ROOKS_HAVE_MOVED = game_json["TrackPieces.BLACK_ROOKS_HAVE_MOVED"] 
         TrackPieces.WHITE_KING_HAS_MOVED = game_json["TrackPieces.WHITE_KING_HAS_MOVED"] 
@@ -183,36 +189,48 @@ class ChessConnector:
         # ---(E)---
         # game_json[""] = move_history
 
-def main():
+# def main():
 
-    import time
-    start = time.time()
+import time
+start = time.time()
 
-    Controller.LOAD_FROM_JSON = False
-    player = Controller()
+Controller.LOAD_FROM_JSON = False
 
-    connector = ChessConnector(player)    
-    connector(mode="import")
+player = Controller()
+connector = ChessConnector(player)    
 
-    # Below is the chess setup for white and black.
-    # player.add("wp", "a2", "b2", "c2",
-    #                 "d2", "e2", "f2",
-    #                 "g2", "h2")
-    # player.add("bp", "a7", "b7", "c7",
-    #                 "d7", "e7", "f7",
-    #                 "g7", "h7")
 
-    # player.add("wr", "a1", "h1")                
-    # player.add("wk", "b1", "g1")
-    # player.add("wb", "c1", "f1")
-    # player.add("wQ", "d1")
-    # player.add("wK", "e1")
+connector(mode="import")
 
-    # player.add("br", "a8", "h8")                
-    # player.add("bk", "b8", "g8")
-    # player.add("bb", "c8", "f8")
-    # player.add("bQ", "d8")
-    # player.add("bK", "e8")
+#Controller.CURRENT_POSITION_STRING = "b7-wr/e3-wK/e7-wp/g2-wp/a3-bK/b2-bp/b-b.c.0-w.c.0-b.ep.0"
+
+connector(mode="export")
+
+print("String is: ", Controller.CURRENT_POSITION_STRING)
+
+player._display_board()
+
+#player.move("e7", "e8")
+
+#Below is the chess setup for white and black.
+# player.add("wp", "a2", "b2", "c2",
+#                 "d2", "e2", "f2",
+#                 "g2", "h2")
+# player.add("bp", "a7", "b7", "c7",
+#                 "d7", "e7", "f7",
+#                 "g7", "h7")
+
+# player.add("wr", "a1", "h1")                
+# player.add("wk", "b1", "g1")
+# player.add("wb", "c1", "f1")
+# player.add("wQ", "d1")
+# player.add("wK", "e1")
+
+# player.add("br", "a8", "h8")                
+# player.add("bk", "b8", "g8")
+# player.add("bb", "c8", "f8")
+# player.add("bQ", "d8")
+# player.add("bK", "e8")
 
     # player.move("d2", "d4")
     # player.move("g8", "f6")
@@ -289,7 +307,7 @@ def main():
     # connector(mode="export")
     # print(ChessConnector.GAME_JSON)
 
-    player.move("b4", "b1")
+    # player.move("b4", "b1")
 
 
     # player._refresh_board()
@@ -298,11 +316,11 @@ def main():
     # for key in Controller.GAME_POSITION_STRINGS.keys():
     #         print(key.split("/")[-1])
 
-    end = time.time()
+end = time.time()
 
-    print("Time Taken: ", end-start)
+print("Time Taken: ", end-start)
 
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()
 

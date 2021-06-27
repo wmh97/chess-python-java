@@ -1,3 +1,5 @@
+package com.ChessGUI;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.util.HashMap;
@@ -6,13 +8,14 @@ import javax.swing.*;
 public class ChessPiece extends JLabel{
 
     static HashMap<Integer, ChessPiece> squareNumberPieceMap = new HashMap<Integer, ChessPiece>();
-    private static int squareNumber = 0;
+    //private static int squareNumber = 0;
 
     private Point position;
     private ImageIcon pieceIcon;
 
     JLabel pieceLabel;
 
+    private int squareNumber;
     private int boardWidth;
     private int boardHeight;
 
@@ -69,8 +72,9 @@ public class ChessPiece extends JLabel{
         setPieceSymbol(pieceSymbol);
         setPosition(squareNumber, boardWidth);
 
+        setSquareNumber(squareNumber);
         ChessPiece.squareNumberPieceMap.put(squareNumber, this);
-        squareNumber++;
+        //squareNumber++;
 
     }
 
@@ -93,6 +97,14 @@ public class ChessPiece extends JLabel{
 
     public void setPieceSymbol(String pieceSymbol){
         this.pieceSymbol = pieceSymbol;
+    }
+
+    public int getSquareNumber(){
+        return this.squareNumber;
+    }
+
+    public void setSquareNumber(int squareNumber){
+        this.squareNumber = squareNumber;
     }
 
     private ImageIcon resizeIcon(ImageIcon icon, int width, int height){

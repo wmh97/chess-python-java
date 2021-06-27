@@ -1,3 +1,5 @@
+package com.ChessGUI;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -10,6 +12,8 @@ public class ChessBoard extends JLayeredPane{
     private int boardHeight;
 
     JLabel piece;
+
+    private GameData gameData;
 
     // can look these up by squareNumber as index.
     static final String[] squareLabels = {
@@ -40,10 +44,10 @@ public class ChessBoard extends JLayeredPane{
 
         // prototype linked map data structure mimicking what linked map will be.
         // getting the square colour data as an array of chars.
-        GameData gameData = new GameData();
+        setGameData();
 
         // parse the piece images and store them in static variables.
-        ChessPiece.parsePieceImages("src//allPieces.png");
+        ChessPiece.parsePieceImages("src//main//java//com//ChessGUI//allPieces.png");
 
         this.addSquares(gameData.getSquareSymbols());
         this.addPieces(gameData.getPieceSymbols());
@@ -51,7 +55,7 @@ public class ChessBoard extends JLayeredPane{
 
 
         // ***********TESTING**************
-        this.reloadPieces(gameData.getBoardStateString());
+
 
     }
 
@@ -66,6 +70,14 @@ public class ChessBoard extends JLayeredPane{
     }
     public void setBoardHeight(int height){
         this.boardHeight = height;
+    }
+
+    public GameData getGameData(){
+        return this.gameData;
+    }
+
+    public void setGameData(){
+        this.gameData = new GameData();
     }
 
     private void addSquares(char[] squareSymbols){
@@ -105,7 +117,7 @@ public class ChessBoard extends JLayeredPane{
         }
     }
 
-    private void reloadPieces(String boardSateString){
+    public void reloadPieces(String boardSateString){
 
         // --> "a1-wr", "...", ...
         String[] splitStateString = boardSateString.split("/");
@@ -114,7 +126,7 @@ public class ChessBoard extends JLayeredPane{
         ArrayList<Integer> stateSquares = new ArrayList<Integer>();
 
         //HashMap<Integer, String> newPiecePositionsMap = new HashMap<Integer, String>();
-        
+
         for (int i=0; i < splitStateString.length-1; i++){
 
 
@@ -151,12 +163,16 @@ public class ChessBoard extends JLayeredPane{
                     );
 
                     // remove the old piece from the squares map and also from the board,
-                    ChessPiece.squareNumberPieceMap.remove(squareNumber, currentPiece);
                     this.remove(currentPiece);
+                    ChessPiece.squareNumberPieceMap.remove(squareNumber, currentPiece);
+
 
                     // then add the new piece to the board and the squares map.
                     ChessPiece newPiece = new ChessPiece(newPieceSymbol, squareNumber, getBoardWidth(), getBoardHeight());
                     this.add(newPiece.addLabel(), Integer.valueOf(1));
+
+                    this.revalidate();
+                    this.repaint();
 
                 } else {
                     //TODO skip to next
@@ -169,6 +185,9 @@ public class ChessBoard extends JLayeredPane{
                 ChessPiece newPiece = new ChessPiece(newPieceSymbol, squareNumber, getBoardWidth(), getBoardHeight());
                 this.add(newPiece.addLabel(), Integer.valueOf(1));
 
+                this.revalidate();
+                this.repaint();
+
             }
         }
 
@@ -179,15 +198,22 @@ public class ChessBoard extends JLayeredPane{
         // removing only if there is a piece on that square.
         for (int sqNo = 0; sqNo < 64; sqNo++){
             if (!stateSquares.contains(sqNo) && ChessPiece.squareNumberPieceMap.containsKey(sqNo)){
+
                 System.out.println(String.format("non-state sq w/ piece: %d", sqNo));
-                this.remove(ChessPiece.squareNumberPieceMap.get(sqNo));
+
+                ChessPiece currentPiece = ChessPiece.squareNumberPieceMap.get(sqNo);
+
+                this.remove(currentPiece);
+                ChessPiece.squareNumberPieceMap.remove(sqNo, currentPiece);
+
+                this.revalidate();
+                this.repaint();
             }
 
         }
 
         this.addPieceListeners();
-        this.revalidate();
-        this.repaint();
+
     }
 
     private void setPaneLayer(Component component, String layer){

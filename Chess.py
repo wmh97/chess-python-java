@@ -2088,6 +2088,8 @@ class Controller:
         # testing for previous repetitions
         GAME_POSITION_STRINGS = {}
 
+        CURRENT_POSITION_STRING = ""
+
         # *** make another argument 
         def __init__(self):
                 
@@ -2447,6 +2449,8 @@ class Controller:
                                 ChessBoard.LINKED_MAP,
                                 colour="b", opp_colour="w" 
                         )
+
+                Controller.CURRENT_POSITION_STRING = current_position_string
 
                 #print(current_position_string)
 
