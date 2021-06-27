@@ -31,6 +31,7 @@ public class UserInterface extends JFrame {
 
         for (int i : ChessPiece.squareNumberPieceMap.keySet()){
             System.out.println(i);
+            System.out.println(ChessPiece.squareNumberPieceMap.get(i).getSquareNumber());
             System.out.println(ChessPiece.squareNumberPieceMap.get(i));
         }
 
@@ -38,7 +39,7 @@ public class UserInterface extends JFrame {
 //        String boardStateString = "a1-wr/a2-wp/b1-wk/b2-wp/c1-wb/c2-wp/d1-wQ/d4-wp/e1-wK/e2-wp/f1-wb/f2-wp/g1-wk/g2-wp/h1-wr/h2-wp/a7-bp/a8-br/b7-bp/b8-bk/c7-bp/c8-bb/d7-bp/d8-bQ/e7-bp/e8-bK/f7-bp/f8-bb/g7-bp/g8-bk/h7-bp/h8-br/b-b.c.1-w.c.1-b.ep.0";
 //        chessBoard.reloadPieces(boardStateString);
 //
-//        String boardStateString = "a2-wp/c3-wb/e2-wK/e3-wp/f1-wr/g2-wp/g7-wr/b4-bp/b6-bK/f2-bp/f5-br/h2-bb/h5-bp/w-w.c.0-b.c.0-w.ep.0";
+//        boardStateString = "a2-wp/c3-wb/e2-wK/e3-wp/f1-wr/g2-wp/g7-wr/b4-bp/b6-bK/f2-bp/f5-br/h2-bb/h5-bp/w-w.c.0-b.c.0-w.ep.0";
 //        chessBoard.reloadPieces(boardStateString);
 //
 //        boardStateString = "a2-wp/a7-wr/e2-wK/e4-wp/f5-wr/g2-wp/b4-bp/c4-bK/h2-bb/h5-bp/w-w.c.0-b.c.0-w.ep.0";

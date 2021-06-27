@@ -29,6 +29,9 @@ public class ChessBoard extends JLayeredPane{
 
     static HashMap<String, Integer> squareLabelsMap = new HashMap<String, Integer>();
 
+    static String selectedPieceStartPos;
+    static String selectedPieceEndPos;
+
     ChessBoard(int width, int height){
 
         this.setBoardWidth(width);
@@ -235,14 +238,44 @@ public class ChessBoard extends JLayeredPane{
 
                             @Override
                             public void mousePressed(MouseEvent e) {
+
+                                // getting the start pos of the selected piece.
+                                ChessBoard.selectedPieceStartPos = selectedPiece.getPieceLocation();
+
+                                System.out.println("Start Pos:");
+                                System.out.println(ChessBoard.selectedPieceStartPos);
+
                                 selectedPiece.movePiece(e, false);
                                 setPaneLayer(selectedPiece, "2");
                             }
 
                             @Override
                             public void mouseReleased(MouseEvent e) {
+
+                                // getting the end pos of the selected pos
+                                ChessBoard.selectedPieceEndPos = ChessBoard.squareLabels[
+                                        BoardSquare.calcSquareNumber(
+                                                (int)selectedPiece.getPosition().getX(),
+                                                (int)selectedPiece.getPosition().getY()
+                                        )
+                                        ];
+
+                                System.out.println("This is the sq we are dropping on...");
+                                System.out.println(ChessBoard.selectedPieceEndPos);
+
                                 selectedPiece.movePiece(e, true);
                                 setPaneLayer(selectedPiece, "1");
+
+                                // ***** send the command to python and then read back in the board state *****
+                                // as long as we are not dropping the piece where it started.
+                                if (ChessBoard.selectedPieceStartPos != ChessBoard.selectedPieceEndPos){
+                                    //TODO execute the move in python and load back in the game json.
+                                    //TODO create a new class for the connector? or maybe use game data class.
+                                }
+
+                                // resetting the start pos and end pos of the now dropped piece.
+                                ChessBoard.selectedPieceStartPos = null;
+                                ChessBoard.selectedPieceEndPos = null;
                             }
 
                             @Override

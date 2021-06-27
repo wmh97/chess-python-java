@@ -16,6 +16,7 @@ public class ChessPiece extends JLabel{
     JLabel pieceLabel;
 
     private int squareNumber;
+    private String pieceLocation;
     private int boardWidth;
     private int boardHeight;
 
@@ -69,12 +70,14 @@ public class ChessPiece extends JLabel{
             break;
             default: return; // throw error
         }
+
         setPieceSymbol(pieceSymbol);
         setPosition(squareNumber, boardWidth);
 
         setSquareNumber(squareNumber);
+        setPieceLocation(squareNumber);
+
         ChessPiece.squareNumberPieceMap.put(squareNumber, this);
-        //squareNumber++;
 
     }
 
@@ -105,6 +108,14 @@ public class ChessPiece extends JLabel{
 
     public void setSquareNumber(int squareNumber){
         this.squareNumber = squareNumber;
+    }
+
+    public String getPieceLocation(){
+        return this.pieceLocation;
+    }
+
+    public void setPieceLocation(int squareNumber){
+        this.pieceLocation = ChessBoard.squareLabels[squareNumber];
     }
 
     private ImageIcon resizeIcon(ImageIcon icon, int width, int height){
