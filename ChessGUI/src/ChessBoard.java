@@ -128,27 +128,84 @@ public class ChessBoard extends JLayeredPane{
         square.displaySquarePosMarker();
 
         // Have managed to sort out the looping above, however, need to sort this part out.
-        for (int i=0; i<64; i++){
-            if (i != positionSquareNumber){
+//        for (int i=0; i<64; i++){
+//            if (i != positionSquareNumber){
+//
+//                BoardSquare otherSquare = BoardSquare.squareNumberMap.get(i);
+//
+//                otherSquare.setBackground(otherSquare.getSquareColour());
+//
+//                //otherSquare.removeSquarePosMarker();
+//
+//                //otherSquare.revalidate();
+//                otherSquare.repaint();
+//
+//            }
+//        }
+    }
 
-                BoardSquare otherSquare = BoardSquare.squareNumberMap.get(i);
+    static void removeHighlightPrevSquare(){
 
-                otherSquare.setBackground(otherSquare.getSquareColour());
+        // This method attempts to use less looping in order to remove the highlighting
+        // from the previous square a piece was dragged over.
+        //
+        // This method removes highlights from the last square and surrounding squares.
+        // This seems to improve the issues with the piece lagging on the first move, however
+        // the 'refresh' rate is not as great as the for loop in the function above,
+        // so there is some clipping of the piece as it passes over squares at high speed.
+        //
+        // Therefore there may be a tradeoff between number of squares refreshed,
+        // and the smoothness of dragging/clipping of the piece icon.
 
-                //otherSquare.removeSquarePosMarker();
+        if (BoardSquare.lastHighlightedSquareNumber != -1){
 
-                //otherSquare.revalidate();
-                otherSquare.repaint();
+            // Below lists for:
+            //   - surrounding squares - 1 dist
+            //   - surrounding squares - 2 dist (commented)
 
+            int[] surroundingSquares = {
+                    BoardSquare.lastHighlightedSquareNumber,
+                    BoardSquare.lastHighlightedSquareNumber + 1,
+                    BoardSquare.lastHighlightedSquareNumber - 1,
+                    BoardSquare.lastHighlightedSquareNumber + 7,
+                    BoardSquare.lastHighlightedSquareNumber + 8,
+                    BoardSquare.lastHighlightedSquareNumber + 9,
+                    BoardSquare.lastHighlightedSquareNumber - 7,
+                    BoardSquare.lastHighlightedSquareNumber - 8,
+                    BoardSquare.lastHighlightedSquareNumber - 9,
+            };
+
+//            int[] surroundingSquares = {
+//                    BoardSquare.lastHighlightedSquareNumber,
+//                    BoardSquare.lastHighlightedSquareNumber + 1,
+//                    BoardSquare.lastHighlightedSquareNumber + 2,
+//                    BoardSquare.lastHighlightedSquareNumber - 1,
+//                    BoardSquare.lastHighlightedSquareNumber - 2,
+//
+//                    BoardSquare.lastHighlightedSquareNumber + 6,
+//                    BoardSquare.lastHighlightedSquareNumber + 7,
+//                    BoardSquare.lastHighlightedSquareNumber + 8,
+//                    BoardSquare.lastHighlightedSquareNumber + 9,
+//                    BoardSquare.lastHighlightedSquareNumber + 10,
+//
+//                    BoardSquare.lastHighlightedSquareNumber - 6,
+//                    BoardSquare.lastHighlightedSquareNumber - 7,
+//                    BoardSquare.lastHighlightedSquareNumber - 8,
+//                    BoardSquare.lastHighlightedSquareNumber - 9,
+//                    BoardSquare.lastHighlightedSquareNumber - 10
+//            };
+
+            for (int i = 0; i < surroundingSquares.length; i++){
+                if ( 0 <= surroundingSquares[i] && surroundingSquares[i] < 64 ){
+
+                    //System.out.println(String.format("Last h.sq = %d",  surroundingSquares[i]));
+                    BoardSquare lastHighlightedSquare = BoardSquare.squareNumberMap.get(surroundingSquares[i]);
+                    lastHighlightedSquare.setBackground(lastHighlightedSquare.getSquareColour());
+
+                    lastHighlightedSquare.revalidate();
+                    lastHighlightedSquare.repaint();
+                }
             }
         }
-
-
     }
-
-    // TODO Need to store the last square the mouse was in, so we can
-    // TODO remove its label below - this will avoid excessive looping above.
-    static void removeHighlightPrevSquare(){
-    }
-
 }

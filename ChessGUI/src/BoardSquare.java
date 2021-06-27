@@ -6,7 +6,8 @@ import java.util.HashMap;
 public class BoardSquare extends JPanel{
 
     static HashMap<Integer, BoardSquare> squareNumberMap = new HashMap<Integer, BoardSquare>();
-    private static int squareNumber = 0;
+    private static int squareNumberCounter = 0;
+    int squareNumber;
 
     static Color whiteSquareColour = new Color(238,238,210);
     static Color blackSquareColour = new Color(118,150,86);
@@ -18,6 +19,7 @@ public class BoardSquare extends JPanel{
     private int squareYPos;
 
     private JLabel squarePosMarker;
+    static int lastHighlightedSquareNumber = -1;
 
     private static int boardWidth;
     private static int boardHeight;
@@ -47,8 +49,20 @@ public class BoardSquare extends JPanel{
         //this.setSquarePosMarker(); // initiating the square pos marker -
 
         // adding the current square to a hashmap with its corresponding square number.
-        squareNumberMap.put(squareNumber, this);
-        squareNumber++; // squareNumber goes from 0 --> 63.
+        squareNumberMap.put(squareNumberCounter, this);
+        setSquareNumber(squareNumberCounter);
+        squareNumberCounter++; // squareNumber goes from 0 --> 63.
+
+
+
+    }
+
+    public int getSquareNumber(){
+        return this.squareNumber;
+    }
+
+    public void setSquareNumber(int squareNumber){
+        this.squareNumber = squareNumber;
     }
 
     public Color getSquareColour(){
@@ -105,8 +119,10 @@ public class BoardSquare extends JPanel{
 
         // try simply changing the sq colour.
         this.setBackground(highlightColour);
-        //this.revalidate();
+        this.revalidate();
         this.repaint();
+
+        BoardSquare.lastHighlightedSquareNumber = this.getSquareNumber();
 
     }
 

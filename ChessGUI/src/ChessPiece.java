@@ -176,7 +176,9 @@ public class ChessPiece extends JLabel{
         // *************************************************************************************************************
          // **** NOTE: this is making the first move slow for some reason ************
         // ***** must be because none of the squares are highlighted with label????? ***********************************
+        ChessBoard.removeHighlightPrevSquare();
         ChessBoard.highlightPositionSquare(piecePos);
+
 
         if (!dropped){
             this.setPosition(piecePos);
