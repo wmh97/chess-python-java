@@ -30,6 +30,8 @@ public class ChessPiece extends JLabel{
     static ImageIcon blackRook;
     static ImageIcon blackPawn;
 
+    private String pieceSymbol;
+
     ChessPiece(String pieceSymbol, int squareNumber, int boardWidth, int boardHeight){
 
         this.boardWidth = boardWidth;
@@ -64,6 +66,7 @@ public class ChessPiece extends JLabel{
             break;
             default: return; // throw error
         }
+        setPieceSymbol(pieceSymbol);
         setPosition(squareNumber, boardWidth);
 
         ChessPiece.squareNumberPieceMap.put(squareNumber, this);
@@ -82,6 +85,14 @@ public class ChessPiece extends JLabel{
 
     public void setPieceIcon(ImageIcon icon, int width, int height){
         this.pieceIcon = resizeIcon(icon, width, height);
+    }
+
+    public String getPieceSymbol(){
+        return this.pieceSymbol;
+    }
+
+    public void setPieceSymbol(String pieceSymbol){
+        this.pieceSymbol = pieceSymbol;
     }
 
     private ImageIcon resizeIcon(ImageIcon icon, int width, int height){

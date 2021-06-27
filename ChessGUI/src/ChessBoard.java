@@ -1,6 +1,8 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class ChessBoard extends JLayeredPane{
 
@@ -9,11 +11,32 @@ public class ChessBoard extends JLayeredPane{
 
     JLabel piece;
 
+    // can look these up by squareNumber as index.
+    static final String[] squareLabels = {
+            "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
+            "a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
+            "a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6",
+            "a5", "b5", "c5", "d5", "e5", "f5", "g5", "h5",
+            "a4", "b4", "c4", "d4", "e4", "f4", "g4", "h4",
+            "a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3",
+            "a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
+            "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1"
+    };
+
+    static HashMap<String, Integer> squareLabelsMap = new HashMap<String, Integer>();
+
     ChessBoard(int width, int height){
 
         this.setBoardWidth(width);
         this.setBoardHeight(height);
         this.setBounds(0, 0, getBoardWidth(), getBoardHeight());
+
+        // setting the square labels map.
+        for (int i=0; i<ChessBoard.squareLabels.length; i++){
+            ChessBoard.squareLabelsMap.put(ChessBoard.squareLabels[i], i);
+        }
+
+        System.out.println(ChessBoard.squareLabelsMap);
 
         // prototype linked map data structure mimicking what linked map will be.
         // getting the square colour data as an array of chars.
@@ -25,6 +48,10 @@ public class ChessBoard extends JLayeredPane{
         this.addSquares(gameData.getSquareSymbols());
         this.addPieces(gameData.getPieceSymbols());
         this.addPieceListeners();
+
+
+        // ***********TESTING**************
+        this.reloadPieces(gameData.getBoardStateString());
 
     }
 
@@ -46,7 +73,12 @@ public class ChessBoard extends JLayeredPane{
 
             int squareIndex = (i-1);
             this.add(
-                    new BoardSquare(squareSymbols[squareIndex], squareIndex, this.getBoardWidth(), this.getBoardHeight()),
+                    new BoardSquare(
+                            squareSymbols[squareIndex],
+                            squareIndex,
+                            this.getBoardWidth(),
+                            this.getBoardHeight()
+                    ),
                     Integer.valueOf(0)
             );
 
@@ -61,11 +93,101 @@ public class ChessBoard extends JLayeredPane{
 
                 int squareIndex = i-1;
 
-                ChessPiece piece = new ChessPiece(pieceSymbols[squareIndex], squareIndex, getBoardWidth(), getBoardHeight());
+                ChessPiece piece = new ChessPiece(
+                        pieceSymbols[squareIndex],
+                        squareIndex,
+                        getBoardWidth(),
+                        getBoardHeight()
+                );
                 this.add(piece.addLabel(), Integer.valueOf(1));
 
             }
         }
+    }
+
+    private void reloadPieces(String boardSateString){
+
+        // --> "a1-wr", "...", ...
+        String[] splitStateString = boardSateString.split("/");
+
+        // squares not in the state string.
+        ArrayList<Integer> stateSquares = new ArrayList<Integer>();
+
+        //HashMap<Integer, String> newPiecePositionsMap = new HashMap<Integer, String>();
+        
+        for (int i=0; i < splitStateString.length-1; i++){
+
+
+            // "a1-wr" "--> "a1", "wr"
+            String[] pieceData = splitStateString[i].split("-");
+            String square = pieceData[0];
+            String newPieceSymbol = pieceData[1];
+            int squareNumber = ChessBoard.squareLabelsMap.get(square);
+
+            stateSquares.add(Integer.valueOf(squareNumber));
+
+            System.out.println(String.format("Adding piece on square %s = %d", square, squareNumber));
+
+            // get current piece - i.e. the piece currently on the current square number.
+
+            // ***************************************************************************88
+            // CONSTRUCTING THIS IS SETTING THE MAPS TO BE THE SAME AS OUR NEW PIECES, THEREFORE
+            // WHEN CHECKING BELOW NONE WILL BE ADDED.
+            // ********* this should be made just before adding piece to the board.
+            //ChessPiece newPiece = new ChessPiece(newPieceSymbol, squareNumber, getBoardWidth(), getBoardHeight());
+
+            // if there is a piece on the square number...
+            if (ChessPiece.squareNumberPieceMap.containsKey(squareNumber)) {
+
+                System.out.println("We are trying to add on a square that has a piece on");
+
+                ChessPiece currentPiece = ChessPiece.squareNumberPieceMap.get(squareNumber);
+
+                // check if the current square is the same as the new piece.
+                if (currentPiece.getPieceSymbol() != newPieceSymbol) {
+
+                    System.out.println(
+                            String.format("We are removing a %s at %s and replacing it with a %s", currentPiece.getPieceSymbol(), square, newPieceSymbol)
+                    );
+
+                    // remove the old piece from the squares map and also from the board,
+                    ChessPiece.squareNumberPieceMap.remove(squareNumber, currentPiece);
+                    this.remove(currentPiece);
+
+                    // then add the new piece to the board and the squares map.
+                    ChessPiece newPiece = new ChessPiece(newPieceSymbol, squareNumber, getBoardWidth(), getBoardHeight());
+                    this.add(newPiece.addLabel(), Integer.valueOf(1));
+
+                } else {
+                    //TODO skip to next
+                    //....
+                }
+
+            } else{
+
+                System.out.println(String.format("Adding %s on empty square %s", newPieceSymbol, square));
+                ChessPiece newPiece = new ChessPiece(newPieceSymbol, squareNumber, getBoardWidth(), getBoardHeight());
+                this.add(newPiece.addLabel(), Integer.valueOf(1));
+
+            }
+        }
+
+        System.out.println("Squares modified...");
+        System.out.println(stateSquares);
+
+        // removing pieces from squares not included in the state string.
+        // removing only if there is a piece on that square.
+        for (int sqNo = 0; sqNo < 64; sqNo++){
+            if (!stateSquares.contains(sqNo) && ChessPiece.squareNumberPieceMap.containsKey(sqNo)){
+                System.out.println(String.format("non-state sq w/ piece: %d", sqNo));
+                this.remove(ChessPiece.squareNumberPieceMap.get(sqNo));
+            }
+
+        }
+
+        this.addPieceListeners();
+        this.revalidate();
+        this.repaint();
     }
 
     private void setPaneLayer(Component component, String layer){

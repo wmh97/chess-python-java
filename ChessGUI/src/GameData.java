@@ -2,6 +2,7 @@ public class GameData {
 
     private char[] squareSymbols;
     private String[] pieceSymbols;
+    private String boardStateString;
 
     GameData(){
 
@@ -69,6 +70,10 @@ public class GameData {
         setSquareSymbols(squareSymbols);
         setPieceSymbols(pieceSymbols);
 
+        String boardStateString = "b7-wr/e3-wK/e7-wp/g2-wp/a2-bK/b2-bp/w-w.c.0-b.c.0-w.ep.0";
+        setBoardStateString(boardStateString);
+
+
     }
 
     public char[] getSquareSymbols(){
@@ -85,6 +90,14 @@ public class GameData {
 
     public void setPieceSymbols(String[] pieceSymbols){
         this.pieceSymbols = pieceSymbols;
+    }
+
+    public String getBoardStateString(){
+        return this.boardStateString;
+    }
+
+    public void setBoardStateString(String boardStateString){
+        this.boardStateString = boardStateString;
     }
 
 }
