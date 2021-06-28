@@ -5,7 +5,7 @@ import java.awt.event.*;
 import java.util.HashMap;
 import javax.swing.*;
 
-public class ChessPiece extends JLabel{
+public class ChessPiece extends JLabel implements MouseListener, MouseMotionListener{
 
     static HashMap<Integer, ChessPiece> squareNumberPieceMap = new HashMap<Integer, ChessPiece>();
     //private static int squareNumber = 0;
@@ -35,6 +35,8 @@ public class ChessPiece extends JLabel{
     static ImageIcon blackPawn;
 
     private String pieceSymbol;
+
+    static ChessBoard parentChessBoard;
 
     ChessPiece(String pieceSymbol, int squareNumber, int boardWidth, int boardHeight){
 
@@ -78,6 +80,8 @@ public class ChessPiece extends JLabel{
         setPieceLocation(squareNumber);
 
         ChessPiece.squareNumberPieceMap.put(squareNumber, this);
+
+        this.addPieceListeners();
 
     }
 
@@ -214,13 +218,60 @@ public class ChessPiece extends JLabel{
         ChessBoard.highlightPositionSquare(piecePos);
 
 
+
         if (!dropped){
             this.setPosition(piecePos);
+
         } else {
+
+
             Point dropSquare = this.getDropSquare(piecePos);
+            int dropSqNo = BoardSquare.calcSquareNumber(
+                    (int)dropSquare.getX(),
+                    (int)dropSquare.getY()
+            );
+
+
+            // remove the piece from where it was unless we are putting it back on the square it started on.
+            if (!ChessBoard.selectedPieceStartPos.equals(ChessBoard.selectedPieceEndPos)){
+
+
+                ChessPiece.squareNumberPieceMap.remove(this.getSquareNumber(), this);
+
+
+                // if we are dropping it on a square with a different piece on, we remove that piece
+                // from the board and the sqNo piece map.
+                if (ChessPiece.squareNumberPieceMap.containsKey(dropSqNo)){
+
+                    ChessPiece pieceToRemove = ChessPiece.squareNumberPieceMap.get(dropSqNo);
+                    this.parentChessBoard.remove(pieceToRemove);
+                    ChessPiece.squareNumberPieceMap.remove(
+                        dropSqNo,
+                        pieceToRemove
+                    );
+
+                }
+
+                // REMOVE?????????????????????????????????????????????????????????????????????
+                // putting the new sq no and piece we have dropped into the sq no piece map.
+                ChessPiece.squareNumberPieceMap.put(dropSqNo, this);
+
+
+            }
+
+            // if we have dropped the piece, update the position and the square number of the piece.
             this.setPosition(dropSquare);
+            this.setSquareNumber(dropSqNo);
+
+
+
+
         }
         this.refreshPiece();
+
+
+
+
     }
 
     public Point getDropSquare(Point droppedPos){
@@ -264,4 +315,121 @@ public class ChessPiece extends JLabel{
 
     }
 
+    public void addPieceListeners(){
+        this.addMouseListener(this);
+        this.addMouseMotionListener(this);
+    }
+
+    private void setPiecePaneLayer(Component component, String layer){
+        this.parentChessBoard.setLayer(component, Integer.valueOf(layer));
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+        // getting the start pos of the selected piece.
+        ChessBoard.selectedPieceStartPos = this.getPieceLocation();
+
+        System.out.println("Start Pos:");
+        System.out.println(ChessBoard.selectedPieceStartPos);
+
+        this.movePiece(e, false);
+        setPiecePaneLayer(this, "2");
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+
+        int dropSqNo = BoardSquare.calcSquareNumber(
+                (int)this.getPosition().getX(),
+                (int)this.getPosition().getY()
+        );
+
+        // getting the end pos of the selected pos
+        ChessBoard.selectedPieceEndPos = ChessBoard.squareLabels[dropSqNo];
+
+        System.out.println("This is the sq we are dropping on...");
+        System.out.println(ChessBoard.selectedPieceEndPos);
+
+
+
+
+        // if there is another piece on that square remove it.
+//        if (
+//                ChessPiece.squareNumberPieceMap.containsKey(dropSqNo)
+//                &&
+//                !ChessBoard.selectedPieceStartPos.equals(ChessBoard.selectedPieceEndPos)
+//        ){
+//
+//            ChessPiece pieceToRemove = ChessPiece.squareNumberPieceMap.get(dropSqNo);
+//
+//
+//            this.parentChessBoard.remove(pieceToRemove);
+//
+//            ChessPiece.squareNumberPieceMap.remove(
+//                    dropSqNo,
+//                    pieceToRemove
+//            );
+//
+//
+//        }
+
+
+
+
+        this.movePiece(e, true);
+        setPiecePaneLayer(this, "1");
+
+
+
+        // ***** send the command to python and then read back in the board state *****
+        // as long as we are not dropping the piece where it started.
+        if (!ChessBoard.selectedPieceStartPos.equals(ChessBoard.selectedPieceEndPos)){
+
+
+
+            //TODO execute the move in python and load back in the game json.
+            //TODO create a new class for the connector? or maybe use game data class.
+            GameData.sendMoveToPython(
+                    ChessBoard.selectedPieceStartPos,
+                    ChessBoard.selectedPieceEndPos
+            );
+
+
+            this.parentChessBoard.setGameData();
+
+
+            this.parentChessBoard.reloadPieces(
+                    this.parentChessBoard.getGameData().getBoardStateString()
+            );
+
+            //TODO need to sort out how to call this... ***********
+            //tempBoardRef.reloadPieces(gameData.getBoardStateString());
+
+
+        }
+
+        // resetting the start pos and end pos of the now dropped piece.
+        ChessBoard.selectedPieceStartPos = "";
+        ChessBoard.selectedPieceEndPos = "";
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {}
+
+    @Override
+    public void mouseExited(MouseEvent e) {}
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        setPiecePaneLayer(this, "2");
+        this.movePiece(e, false);
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {}
 }

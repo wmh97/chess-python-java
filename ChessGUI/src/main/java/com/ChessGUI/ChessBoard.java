@@ -53,8 +53,7 @@ public class ChessBoard extends JLayeredPane{
         ChessPiece.parsePieceImages("src//main//java//com//ChessGUI//allPieces.png");
 
         this.addSquares(gameData.getSquareSymbols());
-        this.addPieces(gameData.getPieceSymbols());
-        this.addPieceListeners();
+        //this.addPieces(gameData.getPieceSymbols()); //************ADDD BACK IN !!!!!***********
 
 
         // ***********TESTING**************
@@ -101,6 +100,7 @@ public class ChessBoard extends JLayeredPane{
     }
 
     private void addPieces(String[] pieceSymbols){
+
         for (int i=1; i<=pieceSymbols.length; i++){
             if (pieceSymbols[i-1] != ""){
 
@@ -118,6 +118,8 @@ public class ChessBoard extends JLayeredPane{
 
             }
         }
+
+        ChessPiece.parentChessBoard = this;
     }
 
     public void reloadPieces(String boardSateString){
@@ -154,11 +156,11 @@ public class ChessBoard extends JLayeredPane{
             // if there is a piece on the square number...
             if (ChessPiece.squareNumberPieceMap.containsKey(squareNumber)) {
 
-                System.out.println("We are trying to add on a square that has a piece on");
+                System.out.println("Square in state string already has a piece on.");
 
                 ChessPiece currentPiece = ChessPiece.squareNumberPieceMap.get(squareNumber);
 
-                // check if the current square is the same as the new piece.
+                // check if the current square piece is the same as the new piece.
                 if (!currentPiece.getPieceSymbol().equals(newPieceSymbol)) {
 
                     System.out.println(
@@ -180,6 +182,7 @@ public class ChessBoard extends JLayeredPane{
                 } else {
                     //TODO skip to next
                     //....
+                    System.out.println("The current piece is the same as the new one, so skipping this square");
                 }
 
             } else{
@@ -192,6 +195,8 @@ public class ChessBoard extends JLayeredPane{
                 this.repaint();
 
             }
+
+            ChessPiece.parentChessBoard = this;
         }
 
         System.out.println("Squares modified...");
@@ -200,14 +205,17 @@ public class ChessBoard extends JLayeredPane{
         // removing pieces from squares not included in the state string.
         // removing only if there is a piece on that square.
         for (int sqNo = 0; sqNo < 64; sqNo++){
+
             if (!stateSquares.contains(sqNo) && ChessPiece.squareNumberPieceMap.containsKey(sqNo)){
 
-                System.out.println(String.format("non-state sq w/ piece: %d", sqNo));
+                System.out.println(String.format("Square not in state string %d has a piece on it.", sqNo));
 
                 ChessPiece currentPiece = ChessPiece.squareNumberPieceMap.get(sqNo);
 
                 this.remove(currentPiece);
                 ChessPiece.squareNumberPieceMap.remove(sqNo, currentPiece);
+
+                System.out.println("Removing the piece on the square.");
 
                 this.revalidate();
                 this.repaint();
@@ -219,101 +227,104 @@ public class ChessBoard extends JLayeredPane{
         // TODO ********MAKE SURE WE ARE NOT ADDING LISTENERS TO PIECES THAT ALREADY HAVE THEM************
         // TODO ... ie if we skip adding as the new string says the piece is the same we dont want
         // TODO ... to add a listener. Below just adds to all of them every time... **********************
-        this.addPieceListeners();
+        //this.addPieceListeners();
 
     }
 
-    private void setPaneLayer(Component component, String layer){
-        this.setLayer(component, Integer.valueOf(layer));
-    }
+//    private void setPaneLayer(Component component, String layer){
+//        this.setLayer(component, Integer.valueOf(layer));
+//    }
 
-    private void addPieceListeners(){
-
-        // TODO this is just for testing....... *****************
-        ChessBoard tempBoardRef = this; // TODO **************************
-
-        for (Component component : this.getComponents()){
-            if (component instanceof JLabel){
-
-                piece = (JLabel) component;
-                ChessPiece selectedPiece = (ChessPiece) component;
-
-                selectedPiece.addMouseListener(
-                        new MouseListener() {
-                            @Override
-                            public void mouseClicked(MouseEvent e) {}
-
-                            @Override
-                            public void mousePressed(MouseEvent e) {
-
-                                // getting the start pos of the selected piece.
-                                ChessBoard.selectedPieceStartPos = selectedPiece.getPieceLocation();
-
-                                System.out.println("Start Pos:");
-                                System.out.println(ChessBoard.selectedPieceStartPos);
-
-                                selectedPiece.movePiece(e, false);
-                                setPaneLayer(selectedPiece, "2");
-                            }
-
-                            @Override
-                            public void mouseReleased(MouseEvent e) {
-
-                                // getting the end pos of the selected pos
-                                ChessBoard.selectedPieceEndPos = ChessBoard.squareLabels[
-                                        BoardSquare.calcSquareNumber(
-                                                (int)selectedPiece.getPosition().getX(),
-                                                (int)selectedPiece.getPosition().getY()
-                                        )
-                                        ];
-
-                                System.out.println("This is the sq we are dropping on...");
-                                System.out.println(ChessBoard.selectedPieceEndPos);
-
-                                selectedPiece.movePiece(e, true);
-                                setPaneLayer(selectedPiece, "1");
-
-                                // ***** send the command to python and then read back in the board state *****
-                                // as long as we are not dropping the piece where it started.
-                                if (!ChessBoard.selectedPieceStartPos.equals(ChessBoard.selectedPieceEndPos)){
-                                    //TODO execute the move in python and load back in the game json.
-                                    //TODO create a new class for the connector? or maybe use game data class.
-                                    gameData.sendMoveToPython(
-                                            ChessBoard.selectedPieceStartPos,
-                                            ChessBoard.selectedPieceEndPos
-                                    );
-
-                                    //TODO need to sort out how to call this... ***********
-                                    //tempBoardRef.reloadPieces(gameData.getBoardStateString());
-
-
-                                }
-
-                                // resetting the start pos and end pos of the now dropped piece.
-                                ChessBoard.selectedPieceStartPos = "";
-                                ChessBoard.selectedPieceEndPos = "";
-                            }
-
-                            @Override
-                            public void mouseEntered(MouseEvent e) {}
-                            @Override
-                            public void mouseExited(MouseEvent e) {}
-                        }
-                );
-
-                selectedPiece.addMouseMotionListener(
-                        new MouseMotionAdapter() {
-                            // whenever the mouse is moved...
-                            @Override
-                            public void mouseDragged(MouseEvent e) {
-                                setPaneLayer(selectedPiece, "2");
-                                selectedPiece.movePiece(e, false);
-                            }
-                        }
-                );
-            }
-        }
-    }
+//    private void addPieceListeners(){
+//
+//        // TODO this is just for testing....... *****************
+//        ChessBoard tempBoardRef = this; // TODO **************************
+//
+//        for (Component component : this.getComponents()){
+//            if (component instanceof JLabel){
+//
+//                piece = (JLabel) component;
+//                ChessPiece selectedPiece = (ChessPiece) component;
+//
+//                selectedPiece.addMouseListener(
+//                        new MouseListener() {
+//                            @Override
+//                            public void mouseClicked(MouseEvent e) {}
+//
+//                            @Override
+//                            public void mousePressed(MouseEvent e) {
+//
+//                                // getting the start pos of the selected piece.
+//                                ChessBoard.selectedPieceStartPos = selectedPiece.getPieceLocation();
+//
+//                                System.out.println("Start Pos:");
+//                                System.out.println(ChessBoard.selectedPieceStartPos);
+//
+//                                selectedPiece.movePiece(e, false);
+//                                setPaneLayer(selectedPiece, "2");
+//                            }
+//
+//                            @Override
+//                            public void mouseReleased(MouseEvent e) {
+//
+//                                // getting the end pos of the selected pos
+//                                ChessBoard.selectedPieceEndPos = ChessBoard.squareLabels[
+//                                        BoardSquare.calcSquareNumber(
+//                                                (int)selectedPiece.getPosition().getX(),
+//                                                (int)selectedPiece.getPosition().getY()
+//                                        )
+//                                        ];
+//
+//                                System.out.println("This is the sq we are dropping on...");
+//                                System.out.println(ChessBoard.selectedPieceEndPos);
+//
+//                                selectedPiece.movePiece(e, true);
+//                                setPaneLayer(selectedPiece, "1");
+//
+//                                // ***** send the command to python and then read back in the board state *****
+//                                // as long as we are not dropping the piece where it started.
+//                                if (!ChessBoard.selectedPieceStartPos.equals(ChessBoard.selectedPieceEndPos)){
+//                                    //TODO execute the move in python and load back in the game json.
+//                                    //TODO create a new class for the connector? or maybe use game data class.
+//                                    GameData.sendMoveToPython(
+//                                            ChessBoard.selectedPieceStartPos,
+//                                            ChessBoard.selectedPieceEndPos
+//                                    );
+//
+//
+//                                    //tempBoardRef.reloadPieces(tempBoardRef.getGameData().getBoardStateString());
+//
+//                                    //TODO need to sort out how to call this... ***********
+//                                    //tempBoardRef.reloadPieces(gameData.getBoardStateString());
+//
+//
+//                                }
+//
+//                                // resetting the start pos and end pos of the now dropped piece.
+//                                ChessBoard.selectedPieceStartPos = "";
+//                                ChessBoard.selectedPieceEndPos = "";
+//                            }
+//
+//                            @Override
+//                            public void mouseEntered(MouseEvent e) {}
+//                            @Override
+//                            public void mouseExited(MouseEvent e) {}
+//                        }
+//                );
+//
+//                selectedPiece.addMouseMotionListener(
+//                        new MouseMotionAdapter() {
+//                            // whenever the mouse is moved...
+//                            @Override
+//                            public void mouseDragged(MouseEvent e) {
+//                                setPaneLayer(selectedPiece, "2");
+//                                selectedPiece.movePiece(e, false);
+//                            }
+//                        }
+//                );
+//            }
+//        }
+//    }
 
     static void highlightPositionSquare(Point position){
 

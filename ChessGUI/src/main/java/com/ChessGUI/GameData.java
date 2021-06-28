@@ -124,6 +124,8 @@ public class GameData {
             String boardStateString = gameJson.path("Controller.CURRENT_POSITION_STRING").asText();
 
             this.boardStateString = boardStateString;
+
+
             System.out.println(String.format("State String: %s", this.boardStateString));
 
 
@@ -158,7 +160,7 @@ public class GameData {
                     new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
             while ((line = reader.readLine()) != null) {
-                System.out.println(line);
+                //System.out.println(line); //*******************************
             }
 
 

@@ -1,3 +1,4 @@
+from os import error
 from Chess import *
 import json # convert dictionary x into JSON string: y = json.dumps(x)
 import sys
@@ -213,6 +214,9 @@ connector = ChessConnector(player)
 
 #player.move("e7", "e8")
 
+
+
+
 # Below is the chess setup for white and black.
 # player.add("wp", "a2", "b2", "c2",
 #                 "d2", "e2", "f2",
@@ -235,13 +239,14 @@ connector = ChessConnector(player)
 
 # Controller.CURRENT_POSITION_STRING = player._get_current_position_string(ChessBoard.LINKED_MAP, colour="w", opp_colour="b")
 
-# # connector(mode="import")
+# # # connector(mode="import")
 # player._display_board()
 # connector(mode="export")
 
 # print(Controller.CURRENT_POSITION_STRING)
 
 def main():
+    
 
     connector(mode="import")
 
@@ -250,9 +255,14 @@ def main():
     start_pos = sys.argv[1]
     end_pos = sys.argv[2]
 
-    player.move(start_pos, end_pos)
+    try:
 
-    connector(mode="export")
+        player.move(start_pos, end_pos)
+
+        connector(mode="export")
+    
+    except error as e:
+        print(e)
 
     print("JSON EXPORTED")
 
