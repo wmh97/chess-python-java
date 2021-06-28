@@ -26,7 +26,7 @@ public class UserInterface extends JFrame {
 
         // Testing reloading the board multiple times. First one has state string already loaded in.
 
-        chessBoard.reloadPieces(chessBoard.getGameData().getBoardStateString());
+        //chessBoard.reloadPieces(chessBoard.getGameData().getBoardStateString());
 
 
         for (int i : ChessPiece.squareNumberPieceMap.keySet()){

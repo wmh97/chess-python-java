@@ -141,7 +141,7 @@ public class ChessBoard extends JLayeredPane{
 
             stateSquares.add(Integer.valueOf(squareNumber));
 
-            System.out.println(String.format("Adding piece on square %s = %d", square, squareNumber));
+            //System.out.println(String.format("Adding piece on square %s = %d", square, squareNumber));
 
             // get current piece - i.e. the piece currently on the current square number.
 
@@ -159,7 +159,7 @@ public class ChessBoard extends JLayeredPane{
                 ChessPiece currentPiece = ChessPiece.squareNumberPieceMap.get(squareNumber);
 
                 // check if the current square is the same as the new piece.
-                if (currentPiece.getPieceSymbol() != newPieceSymbol) {
+                if (!currentPiece.getPieceSymbol().equals(newPieceSymbol)) {
 
                     System.out.println(
                             String.format("We are removing a %s at %s and replacing it with a %s", currentPiece.getPieceSymbol(), square, newPieceSymbol)
@@ -215,6 +215,10 @@ public class ChessBoard extends JLayeredPane{
 
         }
 
+
+        // TODO ********MAKE SURE WE ARE NOT ADDING LISTENERS TO PIECES THAT ALREADY HAVE THEM************
+        // TODO ... ie if we skip adding as the new string says the piece is the same we dont want
+        // TODO ... to add a listener. Below just adds to all of them every time... **********************
         this.addPieceListeners();
 
     }
@@ -224,6 +228,9 @@ public class ChessBoard extends JLayeredPane{
     }
 
     private void addPieceListeners(){
+
+        // TODO this is just for testing....... *****************
+        ChessBoard tempBoardRef = this; // TODO **************************
 
         for (Component component : this.getComponents()){
             if (component instanceof JLabel){
@@ -268,14 +275,23 @@ public class ChessBoard extends JLayeredPane{
 
                                 // ***** send the command to python and then read back in the board state *****
                                 // as long as we are not dropping the piece where it started.
-                                if (ChessBoard.selectedPieceStartPos != ChessBoard.selectedPieceEndPos){
+                                if (!ChessBoard.selectedPieceStartPos.equals(ChessBoard.selectedPieceEndPos)){
                                     //TODO execute the move in python and load back in the game json.
                                     //TODO create a new class for the connector? or maybe use game data class.
+                                    gameData.sendMoveToPython(
+                                            ChessBoard.selectedPieceStartPos,
+                                            ChessBoard.selectedPieceEndPos
+                                    );
+
+                                    //TODO need to sort out how to call this... ***********
+                                    //tempBoardRef.reloadPieces(gameData.getBoardStateString());
+
+
                                 }
 
                                 // resetting the start pos and end pos of the now dropped piece.
-                                ChessBoard.selectedPieceStartPos = null;
-                                ChessBoard.selectedPieceEndPos = null;
+                                ChessBoard.selectedPieceStartPos = "";
+                                ChessBoard.selectedPieceEndPos = "";
                             }
 
                             @Override

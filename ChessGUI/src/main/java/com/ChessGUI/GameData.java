@@ -3,8 +3,10 @@ package com.ChessGUI;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 
 public class GameData {
 
@@ -13,6 +15,7 @@ public class GameData {
     private String boardStateString;
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    static final String projectDir = System.getProperty("user.dir").replace("\\ChessGUI", "");
 
     GameData(){
 
@@ -85,21 +88,7 @@ public class GameData {
 
         /////////////////////////////////
 
-        try {
-
-            String projectDir = System.getProperty("user.dir").replace("\\ChessGUI", "");
-            JsonNode gameJson = objectMapper.readTree(
-                    new File(String.format("%s\\game_json.json", projectDir))
-            );
-
-            String boardStateString = gameJson.path("Controller.CURRENT_POSITION_STRING").asText();
-            setBoardStateString(boardStateString);
-
-            System.out.println(getBoardStateString());
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        setBoardStateString();
 
 
     }
@@ -124,8 +113,62 @@ public class GameData {
         return this.boardStateString;
     }
 
-    public void setBoardStateString(String boardStateString){
-        this.boardStateString = boardStateString;
+    public void setBoardStateString(){
+
+        try {
+
+            JsonNode gameJson = objectMapper.readTree(
+                    new File(String.format("%s\\game_json.json", projectDir))
+            );
+
+            String boardStateString = gameJson.path("Controller.CURRENT_POSITION_STRING").asText();
+
+            this.boardStateString = boardStateString;
+            System.out.println(String.format("State String: %s", this.boardStateString));
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    static void sendMoveToPython(String startPos, String endPos){
+
+        System.out.println(String.format("%s\\ChessConnector.py", projectDir));
+
+        //TODO make this method more robust - just doing a quick implementation for testing.
+        ProcessBuilder processBuilder = new ProcessBuilder();
+
+        //> nul 2>&1
+        processBuilder.command(
+                "python",
+                String.format("%s\\ChessConnector.py", projectDir),
+                String.format("\"%s\"", startPos),
+                String.format("\"%s\"", endPos)
+        );
+
+        try {
+            Process process = processBuilder.start();
+
+
+            // TODO: ************ for some reason python only outputs the file when
+            // TODO ************* we are printing the result to this console.
+            BufferedReader reader =
+                    new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line);
+            }
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+
+
     }
 
 }

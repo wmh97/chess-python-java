@@ -146,7 +146,7 @@ class ChessBoard(AlternatingBoard):
         def __call__(self):
                 #self._print_chess_squares()
                 self._render_board_with_colour()
-                self._render_board()
+                #self._render_board()
        
         def _link_squares_map(self):
                

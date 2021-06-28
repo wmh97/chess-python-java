@@ -1,5 +1,6 @@
 from Chess import *
 import json # convert dictionary x into JSON string: y = json.dumps(x)
+import sys
 
 class ChessConnector:
 
@@ -200,19 +201,19 @@ player = Controller()
 connector = ChessConnector(player)    
 
 
-connector(mode="import")
+# connector(mode="import")
 
-#Controller.CURRENT_POSITION_STRING = "b7-wr/e3-wK/e7-wp/g2-wp/a3-bK/b2-bp/b-b.c.0-w.c.0-b.ep.0"
+# #Controller.CURRENT_POSITION_STRING = "b7-wr/e3-wK/e7-wp/g2-wp/a3-bK/b2-bp/b-b.c.0-w.c.0-b.ep.0"
 
-connector(mode="export")
+# connector(mode="export")
 
-print("String is: ", Controller.CURRENT_POSITION_STRING)
+# print("String is: ", Controller.CURRENT_POSITION_STRING)
 
-player._display_board()
+# player._display_board()
 
 #player.move("e7", "e8")
 
-#Below is the chess setup for white and black.
+# Below is the chess setup for white and black.
 # player.add("wp", "a2", "b2", "c2",
 #                 "d2", "e2", "f2",
 #                 "g2", "h2")
@@ -231,6 +232,29 @@ player._display_board()
 # player.add("bb", "c8", "f8")
 # player.add("bQ", "d8")
 # player.add("bK", "e8")
+
+# Controller.CURRENT_POSITION_STRING = player._get_current_position_string(ChessBoard.LINKED_MAP, colour="w", opp_colour="b")
+
+# # connector(mode="import")
+# player._display_board()
+# connector(mode="export")
+
+# print(Controller.CURRENT_POSITION_STRING)
+
+def main():
+
+    connector(mode="import")
+
+    # player._display_board()
+
+    start_pos = sys.argv[1]
+    end_pos = sys.argv[2]
+
+    player.move(start_pos, end_pos)
+
+    connector(mode="export")
+
+    print("JSON EXPORTED")
 
     # player.move("d2", "d4")
     # player.move("g8", "f6")
@@ -316,11 +340,11 @@ player._display_board()
     # for key in Controller.GAME_POSITION_STRINGS.keys():
     #         print(key.split("/")[-1])
 
-end = time.time()
+# end = time.time()
 
-print("Time Taken: ", end-start)
+# print("Time Taken: ", end-start)
 
 
-# if __name__ == '__main__':
-#     main()
+if __name__ == '__main__':
+    main()
 
