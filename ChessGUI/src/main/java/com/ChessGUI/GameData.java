@@ -125,8 +125,7 @@ public class GameData {
 
             this.boardStateString = boardStateString;
 
-
-            System.out.println(String.format("State String: %s", this.boardStateString));
+            //System.out.println(String.format("State String: %s", this.boardStateString));
 
 
         } catch (IOException e) {
@@ -151,17 +150,14 @@ public class GameData {
         );
 
         try {
-            Process process = processBuilder.start();
 
+            Process process = processBuilder.start();
 
             // TODO: ************ for some reason python only outputs the file when
             // TODO ************* we are printing the result to this console.
-            BufferedReader reader =
-                    new BufferedReader(new InputStreamReader(process.getInputStream()));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
-            while ((line = reader.readLine()) != null) {
-                //System.out.println(line); //*******************************
-            }
+            while ((line = reader.readLine()) != null) {System.out.println(line);}
 
 
         } catch (IOException e) {

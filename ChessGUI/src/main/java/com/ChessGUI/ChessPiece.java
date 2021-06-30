@@ -195,7 +195,7 @@ public class ChessPiece extends JLabel implements MouseListener, MouseMotionList
 //            newPos = new Point((int)newPos.getX(), (int)newPos.getY()*-1);
 //        }
 
-        System.out.println(newPos);
+        //System.out.println(newPos);
 
         // making a point at the centre of the piece label.
         // This coordinate is relative to the whole board.
@@ -211,9 +211,6 @@ public class ChessPiece extends JLabel implements MouseListener, MouseMotionList
         this.setPosition(piecePos);
 
         // leaves behind label on square after move - this might be a good thing though.
-        // *************************************************************************************************************
-         // **** NOTE: this is making the first move slow for some reason ************
-        // ***** must be because none of the squares are highlighted with label????? ***********************************
         ChessBoard.removeHighlightPrevSquare();
         ChessBoard.highlightPositionSquare(piecePos);
 
@@ -235,9 +232,7 @@ public class ChessPiece extends JLabel implements MouseListener, MouseMotionList
             // remove the piece from where it was unless we are putting it back on the square it started on.
             if (!ChessBoard.selectedPieceStartPos.equals(ChessBoard.selectedPieceEndPos)){
 
-
                 ChessPiece.squareNumberPieceMap.remove(this.getSquareNumber(), this);
-
 
                 // if we are dropping it on a square with a different piece on, we remove that piece
                 // from the board and the sqNo piece map.
@@ -256,14 +251,14 @@ public class ChessPiece extends JLabel implements MouseListener, MouseMotionList
                 // putting the new sq no and piece we have dropped into the sq no piece map.
                 ChessPiece.squareNumberPieceMap.put(dropSqNo, this);
 
-
             }
 
             // if we have dropped the piece, update the position and the square number of the piece.
             this.setPosition(dropSquare);
             this.setSquareNumber(dropSqNo);
 
-
+            // update the square location of the piece.
+            this.setPieceLocation(dropSqNo); //////////////////////////////////
 
 
         }
@@ -331,10 +326,11 @@ public class ChessPiece extends JLabel implements MouseListener, MouseMotionList
 
     @Override
     public void mousePressed(MouseEvent e) {
+
         // getting the start pos of the selected piece.
         ChessBoard.selectedPieceStartPos = this.getPieceLocation();
 
-        System.out.println("Start Pos:");
+        System.out.println("Picked up piece at start pos:");
         System.out.println(ChessBoard.selectedPieceStartPos);
 
         this.movePiece(e, false);
@@ -355,32 +351,6 @@ public class ChessPiece extends JLabel implements MouseListener, MouseMotionList
         System.out.println("This is the sq we are dropping on...");
         System.out.println(ChessBoard.selectedPieceEndPos);
 
-
-
-
-        // if there is another piece on that square remove it.
-//        if (
-//                ChessPiece.squareNumberPieceMap.containsKey(dropSqNo)
-//                &&
-//                !ChessBoard.selectedPieceStartPos.equals(ChessBoard.selectedPieceEndPos)
-//        ){
-//
-//            ChessPiece pieceToRemove = ChessPiece.squareNumberPieceMap.get(dropSqNo);
-//
-//
-//            this.parentChessBoard.remove(pieceToRemove);
-//
-//            ChessPiece.squareNumberPieceMap.remove(
-//                    dropSqNo,
-//                    pieceToRemove
-//            );
-//
-//
-//        }
-
-
-
-
         this.movePiece(e, true);
         setPiecePaneLayer(this, "1");
 
@@ -390,27 +360,19 @@ public class ChessPiece extends JLabel implements MouseListener, MouseMotionList
         // as long as we are not dropping the piece where it started.
         if (!ChessBoard.selectedPieceStartPos.equals(ChessBoard.selectedPieceEndPos)){
 
-
-
-            //TODO execute the move in python and load back in the game json.
-            //TODO create a new class for the connector? or maybe use game data class.
             GameData.sendMoveToPython(
                     ChessBoard.selectedPieceStartPos,
                     ChessBoard.selectedPieceEndPos
             );
 
-
             this.parentChessBoard.setGameData();
+
+            //TODO: flip the board......
 
 
             this.parentChessBoard.reloadPieces(
                     this.parentChessBoard.getGameData().getBoardStateString()
             );
-
-            //TODO need to sort out how to call this... ***********
-            //tempBoardRef.reloadPieces(gameData.getBoardStateString());
-
-
         }
 
         // resetting the start pos and end pos of the now dropped piece.

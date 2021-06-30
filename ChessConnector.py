@@ -1,7 +1,7 @@
 from os import error
 from Chess import *
 import json # convert dictionary x into JSON string: y = json.dumps(x)
-import sys
+import sys, os
 
 class ChessConnector:
 
@@ -191,13 +191,15 @@ class ChessConnector:
         # ---(E)---
         # game_json[""] = move_history
 
+
+
+
 # def main():
 
-import time
-start = time.time()
 
-Controller.LOAD_FROM_JSON = False
+# Controller.LOAD_FROM_JSON = False
 
+#sys.stdout = open(os.devnull, 'w')
 player = Controller()
 connector = ChessConnector(player)    
 
@@ -245,6 +247,9 @@ connector = ChessConnector(player)
 
 # print(Controller.CURRENT_POSITION_STRING)
 
+
+
+
 def main():
     
 
@@ -259,9 +264,12 @@ def main():
 
         player.move(start_pos, end_pos)
 
+        #print(Controller.CURRENT_POSITION_STRING) # pick this up in java from stdout....
+
         connector(mode="export")
     
     except error as e:
+        
         print(e)
 
     print("JSON EXPORTED")
