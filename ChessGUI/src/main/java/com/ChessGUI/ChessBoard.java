@@ -290,4 +290,42 @@ public class ChessBoard extends JLayeredPane{
             }
         }
     }
+
+    public void rotateBoard(){
+
+        for (Component component: this.getComponents()){
+
+            //if (component instanceof BoardSquare){
+
+//                BoardSquare tempComponent = (BoardSquare) component;
+//                component = tempComponent;
+
+            int currentYPos = component.getY();
+            int currentXPos = component.getX();
+
+            int boardLength = getBoardHeight();
+            int squareLength = boardLength/8;
+
+            if (component instanceof BoardSquare) {
+                System.out.println(String.format("SqNo: %d, Start = (%d, %d)", ((BoardSquare) component).getSquareNumber(), currentXPos, currentYPos));
+            }
+            int newXPos = Math.abs(currentXPos - boardLength) - squareLength;
+            int newYPos = Math.abs(currentYPos - boardLength) - squareLength;
+
+            component.setBounds(newXPos, newYPos, squareLength, squareLength);
+
+            if (component instanceof BoardSquare) {
+                System.out.println(String.format("EndPos = (%d, %d), Colour = %s", newXPos, newYPos, ((BoardSquare) component).getSquareColour()));
+            }
+
+            this.revalidate();
+            this.repaint();
+
+            //}
+
+        }
+
+    }
+
+
 }

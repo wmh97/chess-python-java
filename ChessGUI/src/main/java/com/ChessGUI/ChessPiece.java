@@ -373,11 +373,18 @@ public class ChessPiece extends JLabel implements MouseListener, MouseMotionList
             this.parentChessBoard.reloadPieces(
                     this.parentChessBoard.getGameData().getBoardStateString()
             );
+
+            // rotate the board
+            this.parentChessBoard.rotateBoard();
+
         }
 
         // resetting the start pos and end pos of the now dropped piece.
         ChessBoard.selectedPieceStartPos = "";
         ChessBoard.selectedPieceEndPos = "";
+
+
+
     }
 
     @Override
