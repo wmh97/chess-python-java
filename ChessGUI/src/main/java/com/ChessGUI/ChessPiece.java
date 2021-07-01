@@ -119,7 +119,16 @@ public class ChessPiece extends JLabel implements MouseListener, MouseMotionList
     }
 
     public void setPieceLocation(int squareNumber){
+//        if (!ChessBoard.isRotated) {
+//            this.pieceLocation = ChessBoard.squareLabels[squareNumber];
+//        } else {
+//            this.pieceLocation = ChessBoard.squareLabels[Math.abs( 63 - (squareNumber) )];
+//        }
+
+        // dont need to rotate sq number here as it has been rotated already elsewhere.
         this.pieceLocation = ChessBoard.squareLabels[squareNumber];
+
+
     }
 
     private ImageIcon resizeIcon(ImageIcon icon, int width, int height){
@@ -340,25 +349,41 @@ public class ChessPiece extends JLabel implements MouseListener, MouseMotionList
     @Override
     public void mouseReleased(MouseEvent e) {
 
+
         int dropSqNo = BoardSquare.calcSquareNumber(
                 (int)this.getPosition().getX(),
                 (int)this.getPosition().getY()
         );
 
         // getting the end pos of the selected pos
+//        if (!ChessBoard.isRotated) {
+//            ChessBoard.selectedPieceEndPos = ChessBoard.squareLabels[dropSqNo];
+//        } else {
+//            ChessBoard.selectedPieceEndPos = ChessBoard.rotatedSquareLabels[dropSqNo];
+//        }
         ChessBoard.selectedPieceEndPos = ChessBoard.squareLabels[dropSqNo];
 
         System.out.println("This is the sq we are dropping on...");
         System.out.println(ChessBoard.selectedPieceEndPos);
+        //System.out.println(this.getPosition());
+        System.out.println(String.format("(%d, %d)", (int)this.getPosition().getX(), (int)this.getPosition().getY()));
+        System.out.println(this.getSquareNumber());
+        System.out.println(this.getPieceLocation());
+        System.out.println(this.getPieceSymbol());
+        System.out.println(String.format("rotated? %b", ChessBoard.isRotated));
+
 
         this.movePiece(e, true);
         setPiecePaneLayer(this, "1");
 
 
+        System.out.println(String.format("MOVE: player.move(\"%s\", \"%s\")", ChessBoard.selectedPieceStartPos, ChessBoard.selectedPieceEndPos));
 
         // ***** send the command to python and then read back in the board state *****
         // as long as we are not dropping the piece where it started.
         if (!ChessBoard.selectedPieceStartPos.equals(ChessBoard.selectedPieceEndPos)){
+
+            String tempStateStringBefore = this.parentChessBoard.getGameData().getBoardStateString();
 
             GameData.sendMoveToPython(
                     ChessBoard.selectedPieceStartPos,
@@ -374,8 +399,11 @@ public class ChessPiece extends JLabel implements MouseListener, MouseMotionList
                     this.parentChessBoard.getGameData().getBoardStateString()
             );
 
-            // rotate the board
-            this.parentChessBoard.rotateBoard();
+            // rotate the board if the state string has changed.
+            if (!tempStateStringBefore.equals(this.parentChessBoard.getGameData().getBoardStateString())){
+                this.parentChessBoard.rotateBoard();
+            }
+
 
         }
 

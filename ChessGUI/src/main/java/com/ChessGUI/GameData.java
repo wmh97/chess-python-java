@@ -157,7 +157,11 @@ public class GameData {
             // TODO ************* we are printing the result to this console.
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
-            while ((line = reader.readLine()) != null) {System.out.println(line);}
+            while ((line = reader.readLine()) != null) {
+                //System.out.println(line);
+            }
+
+            System.out.println("Executed move in python.");
 
 
         } catch (IOException e) {

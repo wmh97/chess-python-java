@@ -27,10 +27,23 @@ public class ChessBoard extends JLayeredPane{
             "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1"
     };
 
+    static final String[] rotatedSquareLabels = {
+            "h1", "g1", "f1", "e1", "d1", "c1", "b1", "a1",
+            "h2", "g2", "f2", "e2", "d2", "c2", "b2", "a2",
+            "h3", "g3", "f3", "e3", "d3", "c3", "b3", "a3",
+            "h4", "g4", "f4", "e4", "d4", "c4", "b4", "a4",
+            "h5", "g5", "f5", "e5", "d5", "c5", "b5", "a5",
+            "h6", "g6", "f6", "e6", "d6", "c6", "b6", "a6",
+            "h7", "g7", "f7", "e7", "d7", "c7", "b7", "a7",
+            "h8", "g8", "f8", "e8", "d8", "c8", "b8", "a8"
+    };
+
     static HashMap<String, Integer> squareLabelsMap = new HashMap<String, Integer>();
 
     static String selectedPieceStartPos;
     static String selectedPieceEndPos;
+
+    public static boolean isRotated = false;
 
     ChessBoard(int width, int height){
 
@@ -218,7 +231,11 @@ public class ChessBoard extends JLayeredPane{
 
     static void highlightPositionSquare(Point position){
 
+
         int positionSquareNumber = BoardSquare.calcSquareNumber((int)position.getX(), (int)position.getY());
+
+        //System.out.println(String.format("We are highlighting %d", positionSquareNumber));
+
         BoardSquare square = BoardSquare.squareNumberMap.get(positionSquareNumber);
 
         // getting the pos marker associated with a square and
@@ -293,6 +310,7 @@ public class ChessBoard extends JLayeredPane{
 
     public void rotateBoard(){
 
+
         for (Component component: this.getComponents()){
 
             //if (component instanceof BoardSquare){
@@ -306,24 +324,57 @@ public class ChessBoard extends JLayeredPane{
             int boardLength = getBoardHeight();
             int squareLength = boardLength/8;
 
-            if (component instanceof BoardSquare) {
-                System.out.println(String.format("SqNo: %d, Start = (%d, %d)", ((BoardSquare) component).getSquareNumber(), currentXPos, currentYPos));
+//            if (component instanceof BoardSquare) {
+//                System.out.println(String.format("SqNo: %d, Start = (%d, %d)", ((BoardSquare) component).getSquareNumber(), currentXPos, currentYPos));
+//            }
+
+            if (component instanceof ChessPiece){
+                //System.out.println(String.format("StartPos = %s", ((ChessPiece) component).getPosition()));
             }
+
             int newXPos = Math.abs(currentXPos - boardLength) - squareLength;
             int newYPos = Math.abs(currentYPos - boardLength) - squareLength;
 
             component.setBounds(newXPos, newYPos, squareLength, squareLength);
 
-            if (component instanceof BoardSquare) {
-                System.out.println(String.format("EndPos = (%d, %d), Colour = %s", newXPos, newYPos, ((BoardSquare) component).getSquareColour()));
+//            if (component instanceof BoardSquare) {
+//                System.out.println(String.format("EndPos = (%d, %d), Colour = %s", newXPos, newYPos, ((BoardSquare) component).getSquareColour()));
+//            }
+
+            if (component instanceof ChessPiece){
+
+                ((ChessPiece) component).setPosition(new Point(newXPos, newYPos));
+                //((ChessPiece) component).setPieceLocation(((ChessPiece) component).getSquareNumber());
+
+                //((ChessPiece) component).setPieceLocation(BoardSquare.calcSquareNumber(currentXPos, currentYPos));
+
+                //System.out.println(String.format("EndPos = %s", ((ChessPiece) component).getPosition()));
             }
 
             this.revalidate();
             this.repaint();
 
+
+//            for (Component componentAgain : this.getComponents()){
+//
+//                if (componentAgain instanceof ChessPiece){
+//                    ((ChessPiece) componentAgain).setPieceLocation(((ChessPiece) componentAgain).getSquareNumber());
+//                }
+//
+//            }
+
             //}
 
         }
+
+        System.out.println(String.format("Board is rotated : %b", ChessBoard.isRotated));
+        ChessBoard.isRotated = !ChessBoard.isRotated;
+
+//        if(ChessBoard.isRotated == false){
+//            ChessBoard.isRotated = true;
+//        } else {
+//            ChessBoard.isRotated = false;
+//        }
 
     }
 

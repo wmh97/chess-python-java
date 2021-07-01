@@ -134,10 +134,20 @@ public class BoardSquare extends JPanel{
     }
 
     static int calcBoardXPos(int squareNumber, int boardWidth){
-        return (squareNumber % 8) * (boardWidth / 8);
+
+        if (!ChessBoard.isRotated){
+            return (squareNumber % 8) * (boardWidth / 8);
+        } else {
+            return BoardSquare.rotateBoardXCoordinate( (squareNumber % 8) * (boardWidth / 8), boardWidth );
+        }
+
     }
     static int calcBoardYPos(int squareNumber, int boardHeight){
-        return (squareNumber / 8) * (boardHeight / 8);
+        if (!ChessBoard.isRotated) {
+            return (squareNumber / 8) * (boardHeight / 8);
+        } else {
+            return BoardSquare.rotateBoardYCoordinate( (squareNumber / 8) * (boardHeight / 8), boardHeight );
+        }
     }
 
     static int calcSquareNumber(int xPos, int yPos){
@@ -147,9 +157,29 @@ public class BoardSquare extends JPanel{
         double squaresAcross = Math.round(xPos/squareLength);
         double squaresDown = Math.round(yPos/squareLength);
 
-        int squareNumber = (((int)squaresDown) * 8) + (int)squaresAcross;
+        if (!ChessBoard.isRotated) {
+            return (((int) squaresDown) * 8) + (int) squaresAcross;
+        } else {
+            return BoardSquare.rotateBoardSquareNumber( (((int) squaresDown) * 8) + (int) squaresAcross );
+        }
 
-        return squareNumber;
+        //return squareNumber;
+    }
+
+    static int rotateBoardXCoordinate(int currentXPos, int boardWidth){
+        int squareLength = boardWidth/8;
+        int newXPos = Math.abs(currentXPos - boardWidth) - squareLength;
+        return newXPos;
+    }
+
+    static int rotateBoardYCoordinate(int currentYPos, int boardHeight){
+        int squareLength = boardHeight/8;
+        int newYPos = Math.abs(currentYPos - boardHeight) - squareLength;
+        return newYPos;
+    }
+
+    static int rotateBoardSquareNumber(int squareNumber){
+        return Math.abs(63 - squareNumber);
     }
 
 }
