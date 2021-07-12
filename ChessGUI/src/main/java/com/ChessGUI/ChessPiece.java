@@ -273,9 +273,6 @@ public class ChessPiece extends JLabel implements MouseListener, MouseMotionList
         }
         this.refreshPiece();
 
-
-
-
     }
 
     public Point getDropSquare(Point droppedPos){
@@ -385,15 +382,16 @@ public class ChessPiece extends JLabel implements MouseListener, MouseMotionList
 
             String tempStateStringBefore = this.parentChessBoard.getGameData().getBoardStateString();
 
-            GameData.sendMoveToPython(
-                    ChessBoard.selectedPieceStartPos,
-                    ChessBoard.selectedPieceEndPos
-            );
+            try {
+                this.parentChessBoard.getGameData().sendMoveToPython(
+                        ChessBoard.selectedPieceStartPos,
+                        ChessBoard.selectedPieceEndPos
+                );
+            } catch (InterruptedException interruptedException) {
+                interruptedException.printStackTrace();
+            }
 
             this.parentChessBoard.setGameData();
-
-            //TODO: flip the board......
-
 
             this.parentChessBoard.reloadPieces(
                     this.parentChessBoard.getGameData().getBoardStateString()

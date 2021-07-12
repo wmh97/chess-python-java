@@ -983,12 +983,12 @@ class TrackPieces:
                         print("********************")
                         print("*****BLACK WINS*****")
                         print("********************")
-                        quit()
+                        #quit()
                 if TrackPieces.BLACK_IN_CHECK and TrackPieces.BLACK_SURROUNDING_CHECK:
                         print("********************")
                         print("*****WHITE WINS*****")
                         print("********************")
-                        quit()
+                        #quit()
                 if (
                         TrackPieces.WHITE_SURROUNDING_CHECK and not TrackPieces.WHITE_IN_CHECK
                         and not TrackPieces.SKIP_STALEMATE_DETECTION
@@ -1046,7 +1046,7 @@ class TrackPieces:
                                 print("********************")
                                 print("*****STALE-MATE*****")
                                 print("********************")
-                                quit() 
+                                #quit() 
                         
         def _other_pieces_can_move(self, *, colour):
 
@@ -2165,7 +2165,7 @@ class Controller:
                         TrackPieces.WHITE_POSITIONS,
                         TrackPieces.BLACK_POSITIONS        
                 )
-                
+
                 if not self.track.validate_colour_move(start_pos):
                     raise ValueError("Not Your Turn/Invalid Move")
                 
@@ -2473,7 +2473,7 @@ class Controller:
                         print("*********************************")
                         print("***THREE-FOLD-REPETITION DRAW!***")
                         print("*********************************")
-                        quit()
+                        #quit()
                 else:
                         return
 

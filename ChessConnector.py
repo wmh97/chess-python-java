@@ -19,7 +19,7 @@ class ChessConnector:
             self._load_game_json(ChessConnector.GAME_JSON)
 
     def _import_game_json(self):
-        with open(r"C:\Users\willi\Desktop\Chess_Python\game_json.json", "r") as json_infile:
+        with open(f"./../game_json.json", "r") as json_infile:
             game_json = json.load(json_infile)
         json_infile.close()
         return game_json
@@ -27,7 +27,7 @@ class ChessConnector:
     def _export_game_json(self, game_json_dict):
         game_json = json.dumps(game_json_dict)
         # need more specific path
-        with open(r"C:\Users\willi\Desktop\Chess_Python\game_json.json", "w") as json_outfile:
+        with open(f"./../game_json.json", "w") as json_outfile:
             json_outfile.write(game_json)
         json_outfile.close()
 
@@ -249,13 +249,11 @@ connector = ChessConnector(player)
 
 
 
-
 def main():
     
-
     connector(mode="import")
 
-    # player._display_board()
+    player._display_board()
 
     start_pos = sys.argv[1]
     end_pos = sys.argv[2]
@@ -264,13 +262,13 @@ def main():
 
         player.move(start_pos, end_pos)
 
-        #print(Controller.CURRENT_POSITION_STRING) # pick this up in java from stdout....
-
         connector(mode="export")
     
     except error as e:
         
         print(e)
+
+        connector(mode="export")
 
     print("JSON EXPORTED")
 

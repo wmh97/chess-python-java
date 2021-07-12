@@ -1,6 +1,7 @@
 package com.ChessGUI;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class UserInterface extends JFrame {
 
@@ -8,7 +9,7 @@ public class UserInterface extends JFrame {
 
     UserInterface(int width, int height){
 
-        int frameWidth = (int) (width * 1.1);
+        int frameWidth = (int) (width * 1);
         int frameHeight = (int) (height * 1.1);
 
         this.setTitle("Chess");
@@ -16,6 +17,8 @@ public class UserInterface extends JFrame {
         this.setSize(frameWidth, frameHeight);
         this.setResizable(true);
         this.setLayout(null); // decide which layout to use later.
+        //this.setBackground(Color.BLACK);
+
 
         chessBoard = new ChessBoard(width, height);
 

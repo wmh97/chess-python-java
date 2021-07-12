@@ -15,7 +15,7 @@ public class GameData {
     private String boardStateString;
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    static final String projectDir = System.getProperty("user.dir").replace("\\ChessGUI", "");
+    static final String projectDir = System.getProperty("user.dir").replace("/ChessGUI", "");
 
     GameData(){
 
@@ -117,8 +117,10 @@ public class GameData {
 
         try {
 
+            System.out.println(String.format("%s/game_json.json", projectDir));
+
             JsonNode gameJson = objectMapper.readTree(
-                    new File(String.format("%s\\game_json.json", projectDir))
+                    new File(String.format("%s/game_json.json", projectDir))
             );
 
             String boardStateString = gameJson.path("Controller.CURRENT_POSITION_STRING").asText();
@@ -134,34 +136,30 @@ public class GameData {
 
     }
 
-    static void sendMoveToPython(String startPos, String endPos){
-
-        System.out.println(String.format("%s\\ChessConnector.py", projectDir));
+    public void sendMoveToPython(String startPos, String endPos) throws InterruptedException {
 
         //TODO make this method more robust - just doing a quick implementation for testing.
         ProcessBuilder processBuilder = new ProcessBuilder();
 
-        //> nul 2>&1
+        System.out.println(String.format("python3 %s/ChessConnector.py \"%s\" \"%s\"", projectDir, startPos, endPos));
+
         processBuilder.command(
-                "python",
-                String.format("%s\\ChessConnector.py", projectDir),
-                String.format("\"%s\"", startPos),
-                String.format("\"%s\"", endPos)
+                "python3",
+                String.format("%s/ChessConnector.py", projectDir),
+                String.format("%s", startPos),
+                String.format("%s", endPos)
         );
 
         try {
 
             Process process = processBuilder.start();
 
-            // TODO: ************ for some reason python only outputs the file when
-            // TODO ************* we are printing the result to this console.
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                //System.out.println(line);
-            }
+            // print std out and std error to console in background.
+            Runnable backgroundOutput = new BackgroundOutput(process);
+            new Thread(backgroundOutput).start();
 
-            System.out.println("Executed move in python.");
+            // wait for process to complete before exiting this method.
+            process.waitFor();
 
 
         } catch (IOException e) {
@@ -169,7 +167,36 @@ public class GameData {
         }
 
 
+    }
 
+    private class BackgroundOutput implements Runnable{
+
+        private BufferedReader stdOutReader;
+        private BufferedReader stdErrorReader;
+
+        BackgroundOutput(Process process){
+
+            this.stdOutReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            this.stdErrorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+        }
+
+        @Override
+        public void run(){
+            try{
+
+                String line;
+                while ((line = stdOutReader.readLine()) != null) {
+                    System.out.println(line);
+                }
+                while ((line = stdErrorReader.readLine()) != null) {
+                    System.out.println(line);
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
 
     }
 
