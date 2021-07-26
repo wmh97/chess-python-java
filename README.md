@@ -12,6 +12,10 @@ Project to create a Chess game using Python for the engine, connected to Java fo
 * If the move was unsuccessful (illegal move) then the Java GUI will reload the board position
     we just tried to move from.
 
+Example Video:
+https://user-images.githubusercontent.com/82291365/126997618-4c3a41e3-68c5-4dbc-8c43-40c0f875d514.mp4
+
+
 
 ## Improvements to Gameplay:
 ### Implemented:
